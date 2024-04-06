@@ -56,5 +56,6 @@ void proceso_estado(char**);
 void listar_comandos();
 op_code_kernel codigo_comando(char*);
 void loguear_config();
+void finalizar_kernel(t_config_kernel*);
 
 #endif /* kernel.h*/

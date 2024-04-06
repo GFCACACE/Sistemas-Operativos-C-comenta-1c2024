@@ -37,8 +37,9 @@ int main(int argc, char* argv[]) {
     printf("cod_op: %d",cod_op_interrupt);
     recibir_mensaje(cpu_interrupt);
 
-
 	//consola();
+
+    finalizar_kernel(config);
 
     return 0;
 }

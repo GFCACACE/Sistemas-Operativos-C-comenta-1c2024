@@ -234,3 +234,16 @@ void multiprogramacion(char** substrings){
 }
 void detener_planificacion(char** substrings){}
 void proceso_estado(char** substrings){}
+
+void config_destroy_kernel(t_config_kernel * config){
+	config_destroy(config->config);
+	string_array_destroy(config->INSTANCIAS_RECURSOS);
+	string_array_destroy(config->RECURSOS);
+	free(config);
+}
+
+void finalizar_kernel(t_config_kernel* config){
+	
+	config_destroy_kernel(config);
+	log_destroy(logger);
+}
