@@ -1,5 +1,5 @@
-#ifndef UTILS_H_
-#define UTILS_H_
+#ifndef utils_client_h
+#define utils_client_h
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -9,12 +9,9 @@
 #include<netdb.h>
 #include<string.h>
 #include<commons/log.h>
+#include<utils/utils-commons.h>
 
-typedef enum
-{
-	MENSAJE,
-	PAQUETE
-}op_code;
+
 
 typedef struct
 {
@@ -38,4 +35,4 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
 
-#endif /* UTILS_H_ */
+#endif /* utils_client_h */

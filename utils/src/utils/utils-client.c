@@ -37,6 +37,8 @@ int crear_conexion(char *ip, char* puerto)
 	int connect_res=connect(socket_cliente,server_info->ai_addr,server_info->ai_addrlen);
 	printf("%d\n",connect_res);
 	freeaddrinfo(server_info);
+	if(connect_res<0)
+		socket_cliente = connect_res;
 
 	return socket_cliente;
 }
