@@ -10,14 +10,13 @@ int main(int argc, char* argv[]) {
     logger = iniciar_logger(modulo);   
 
     t_config_cpu* config = config_create_cpu();
-    char* puerto =config->PUERTO_ESCUCHA_DISPATCH;
     
-    int dispatch = iniciar_servidor(puerto);
+    int dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
     loguear("servidor iniciado, dispatch");
 
     int kernel_dispatch = esperar_cliente(dispatch);
 
-    int interrupt= iniciar_servidor(puerto);
+    int interrupt= iniciar_servidor(config->PUERTO_ESCUCHA_INTERRUPT);
     loguear("servidor iniciado, interrupt");
 
     int kernel_interrupt = esperar_cliente(interrupt);
