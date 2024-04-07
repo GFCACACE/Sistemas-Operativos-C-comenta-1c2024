@@ -22,18 +22,18 @@ int iniciar_servidor(char * puerto)
 	listen(socket_servidor,SOMAXCONN);
 
 	freeaddrinfo(servinfo);
-	log_trace(logger, "Listo para escuchar a mi cliente");
+	//log_trace(logger, "Listo para escuchar a mi cliente");
 
 	return socket_servidor;
 }
 
-int esperar_cliente(int socket_servidor)
+int esperar_cliente(int socket_servidor,t_log* logger_modulo)
 {
 
 	// Aceptamos un nuevo cliente
 	int socket_cliente=accept(socket_servidor,NULL,NULL);
 
-	log_info(logger, "Se conecto un cliente!");
+	log_info(logger_modulo, "Se conecto un cliente!");
 
 	return socket_cliente;
 }

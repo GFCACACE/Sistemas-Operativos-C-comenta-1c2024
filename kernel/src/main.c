@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
     logger = iniciar_logger(modulo);
 	config = iniciar_config_kernel(modulo);
 	loguear_config();	    
-
+    int conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
     int cpu_dispatch = crear_conexion(config->IP_CPU, config->PUERTO_CPU_DISPATCH);
 
     if(cpu_dispatch<0){
@@ -27,6 +27,10 @@ int main(int argc, char* argv[]) {
 
     enviar_mensaje("Hola desde kernel",cpu_dispatch);
 
+    //Recibimos respuesta de Memoria
+    int cod_op_memoria = recibir_operacion(conexion_memoria);
+    printf("cod_op: %d",cod_op_memoria);
+    recibir_mensaje(conexion_memoria);
     //Recibimos respuesta de CPU
     int cod_op_dispatch = recibir_operacion(cpu_dispatch);
     printf("cod_op: %d",cod_op_dispatch);

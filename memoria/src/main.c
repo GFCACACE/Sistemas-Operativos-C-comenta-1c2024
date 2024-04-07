@@ -1,8 +1,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <utils/hello.h>
+#include "memoria.h"
 
 int main(int argc, char* argv[]) {
-    decir_hola("Memoria");
-    return 0;
+    char* modulo = "memoria";
+    logger_memoria= iniciar_logger(modulo);
+	config_memoria = iniciar_config_memoria(modulo);
+	loguear_config_memoria();	    
+    int memoria_fd = iniciar_servidor(config_memoria->PUERTO_ESCUCHA);
+    log_info(logger_memoria,"El Servidor ha sido iniciado");
+    int kernel_fd = esperar_cliente(memoria_fd,logger_memoria);
+    enviar_mensaje("Envio un mensaje desde memoria!!",kernel_fd);
+
 }

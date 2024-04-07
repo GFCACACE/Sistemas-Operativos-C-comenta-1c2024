@@ -14,12 +14,12 @@ int main(int argc, char* argv[]) {
     int dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
     loguear("servidor iniciado, dispatch");
 
-    int kernel_dispatch = esperar_cliente(dispatch);
+    int kernel_dispatch = esperar_cliente(dispatch,logger);
 
     int interrupt= iniciar_servidor(config->PUERTO_ESCUCHA_INTERRUPT);
     loguear("servidor iniciado, interrupt");
 
-    int kernel_interrupt = esperar_cliente(interrupt);
+    int kernel_interrupt = esperar_cliente(interrupt,logger);
 
     int cod_op = recibir_operacion(kernel_dispatch);
     printf("cod_op: %d",cod_op);

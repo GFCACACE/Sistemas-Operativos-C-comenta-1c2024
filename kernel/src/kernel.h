@@ -13,9 +13,9 @@
 typedef struct
 {
 	char* IP_MEMORIA;
-	int PUERTO_MEMORIA;
+	char* PUERTO_MEMORIA;
 	char* IP_FILESYSTEM;
-	int PUERTO_FILESYSTEM;
+	char* PUERTO_FILESYSTEM;
 	char* IP_CPU;
 	char* PUERTO_CPU_DISPATCH;
 	char* PUERTO_CPU_INTERRUPT;

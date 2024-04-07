@@ -1,6 +1,6 @@
 #include "kernel.h"
 
-t_log* logger;
+// t_log* logger;
 t_config_kernel* config;
 
 t_config_kernel* iniciar_config_kernel(char* modulo){
@@ -8,7 +8,7 @@ t_config_kernel* iniciar_config_kernel(char* modulo){
 	t_config_kernel* config_kernel = malloc(sizeof(t_config_kernel));	
 
 	config_kernel->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
-	config_kernel->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
+	config_kernel->PUERTO_MEMORIA = config_get_string_value(_config,"PUERTO_MEMORIA");
 	config_kernel->IP_FILESYSTEM = config_get_string_value(_config,"IP_FILESYSTEM");
 	config_kernel->PUERTO_FILESYSTEM = config_get_int_value(_config,"PUERTO_FILESYSTEM");
 	config_kernel->IP_CPU = config_get_string_value(_config,"IP_CPU");

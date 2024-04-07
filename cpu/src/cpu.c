@@ -1,6 +1,6 @@
 #include "cpu.h"
 
-t_log* logger;
+// t_log* logger;
 t_config_cpu* config_create_cpu(){
 	t_config* config = iniciar_config("cpu");
 	t_config_cpu* config_cpu = malloc(sizeof(t_config_cpu));

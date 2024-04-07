@@ -1,5 +1,5 @@
 #include "utils-config.h"
-
+t_log* logger;
 t_config* iniciar_config(char* nombre_archivo)
 {
      char* path = construir_path_config(nombre_archivo);
