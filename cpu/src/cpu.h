@@ -25,7 +25,7 @@ typedef struct {
 t_config_cpu* config_create_cpu(void);
 void config_destroy_cpu(t_config_cpu*);
 void finalizar_cpu(int,int,t_config_cpu*);
-
+int intentar_conexion(char*,char*,char*);
 extern t_log* logger;
 
 #endif //cpu_h

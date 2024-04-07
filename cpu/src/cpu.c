@@ -26,3 +26,15 @@ void finalizar_cpu(int socket_dispatch,int socket_interrupt,t_config_cpu* config
 	close(socket_interrupt);
 
 }
+
+int intentar_conexion(char* ip, char*puerto,char* modulo_servidor){
+	 log_info(logger,"Intentando conectar con %s...",modulo_servidor);
+     int conexion_memoria = crear_conexion(ip,puerto);
+         if (conexion_memoria<0){
+            log_info(logger,"Debe estar levantada la memoria, respuesta obtenida: %d", conexion_memoria);
+        }else{
+            log_info(logger,"Conexión exitosa con memoria");
+        }
+	return conexion_memoria;
+    }
+    
