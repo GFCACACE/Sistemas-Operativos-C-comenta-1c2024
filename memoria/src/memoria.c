@@ -3,17 +3,18 @@
 t_log* logger_memoria;
 t_config_memoria* config_memoria;
 
-t_config_memoria* iniciar_config_memoria(char* modulo){
-	t_config* _config = iniciar_config(modulo);
-	t_config_memoria* config_memoria = malloc(sizeof(t_config_memoria*));	
+t_config_memoria* iniciar_config_memoria(char* config_path){
+
+	t_config* _config = config_create(config_path);
+	t_config_memoria* config_memoria = malloc(sizeof(t_config_memoria));	
 
 	config_memoria->PUERTO_ESCUCHA = config_get_string_value(_config,"PUERTO_ESCUCHA");
 	config_memoria->TAM_MEMORIA = config_get_int_value(_config,"TAM_MEMORIA");
 	config_memoria->TAM_PAGINA = config_get_int_value(_config,"TAM_PAGINA");
 	config_memoria->PATH_INSTRUCCIONES = config_get_string_value(_config,"PATH_INSTRUCCIONES");
 	config_memoria->RETARDO_RESPUESTA = config_get_int_value(_config,"RETARDO_RESPUESTA");
-	
-	config_memoria->config = _config;
+
+	config_memoria->config=_config;
 
 	return config_memoria;
 }
