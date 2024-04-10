@@ -1,7 +1,7 @@
 #include "utils-server.h"
 
 
-int iniciar_servidor(char * puerto)
+int iniciar_servidor(int puerto)
 {
 	int socket_servidor;
 
@@ -12,7 +12,10 @@ int iniciar_servidor(char * puerto)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	getaddrinfo(NULL, puerto, &hints, &servinfo);
+	char* puerto_char = (char*)malloc(sizeof(char) * 20); 
+	sprintf(puerto_char, "%d", puerto);
+	getaddrinfo(NULL, puerto_char, &hints, &servinfo);
+	free(puerto_char);
 
 	// Creamos el socket de escucha del servidor
 	socket_servidor= socket(servinfo->ai_family,servinfo->ai_socktype,servinfo->ai_protocol);

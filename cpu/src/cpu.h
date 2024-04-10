@@ -10,9 +10,9 @@
 typedef struct
 {
 	char* IP_MEMORIA;
-	char* PUERTO_MEMORIA;
-	char* PUERTO_ESCUCHA_DISPATCH;
-	char* PUERTO_ESCUCHA_INTERRUPT;
+	int PUERTO_MEMORIA;
+	int PUERTO_ESCUCHA_DISPATCH;
+	int PUERTO_ESCUCHA_INTERRUPT;
 	t_config* config;
 } t_config_cpu;
 
@@ -22,10 +22,11 @@ typedef struct {
 	int memoria;
 } t_connections_cpu;
 
-t_config_cpu* config_create_cpu(void);
+t_config_cpu* config_create_cpu(char*);
 void config_destroy_cpu(t_config_cpu*);
 void finalizar_cpu(int,int,t_config_cpu*);
-int intentar_conexion(char*,char*,char*);
+void loguear_config();
+int intentar_conexion(char*,int,char*);
 extern t_log* logger;
-
+extern t_config_cpu * config;
 #endif //cpu_h

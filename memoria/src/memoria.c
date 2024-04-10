@@ -8,7 +8,7 @@ t_config_memoria* iniciar_config_memoria(char* config_path){
 	t_config* _config = config_create(config_path);
 	t_config_memoria* config_memoria = malloc(sizeof(t_config_memoria));	
 
-	config_memoria->PUERTO_ESCUCHA = config_get_string_value(_config,"PUERTO_ESCUCHA");
+	config_memoria->PUERTO_ESCUCHA = config_get_int_value(_config,"PUERTO_ESCUCHA");
 	config_memoria->TAM_MEMORIA = config_get_int_value(_config,"TAM_MEMORIA");
 	config_memoria->TAM_PAGINA = config_get_int_value(_config,"TAM_PAGINA");
 	config_memoria->PATH_INSTRUCCIONES = config_get_string_value(_config,"PATH_INSTRUCCIONES");
@@ -30,7 +30,7 @@ void config_memoria_destroy(t_config_memoria* config){
 
 void loguear_config_memoria(){
 
-	log_info(logger_memoria,"PUERTO_ESCUCHA: %s",config_memoria->PUERTO_ESCUCHA);
+	log_info(logger_memoria,"PUERTO_ESCUCHA: %d",config_memoria->PUERTO_ESCUCHA);
 	log_info(logger_memoria,"TAM_MEMORIA: %d",config_memoria->TAM_MEMORIA);
 	log_info(logger_memoria,"TAM_PAGINA: %d",config_memoria->TAM_PAGINA);
 

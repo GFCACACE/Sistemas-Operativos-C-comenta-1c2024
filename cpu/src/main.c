@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
 
     logger = iniciar_logger(modulo);   
 
-    t_config_cpu* config = config_create_cpu();
+    config = config_create_cpu(argv[1]);
     
     int dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
     loguear("Servidor iniciado, dispatch");

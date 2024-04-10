@@ -12,7 +12,7 @@
 
 typedef struct
 {
-	char* PUERTO_ESCUCHA;
+	int PUERTO_ESCUCHA;
 	int TAM_MEMORIA;
 	int TAM_PAGINA;
 	char* PATH_INSTRUCCIONES;

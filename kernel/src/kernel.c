@@ -8,12 +8,12 @@ t_config_kernel* iniciar_config_kernel(char* modulo){
 	t_config_kernel* config_kernel = malloc(sizeof(t_config_kernel));	
 
 	config_kernel->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
-	config_kernel->PUERTO_MEMORIA = config_get_string_value(_config,"PUERTO_MEMORIA");
+	config_kernel->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
 	config_kernel->IP_FILESYSTEM = config_get_string_value(_config,"IP_FILESYSTEM");
 	config_kernel->PUERTO_FILESYSTEM = config_get_int_value(_config,"PUERTO_FILESYSTEM");
 	config_kernel->IP_CPU = config_get_string_value(_config,"IP_CPU");
-	config_kernel->PUERTO_CPU_DISPATCH = config_get_string_value(_config,"PUERTO_CPU_DISPATCH");
-	config_kernel->PUERTO_CPU_INTERRUPT = config_get_string_value(_config,"PUERTO_CPU_INTERRUPT");
+	config_kernel->PUERTO_CPU_DISPATCH = config_get_int_value(_config,"PUERTO_CPU_DISPATCH");
+	config_kernel->PUERTO_CPU_INTERRUPT = config_get_int_value(_config,"PUERTO_CPU_INTERRUPT");
 	config_kernel->ALGORITMO_PLANIFICACION = config_get_string_value(_config,"ALGORITMO_PLANIFICACION");
 	config_kernel->QUANTUM = config_get_int_value(_config,"QUANTUM");
 	config_kernel->RECURSOS = config_get_array_value(_config,"RECURSOS");
@@ -40,8 +40,8 @@ void loguear_config(){
 	loguear("PUERTO_MEMORIA: %d",config->PUERTO_MEMORIA);
 	loguear("QUANTUM: %d",config->QUANTUM);
 	loguear("IP_CPU: %s",config->IP_CPU);
-	loguear("PUERTO DISPATCH: %s",config->PUERTO_CPU_DISPATCH);
-	loguear("PUERTO INTERRUPT: %s",config->PUERTO_CPU_DISPATCH);
+	loguear("PUERTO DISPATCH: %d",config->PUERTO_CPU_DISPATCH);
+	loguear("PUERTO INTERRUPT: %d",config->PUERTO_CPU_DISPATCH);
 	loguear("CANT. RECURSOS: %d", string_array_size(config->RECURSOS));
 }
 
