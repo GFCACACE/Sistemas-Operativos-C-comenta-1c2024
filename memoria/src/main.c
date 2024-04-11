@@ -4,23 +4,15 @@
 #include "memoria.h"
 
 int main(int argc, char** argv) {
-    char* modulo = "memoria";
-    decir_hola(modulo);
-    logger_memoria= iniciar_logger(modulo);
-    log_info(logger_memoria,"El path de la config es: %s",argv[1]);
-	config_memoria = iniciar_config_memoria(argv[1]);
-	loguear_config_memoria();	    
-    int memoria_fd = iniciar_servidor(config_memoria->PUERTO_ESCUCHA);
-    log_info(logger_memoria,"El Servidor ha sido iniciado");
-    log_info(logger_memoria,"Esperando conexiones...");
-
-    int cpu_cl = esperar_cliente(memoria_fd,logger_memoria);
-    int kernel_fd = esperar_cliente(memoria_fd,logger_memoria);
-    
-    
-    
-
 
     
+    bool flag_iniciar_memoria = iniciar_memoria(argv[1]);
+    if(flag_iniciar_memoria == false){
+        finalizar_memoria();
+        return EXIT_FAILURE;
+    }
+    
+    finalizar_memoria();
+    return EXIT_SUCCESS;
 
 }

@@ -42,7 +42,7 @@ char* construir_path_config(char* nombre_archivo){
 
 char* construir_path(char* nombre_archivo,char* extension){
     char* path_char =  "";    
-    char* path =(char*)malloc(strlen(path_char)+strlen(nombre_archivo)+strlen(extension) +1);
+    char* path =malloc(strlen(path_char)+strlen(nombre_archivo)+strlen(extension) +1);
         if (path == NULL) {
         fprintf(stderr, "Memory allocation failed in construir_path.\n");
         exit(EXIT_FAILURE);
@@ -82,6 +82,22 @@ void loguear(const char* message_template, ...) {
 
 	pthread_mutex_lock(&mx_log);
 	log_info(logger,message,"");
+	pthread_mutex_unlock(&mx_log);
+
+	free(message);
+
+}
+
+void loguear_error(const char* message_template, ...) {
+	
+	char*message;
+	va_list arguments;
+   	va_start(arguments, message_template);			
+	va_end(arguments);		
+	message = string_from_vformat(message_template, arguments);
+
+	pthread_mutex_lock(&mx_log);
+	log_error(logger,message,"");
 	pthread_mutex_unlock(&mx_log);
 
 	free(message);

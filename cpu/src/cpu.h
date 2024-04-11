@@ -6,7 +6,7 @@
 #include "utils/utils-server.h"
 #include "utils/utils-client.h"
 #include "utils/utils-config.h"
-
+#define MODULO "cpu"
 typedef struct
 {
 	char* IP_MEMORIA;
@@ -22,11 +22,14 @@ typedef struct {
 	int memoria;
 } t_connections_cpu;
 
-t_config_cpu* config_create_cpu(char*);
+bool iniciar_cpu(char*);
+t_config_cpu* iniciar_config_cpu(char*);
 void config_destroy_cpu(t_config_cpu*);
-void finalizar_cpu(int,int,t_config_cpu*);
+void finalizar_cpu();
 void loguear_config();
 int intentar_conexion(char*,int,char*);
 extern t_log* logger;
 extern t_config_cpu * config;
+extern int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
+extern int cod_op_kernel_dispatch;
 #endif //cpu_h

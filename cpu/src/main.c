@@ -7,29 +7,16 @@
 
 
 
-int main(int argc, char* argv[]) {
-    char* modulo = "cpu";
-    decir_hola(modulo);
-
-    logger = iniciar_logger(modulo);   
-
-    config = config_create_cpu(argv[1]);
+int main(int argc, char** argv) {
     
-    int dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
-    loguear("Servidor iniciado, dispatch");
-    
-    int conexion_memoria = intentar_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA,"memoria");
+    bool flag_iniciar_cpu = iniciar_cpu(argv[1]);
+    if(flag_iniciar_cpu == false){ 
+        finalizar_cpu();
+        return EXIT_FAILURE;
+        }
 
-    int kernel_dispatch = esperar_cliente(dispatch,logger);
-
-    int interrupt= iniciar_servidor(config->PUERTO_ESCUCHA_INTERRUPT);
-    loguear("servidor iniciado, interrupt");
-
-    
-    int kernel_interrupt = esperar_cliente(interrupt,logger);
-
-    int cod_op = recibir_operacion(kernel_dispatch);
-    printf("cod_op: %d",cod_op);
+    cod_op_kernel_dispatch = recibir_operacion(kernel_dispatch);
+    printf("cod_op: %d",cod_op_kernel_dispatch);
 
     recibir_mensaje(kernel_dispatch);
 
@@ -37,9 +24,9 @@ int main(int argc, char* argv[]) {
 
     enviar_mensaje("Interrupción desde CPU",kernel_interrupt);
 
-    finalizar_cpu(dispatch,interrupt,config);
+    finalizar_cpu();
 
-    return 0;
+    return EXIT_SUCCESS;
 
 
 

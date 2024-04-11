@@ -25,7 +25,7 @@ char* construir_path_config(char*);
 t_log* iniciar_logger(char*);
 t_config* iniciar_config(char*);
 void loguear(const char*, ...)__attribute__((format(printf, 1, 2)));
-
+void loguear_error(const char*, ...)__attribute__((format(printf, 1, 2)));
 
 bool is_numeric(const char*);
 void path_resolve(char*, const char*, const char*);

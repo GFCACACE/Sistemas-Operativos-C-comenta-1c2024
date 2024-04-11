@@ -1,6 +1,6 @@
 #include "memoria.h"
 
-t_log* logger_memoria;
+int memoria_escucha,conexion_cpu, conexion_kernel;
 t_config_memoria* config_memoria;
 
 t_config_memoria* iniciar_config_memoria(char* config_path){
@@ -21,20 +21,57 @@ t_config_memoria* iniciar_config_memoria(char* config_path){
 
 
 
-void config_memoria_destroy(t_config_memoria* config){
+void config_memoria_destroy(){
 
-	free(config->PATH_INSTRUCCIONES);
-	config_destroy(config->config);
-	free(config);
+	config_destroy(config_memoria->config);
+	free(config_memoria);
 }
 
 void loguear_config_memoria(){
 
-	log_info(logger_memoria,"PUERTO_ESCUCHA: %d",config_memoria->PUERTO_ESCUCHA);
-	log_info(logger_memoria,"TAM_MEMORIA: %d",config_memoria->TAM_MEMORIA);
-	log_info(logger_memoria,"TAM_PAGINA: %d",config_memoria->TAM_PAGINA);
+	loguear("PUERTO_ESCUCHA: %d",config_memoria->PUERTO_ESCUCHA);
+	loguear("TAM_MEMORIA: %d",config_memoria->TAM_MEMORIA);
+	loguear("TAM_PAGINA: %d",config_memoria->TAM_PAGINA);
 
-	log_info(logger_memoria,"PATH_INSTRUCCIONES: %s",config_memoria->PATH_INSTRUCCIONES);
-	log_info(logger_memoria,"RETARDO_RESPUESTA: %d",config_memoria->RETARDO_RESPUESTA);
+	loguear("PATH_INSTRUCCIONES: %s",config_memoria->PATH_INSTRUCCIONES);
+	loguear("RETARDO_RESPUESTA: %d",config_memoria->RETARDO_RESPUESTA);
 }
 
+bool iniciar_memoria(char* path_config){
+	
+    decir_hola(MODULO);
+    logger= iniciar_logger(MODULO);
+	if(logger ==NULL ){
+		printf("EL LOGGER NO PUDO SER INICIADO.\n");
+		return false;
+	} 
+	config_memoria = iniciar_config_memoria(path_config);
+	if(config_memoria == NULL){ 
+		loguear_error("Fallo al iniciar las config");
+		return false;
+	}
+	loguear_config_memoria();	    
+    memoria_escucha= iniciar_servidor(config_memoria->PUERTO_ESCUCHA);
+	if(memoria_escucha == -1){
+		loguear_error("El servidor no pudo ser iniciado");
+		return false;
+	}
+    loguear("El Servidor iniciado correctamente");
+
+    conexion_cpu = esperar_cliente(memoria_escucha);
+	if(conexion_cpu == -1){
+		loguear_error("Falló la conexión con cpu");
+		return false;
+	}
+    conexion_kernel = esperar_cliente(memoria_escucha);
+	if(conexion_kernel == -1){
+		loguear_error("Falló la conexión con kernel");
+		return false;
+	}
+	return true;
+}
+
+void finalizar_memoria(){
+	if(config_memoria != NULL) config_memoria_destroy();
+	if(logger != NULL) log_destroy(logger);
+}

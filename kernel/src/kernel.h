@@ -8,7 +8,7 @@
 #include <utils/utils-server.h>
 #include <utils/utils-config.h>
 #include <readline/readline.h>
-
+#define MODULO "kernel"
 
 typedef struct
 {
@@ -44,7 +44,11 @@ t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
 extern t_config_kernel* config;
+extern int conexion_memoria, cpu_dispatch,cpu_interrupt;
+extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 
+
+bool iniciar_kernel(char*);
 void consola();
 char* leer_texto_consola();
 void iniciar_proceso(char** parametros);
@@ -56,6 +60,6 @@ void proceso_estado(char**);
 void listar_comandos();
 op_code_kernel codigo_comando(char*);
 void loguear_config();
-void finalizar_kernel(t_config_kernel*);
+void finalizar_kernel();
 
 #endif /* kernel.h*/

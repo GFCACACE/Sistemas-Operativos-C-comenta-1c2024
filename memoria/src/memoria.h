@@ -8,7 +8,7 @@
 #include <utils/utils-server.h>
 #include <utils/utils-config.h>
 #include <readline/readline.h>
-
+#define MODULO "memoria"
 
 typedef struct
 {
@@ -32,11 +32,13 @@ typedef enum
 }op_code_memoria;
 
 t_config_memoria* iniciar_config_memoria(char*);
-void config_memoria_destroy(t_config_memoria*);
+void config_memoria_destroy();
 void loguear_config_memoria();
-extern t_log* logger_memoria;
+bool iniciar_memoria(char*);
+void finalizar_memoria();
+extern t_log* logger;
 extern t_config_memoria* config_memoria;
-
+extern int memoria_escucha,conexion_cpu, conexion_kernel;
 
 
 #endif /* kernel.h*/

@@ -1,10 +1,11 @@
 #include "kernel.h"
 
-// t_log* logger;
+int conexion_memoria, cpu_dispatch,cpu_interrupt;
+int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 
-t_config_kernel* iniciar_config_kernel(char* modulo){
-	t_config* _config = iniciar_config(modulo);
+t_config_kernel* iniciar_config_kernel(char* path_config){
+	t_config* _config = config_create(path_config);
 	t_config_kernel* config_kernel = malloc(sizeof(t_config_kernel));	
 
 	config_kernel->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
@@ -24,7 +25,33 @@ t_config_kernel* iniciar_config_kernel(char* modulo){
 	return config_kernel;
 }
 
-
+bool iniciar_kernel(char* path_config){
+	decir_hola(MODULO);
+    logger = iniciar_logger(MODULO);
+	if(logger == NULL) printf("EL LOGGER NO PUDO SER INICIADO.\n");
+	config = iniciar_config_kernel(path_config);
+	if(config == NULL) loguear_error("Fallo al iniciar las config");
+	loguear_config();	    
+    conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
+	if(conexion_memoria ==-1){
+		
+		loguear_error("No se pudo conectar memoria");
+		return false;
+	} 
+    cpu_dispatch = crear_conexion(config->IP_CPU, config->PUERTO_CPU_DISPATCH);
+	if(cpu_dispatch ==-1){
+		
+		loguear_error("No se pudo conectar cpu (dispatch)");
+		return false;
+	} 
+    cpu_interrupt = crear_conexion(config->IP_CPU, config->PUERTO_CPU_INTERRUPT);
+	if(cpu_interrupt ==-1){
+		
+		loguear_error("No se pudo conectar cpu (interrupt)");
+		return false;
+	} 
+	return true;
+}
 
 void config_kernel_destroy(t_config_kernel* config){
 
@@ -242,8 +269,11 @@ void config_destroy_kernel(t_config_kernel * config){
 	free(config);
 }
 
-void finalizar_kernel(t_config_kernel* config){
+void finalizar_kernel(){
 	
-	config_destroy_kernel(config);
-	log_destroy(logger);
+	if (conexion_memoria != -1) liberar_conexion(conexion_memoria);
+	if (cpu_dispatch != -1) liberar_conexion(cpu_dispatch);
+	if (cpu_interrupt != -1) liberar_conexion(cpu_interrupt);
+	if(config) config_destroy_kernel(config);
+	if(logger) log_destroy(logger);
 }

@@ -30,13 +30,13 @@ int iniciar_servidor(int puerto)
 	return socket_servidor;
 }
 
-int esperar_cliente(int socket_servidor,t_log* logger_modulo)
+int esperar_cliente(int socket_servidor)
 {
 
 	// Aceptamos un nuevo cliente
 	int socket_cliente=accept(socket_servidor,NULL,NULL);
 
-	log_info(logger_modulo, "Se conecto un cliente!");
+	loguear("Se conecto un cliente!");
 
 	return socket_cliente;
 }
