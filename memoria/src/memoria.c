@@ -22,9 +22,11 @@ t_config_memoria* iniciar_config_memoria(char* config_path){
 
 
 void config_memoria_destroy(){
+	//Para asegurarnos que liberamos toda la memoria de una estructura 
+	//primero borramos lo de adentro y luego lo de afuera
 
-	config_destroy(config_memoria->config);
-	free(config_memoria);
+	config_destroy(config_memoria->config);//Primero borramos la config que está adentro
+	free(config_memoria); // Finalmente la estructura que lo contenía
 }
 
 void loguear_config_memoria(){
@@ -37,20 +39,33 @@ void loguear_config_memoria(){
 	loguear("RETARDO_RESPUESTA: %d",config_memoria->RETARDO_RESPUESTA);
 }
 
-bool iniciar_memoria(char* path_config){
+bool iniciar_memoria(char* path_config/*acá va la ruta en dónde se hayan las configs*/){
 	
+	// en el "memoria.h" se hizo un "#define" con el nombre del MODULO
     decir_hola(MODULO);
-    logger= iniciar_logger(MODULO);
+
+    //Iniciamos el logger que es una variable global en las utils
+	/*Recuerden que al ser un módulo que se compila separado de los otros módulos,
+	 la variable global solo tiene alcance para cada módulo en particular.
+	 Por eso nos beneficia tenerlo declarado en un lugar general*/
+	logger= iniciar_logger(MODULO);//
 	if(logger ==NULL ){
 		printf("EL LOGGER NO PUDO SER INICIADO.\n");
+		//Retornamos 'false' indicando que no se inició correctamente
 		return false;
 	} 
+
 	config_memoria = iniciar_config_memoria(path_config);
+	
 	if(config_memoria == NULL){ 
 		loguear_error("Fallo al iniciar las config");
 		return false;
 	}
-	loguear_config_memoria();	    
+
+	//Registramos en el log todos los parámetros de la config de memoria
+	loguear_config_memoria();   
+
+	//Iniciamos el servidor con el puerto indicado en la config
     memoria_escucha= iniciar_servidor(config_memoria->PUERTO_ESCUCHA);
 	if(memoria_escucha == -1){
 		loguear_error("El servidor no pudo ser iniciado");
@@ -58,6 +73,7 @@ bool iniciar_memoria(char* path_config){
 	}
     loguear("El Servidor iniciado correctamente");
 
+	//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
     conexion_cpu = esperar_cliente(memoria_escucha);
 	if(conexion_cpu == -1){
 		loguear_error("Falló la conexión con cpu");

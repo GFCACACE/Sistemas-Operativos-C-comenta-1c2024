@@ -5,7 +5,9 @@ int iniciar_servidor(int puerto)
 {
 	int socket_servidor;
 
-	struct addrinfo hints, *servinfo;
+	//parámetros que nos guardarán las direcciones para que la máquina entienda
+	struct addrinfo hints, *servinfo; 
+
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -25,8 +27,6 @@ int iniciar_servidor(int puerto)
 	listen(socket_servidor,SOMAXCONN);
 
 	freeaddrinfo(servinfo);
-	//log_trace(logger, "Listo para escuchar a mi cliente");
-
 	return socket_servidor;
 }
 
