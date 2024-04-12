@@ -6,6 +6,8 @@ t_config_memoria* config_memoria;
 t_config_memoria* iniciar_config_memoria(char* config_path){
 
 	t_config* _config = config_create(config_path);
+	if(_config ==NULL)
+		return NULL;
 	t_config_memoria* config_memoria = malloc(sizeof(t_config_memoria));	
 
 	config_memoria->PUERTO_ESCUCHA = config_get_int_value(_config,"PUERTO_ESCUCHA");
@@ -39,7 +41,7 @@ void loguear_config_memoria(){
 	loguear("RETARDO_RESPUESTA: %d",config_memoria->RETARDO_RESPUESTA);
 }
 
-bool iniciar_memoria(char* path_config/*acá va la ruta en dónde se hayan las configs*/){
+bool iniciar_memoria(char* path_config/*acá va la ruta en dónde se hallan las configs*/){
 	
 	// en el "memoria.h" se hizo un "#define" con el nombre del MODULO
     decir_hola(MODULO);
@@ -58,7 +60,7 @@ bool iniciar_memoria(char* path_config/*acá va la ruta en dónde se hayan las c
 	config_memoria = iniciar_config_memoria(path_config);
 	
 	if(config_memoria == NULL){ 
-		loguear_error("Fallo al iniciar las config");
+		loguear_error("No se encuentra el archivo de las config");
 		return false;
 	}
 
@@ -90,4 +92,58 @@ bool iniciar_memoria(char* path_config/*acá va la ruta en dónde se hayan las c
 void finalizar_memoria(){
 	if(config_memoria != NULL) config_memoria_destroy();
 	if(logger != NULL) log_destroy(logger);
+}
+
+t_dictionary* crear_procesos_prueba(){
+
+	t_dictionary * procesosCargados  = dictionary_create();
+
+	t_list * comandos_01 = list_create();
+	list_add(comandos_01,"SUM AX BX");
+	list_add(comandos_01,"MOV CX AX");
+	list_add(comandos_01,"SET CX 3");
+	list_add(comandos_01,"EXIT");
+
+	t_list * comandos_02 = list_create();
+	list_add(comandos_02,"SUM AX BX");
+	list_add(comandos_02,"MOV CX AX");
+	list_add(comandos_02,"SET CX 3");
+	list_add(comandos_02,"EXIT");		
+
+	t_list * comandos_03 = list_create();
+	list_add(comandos_03,"SUM AX BX");
+	list_add(comandos_03,"MOV CX AX");
+	list_add(comandos_03,"SET CX 3");	
+	list_add(comandos_03,"EXIT");
+
+
+	dictionary_put(procesosCargados,"1",comandos_01);
+	dictionary_put(procesosCargados,"2",comandos_02);
+	dictionary_put(procesosCargados,"3",comandos_03);
+
+	return procesosCargados;
+}
+
+char* proxima_instruccion_de(t_pcb* pcb){
+	char* proxima_instruccion = "";
+	char pid[20];       
+    sprintf(pid, "%d", pcb->PID);
+	t_dictionary* procesos = crear_procesos_prueba();
+	void list_iterate_loguear(void *element) {
+		char *mensaje = (char *)element;
+		loguear("%s\n", mensaje);
+	}
+	if(dictionary_has_key(procesos,pid)){
+		t_list* lista = (t_list*) dictionary_get(procesos, pid);
+		list_iterate(lista,list_iterate_loguear);
+		proxima_instruccion = list_get(lista,pcb->program_counter);
+		loguear("Próxima instruccción: %s",proxima_instruccion);
+		
+	}
+	else{
+		loguear("No hay comandos para el PID:%s, %d",pid,pcb->PID);
+	
+	}
+
+	return proxima_instruccion;
 }

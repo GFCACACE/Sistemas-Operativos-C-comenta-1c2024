@@ -6,6 +6,8 @@ int cod_op_kernel_dispatch;
 t_config_cpu * config;
 t_config_cpu* iniciar_config_cpu(char* path_config){
 	t_config* _config = config_create(path_config);
+	if(_config ==NULL)
+		return NULL;
 	t_config_cpu* config_cpu = malloc(sizeof(t_config_cpu));
 	 config_cpu->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
 	 config_cpu->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
@@ -25,7 +27,7 @@ bool iniciar_cpu(char* path_config){
 	} 
 	config = iniciar_config_cpu(path_config);
 	if(config == NULL){ 
-		loguear_error("Fallo al iniciar las config");
+		loguear_error("No se encuentra el archivo de las config");
 		return false;
 	}
 	loguear_config();	    

@@ -6,6 +6,8 @@ t_config_kernel* config;
 
 t_config_kernel* iniciar_config_kernel(char* path_config){
 	t_config* _config = config_create(path_config);
+	if(_config ==NULL)
+		return NULL;
 	t_config_kernel* config_kernel = malloc(sizeof(t_config_kernel));	
 
 	config_kernel->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
@@ -30,7 +32,10 @@ bool iniciar_kernel(char* path_config){
     logger = iniciar_logger(MODULO);
 	if(logger == NULL) printf("EL LOGGER NO PUDO SER INICIADO.\n");
 	config = iniciar_config_kernel(path_config);
-	if(config == NULL) loguear_error("Fallo al iniciar las config");
+	if(config == NULL) {
+		loguear_error("No se encuentra el archivo de las config");
+		return false;
+	}
 	loguear_config();	    
     conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
 	if(conexion_memoria ==-1){
@@ -274,6 +279,6 @@ void finalizar_kernel(){
 	if (conexion_memoria != -1) liberar_conexion(conexion_memoria);
 	if (cpu_dispatch != -1) liberar_conexion(cpu_dispatch);
 	if (cpu_interrupt != -1) liberar_conexion(cpu_interrupt);
-	if(config) config_destroy_kernel(config);
-	if(logger) log_destroy(logger);
+	if(config!=NULL) config_destroy_kernel(config);
+	if(logger!=NULL) log_destroy(logger);
 }

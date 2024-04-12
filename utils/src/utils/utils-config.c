@@ -3,6 +3,12 @@ t_log* logger;
 t_config* iniciar_config(char* nombre_archivo)
 {
      char* path = construir_path_config(nombre_archivo);
+
+    if(path==NULL)	{		
+        loguear( "No se pudo crear el config! No se especificó un nombre de archivo");
+        exit(EXIT_FAILURE);
+    };
+
    
 	t_config* nuevo_config;
 	char *current_dir = getcwd(NULL, 0);
@@ -37,7 +43,10 @@ char* construir_path_log(char* nombre_archivo){
 }
 
 char* construir_path_config(char* nombre_archivo){
+    if(nombre_archivo!=NULL)
     return construir_path(nombre_archivo,".config");
+    else
+        return NULL;
 }
 
 char* construir_path(char* nombre_archivo,char* extension){
@@ -51,22 +60,6 @@ char* construir_path(char* nombre_archivo,char* extension){
     strcat(path,nombre_archivo);
     strcat(path,extension);
     return path;
-}
-
-bool is_numeric(const char* str) {
-    if (str == NULL || *str == '\0') {
-        // Handle empty strings or NULL pointers.
-        return false;
-    }
-
-    for (int i = 0; str[i] != '\0'; i++) {
-        if (!isdigit(str[i])) {
-            // If any character is not a digit, return false.
-            return false;
-        }
-    }
-
-    return true;
 }
 
 

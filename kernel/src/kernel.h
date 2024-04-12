@@ -6,6 +6,7 @@
 #include<commons/collections/queue.h>
 #include <utils/utils-client.h>
 #include <utils/utils-server.h>
+#include <utils/utils-commons.h>
 #include <utils/utils-config.h>
 #include <readline/readline.h>
 #define MODULO "kernel"
