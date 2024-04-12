@@ -14,15 +14,6 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
  
-    loguear("voy");
-    t_pcb* pcb_prueba = pcb_create();
-    pcb_destroy(pcb_prueba);
-    pcb_prueba = pcb_create();
-
-    char* inst = proxima_instruccion_de(pcb_prueba);
-    loguear("inst: %s",inst);
-    pcb_destroy(pcb_prueba);
-
     //Si llega hasta acá es porque ya se ejecutó todo lo necesario
     //Finalizamos memoria y salimos del programa
     finalizar_memoria();

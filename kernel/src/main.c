@@ -14,24 +14,6 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     } 
 
-    enviar_mensaje("Hola desde kernel",cpu_dispatch);
-
-    //Recibimos respuesta de Memoria
-    cod_op_memoria = recibir_operacion(conexion_memoria);
-    printf("cod_op: %d",cod_op_memoria);
-    recibir_mensaje(conexion_memoria);
-    //Recibimos respuesta de CPU
-    cod_op_dispatch = recibir_operacion(cpu_dispatch);
-    printf("cod_op: %d",cod_op_dispatch);
-    recibir_mensaje(cpu_dispatch);
-
-    //Recibimos interrupt de CPU
-    cod_op_interrupt = recibir_operacion(cpu_interrupt);
-    printf("cod_op: %d",cod_op_interrupt);
-    recibir_mensaje(cpu_interrupt);
-
-	//consola();
-
     finalizar_kernel();
 
     return EXIT_SUCCESS;

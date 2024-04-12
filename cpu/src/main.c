@@ -15,15 +15,6 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
         }
 
-    cod_op_kernel_dispatch = recibir_operacion(kernel_dispatch);
-    printf("cod_op: %d",cod_op_kernel_dispatch);
-
-    recibir_mensaje(kernel_dispatch);
-
-    enviar_mensaje("Respuesta desde CPU",kernel_dispatch);
-
-    enviar_mensaje("Interrupción desde CPU",kernel_interrupt);
-
     finalizar_cpu();
 
     return EXIT_SUCCESS;
