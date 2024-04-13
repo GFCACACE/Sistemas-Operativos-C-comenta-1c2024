@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
         finalizar_kernel();
         return EXIT_FAILURE;
     } 
-
+    
     finalizar_kernel();
 
     return EXIT_SUCCESS;

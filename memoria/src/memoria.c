@@ -1,6 +1,6 @@
 #include "memoria.h"
 
-int memoria_escucha,conexion_cpu, conexion_kernel;
+int memoria_escucha,conexion_cpu, conexion_kernel, conexion_entrada_salida;
 t_config_memoria* config_memoria;
 
 t_config_memoria* iniciar_config_memoria(char* config_path){
@@ -84,6 +84,11 @@ bool iniciar_memoria(char* path_config/*acá va la ruta en dónde se hallan las 
     conexion_kernel = esperar_cliente(memoria_escucha);
 	if(conexion_kernel == -1){
 		loguear_error("Falló la conexión con kernel");
+		return false;
+	}
+	conexion_entrada_salida = esperar_cliente(memoria_escucha);
+	if(conexion_entrada_salida == -1){
+		loguear_error("Falló la conexión con entrada salida");
 		return false;
 	}
 	return true;

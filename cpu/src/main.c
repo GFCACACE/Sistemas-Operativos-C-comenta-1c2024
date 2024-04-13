@@ -5,8 +5,6 @@
 #include "cpu.h"
 
 
-
-
 int main(int argc, char** argv) {
     
     bool flag_iniciar_cpu = iniciar_cpu(argv[1]);
@@ -18,12 +16,6 @@ int main(int argc, char** argv) {
     finalizar_cpu();
 
     return EXIT_SUCCESS;
-
-
-
-
-
-
 
 }
 
