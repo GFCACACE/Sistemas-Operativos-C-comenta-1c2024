@@ -13,10 +13,10 @@
 
 typedef struct
 {
+	int PUERTO_ESCUCHA;
 	char* IP_MEMORIA;
 	int PUERTO_MEMORIA;
-	char* IP_FILESYSTEM;
-	int PUERTO_FILESYSTEM;
+	//char* IP_FILESYSTEM;
 	char* IP_CPU;
 	int PUERTO_CPU_DISPATCH;
 	int PUERTO_CPU_INTERRUPT;
