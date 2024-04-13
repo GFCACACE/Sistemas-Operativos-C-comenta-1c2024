@@ -1,6 +1,6 @@
 #include "kernel.h"
 
-int conexion_memoria, cpu_dispatch,cpu_interrupt;
+int conexion_memoria, cpu_dispatch,cpu_interrupt, conexion_io,kernel_escucha;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 
@@ -55,6 +55,28 @@ bool iniciar_kernel(char* path_config){
 		loguear_error("No se pudo conectar cpu (interrupt)");
 		return false;
 	} 
+
+
+
+	//Iniciamos el servidor con el puerto indicado en la config
+    kernel_escucha= iniciar_servidor(config->PUERTO_FILESYSTEM);
+	if(kernel_escucha == -1){
+		loguear_error("El servidor no pudo ser iniciado");
+		return false;
+	}
+    loguear("El Servidor iniciado correctamente");
+
+	//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
+    conexion_io = esperar_cliente(kernel_escucha);
+	if(conexion_io == -1){
+		loguear_error("Falló la conexión con cpu");
+		return false;
+	}
+    
+
+
+
+
 	return true;
 }
 

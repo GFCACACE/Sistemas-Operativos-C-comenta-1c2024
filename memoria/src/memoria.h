@@ -1,5 +1,5 @@
-#ifndef kernel_h
-#define kernel_h
+#ifndef memoria_h
+#define memoria_h
 #include <utils/hello.h>
 #include<commons/config.h>
 #include<commons/string.h>

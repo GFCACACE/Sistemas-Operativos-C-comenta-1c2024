@@ -51,7 +51,7 @@ bool iniciar_memoria(char* path_config/*acá va la ruta en dónde se hallan las 
 	 la variable global solo tiene alcance para cada módulo en particular.
 	 Por eso nos beneficia tenerlo declarado en un lugar general*/
 	logger= iniciar_logger(MODULO);//
-	if(logger ==NULL ){
+	if(logger == NULL ){
 		printf("EL LOGGER NO PUDO SER INICIADO.\n");
 		//Retornamos 'false' indicando que no se inició correctamente
 		return false;
