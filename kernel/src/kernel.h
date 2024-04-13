@@ -45,7 +45,7 @@ t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
 extern t_config_kernel* config;
-extern int conexion_memoria, cpu_dispatch,cpu_interrupt;
+extern int conexion_memoria, cpu_dispatch,cpu_interrupt, conexion_io, kernel_escucha;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 
 

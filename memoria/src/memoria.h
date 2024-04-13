@@ -1,5 +1,5 @@
-#ifndef kernel_h
-#define kernel_h
+#ifndef memoria_h
+#define memoria_h
 #include <utils/hello.h>
 #include<commons/config.h>
 #include<commons/string.h>
@@ -40,7 +40,7 @@ bool iniciar_memoria(char*);
 void finalizar_memoria();
 extern t_log* logger;
 extern t_config_memoria* config_memoria;
-extern int memoria_escucha,conexion_cpu, conexion_kernel;
+extern int memoria_escucha,conexion_cpu, conexion_kernel, conexion_io;
 char* proxima_instruccion_de(t_pcb* pcb);
 
 

@@ -1,6 +1,6 @@
 #include "memoria.h"
 
-int memoria_escucha,conexion_cpu, conexion_kernel, conexion_entrada_salida;
+int memoria_escucha,conexion_cpu, conexion_kernel, conexion_io;
 t_config_memoria* config_memoria;
 
 t_config_memoria* iniciar_config_memoria(char* config_path){
@@ -51,7 +51,7 @@ bool iniciar_memoria(char* path_config/*acá va la ruta en dónde se hallan las 
 	 la variable global solo tiene alcance para cada módulo en particular.
 	 Por eso nos beneficia tenerlo declarado en un lugar general*/
 	logger= iniciar_logger(MODULO);//
-	if(logger ==NULL ){
+	if(logger == NULL ){
 		printf("EL LOGGER NO PUDO SER INICIADO.\n");
 		//Retornamos 'false' indicando que no se inició correctamente
 		return false;
@@ -86,8 +86,8 @@ bool iniciar_memoria(char* path_config/*acá va la ruta en dónde se hallan las 
 		loguear_error("Falló la conexión con kernel");
 		return false;
 	}
-	conexion_entrada_salida = esperar_cliente(memoria_escucha);
-	if(conexion_entrada_salida == -1){
+	conexion_io = esperar_cliente(memoria_escucha);
+	if(conexion_io == -1){
 		loguear_error("Falló la conexión con entrada salida");
 		return false;
 	}
@@ -134,7 +134,7 @@ char* proxima_instruccion_de(t_pcb* pcb){
 	char pid[20];       
     sprintf(pid, "%d", pcb->PID);
 	t_dictionary* procesos = crear_procesos_prueba();
-	void list_iterate_loguear(void *element) {
+	void list_iterate_loguear(void *element){
 		char *mensaje = (char *)element;
 		loguear("%s\n", mensaje);
 	}
