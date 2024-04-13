@@ -79,3 +79,9 @@ void path_resolve(char* dest, const char* path, const char* filename)
         strcat(dest, filename);
     }
 }
+
+char * uint_a_string(uint num){
+    char* string = malloc(sizeof(char) * 20);
+	sprintf(string,"%u", num);
+    return string;
+}

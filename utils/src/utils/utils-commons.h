@@ -46,5 +46,6 @@ void pcb_destroy(t_pcb*);
 bool is_numeric(const char*);
 void loguear_pcb(t_pcb*);
 void path_resolve(char*, const char*, const char*);
+char * uint_a_string(uint);
 
 #endif /* utils_commons_h */
