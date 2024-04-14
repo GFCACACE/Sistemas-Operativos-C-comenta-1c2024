@@ -41,7 +41,7 @@ typedef struct
 	char* path;
 } t_pcb;
 
-t_pcb* pcb_create(void);
+t_pcb* pcb_create(char*);
 void pcb_destroy(t_pcb*);
 bool is_numeric(const char*);
 void loguear_pcb(t_pcb*);

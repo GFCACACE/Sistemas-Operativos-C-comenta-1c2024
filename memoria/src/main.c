@@ -16,8 +16,8 @@ int main(int argc, char** argv) {
  
     loguear("voy");
 
-    t_pcb* pcb_prueba = pcb_create();
-    cargar_programa_de(pcb_prueba,"programa1.txt");
+    t_pcb* pcb_prueba = pcb_create("programa1.txt");
+    //cargar_programa_de(pcb_prueba,"programa1.txt");
     proxima_instruccion_de(pcb_prueba);
 
     pcb_prueba->program_counter++;

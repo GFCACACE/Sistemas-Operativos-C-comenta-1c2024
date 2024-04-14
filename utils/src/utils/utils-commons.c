@@ -1,13 +1,14 @@
 #include "utils-commons.h"
 int ultimo_pid=0;
 
-t_pcb* pcb_create(){
+t_pcb* pcb_create(char* path_programa){
 	t_pcb* pcb = malloc(sizeof(t_pcb));
 	pcb->PID = ultimo_pid++;
 	pcb->archivos_abiertos = list_create();
 	pcb->registros_cpu = malloc(sizeof(t_registros_cpu));
 	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX=0;
 	pcb->program_counter = 0;
+    pcb->path = path_programa;
 
 	return pcb;
 }
