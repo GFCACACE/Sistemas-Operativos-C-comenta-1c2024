@@ -2,8 +2,8 @@
 
 int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 int cod_op_kernel_dispatch;
-
 t_config_cpu * config;
+
 t_config_cpu* iniciar_config_cpu(char* path_config){
 	t_config* _config = config_create(path_config);
 	if(_config ==NULL)
@@ -36,7 +36,7 @@ bool iniciar_cpu(char* path_config){
 		loguear_error("El servidor (dispatch) no pudo ser iniciado");
 		return false;
 		}
-    conexion_memoria = intentar_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA,"memoria");
+    conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
     if(conexion_memoria == -1 ) {
 		loguear_error("Fallo en la conexión con Memoria");
 		return false;
@@ -49,6 +49,7 @@ bool iniciar_cpu(char* path_config){
 		return false;
 		}
     kernel_interrupt = esperar_cliente(interrupt);
+	
 	return true;
 }
 
@@ -61,7 +62,8 @@ void config_destroy_cpu(t_config_cpu* config){
 void finalizar_cpu(){
 	if (config) config_destroy_cpu(config);
 	if(logger) log_destroy(logger);
-	if (conexion_memoria !=-1) liberar_conexion(conexion_memoria);
+	if (conexion_memoria !=-1) 
+		liberar_conexion(conexion_memoria);
 
 }
 
@@ -82,3 +84,50 @@ void loguear_config(){
 	loguear("PUERTO_ESCUCHA_DISPATCH: %d",config->PUERTO_ESCUCHA_DISPATCH);
 	loguear("PUERTO_ESCUCHA_INTERRUPT: %d",config->PUERTO_ESCUCHA_INTERRUPT);
 }
+
+ void pedir_proxima_instruccion(t_pcb* pcb){
+	enviar_pcb(pcb,PROXIMA_INSTRUCCION,conexion_memoria);
+ }
+
+ 
+ char* recibir_instruccion(){
+	char* mje_inst = NULL;
+	int op = recibir_operacion(conexion_memoria);
+	if(op==MENSAJE)
+		mje_inst =  recibir_mensaje(conexion_memoria);
+	
+	return mje_inst;
+ }
+
+
+ void ejecutar_instruccion(t_pcb* pcb,char* instruccion){
+
+	loguear("Ejecutando instrucción: %s ...", instruccion);
+	pcb->program_counter++;
+
+ }
+
+bool es_exit(char* comando){
+		return string_equals_ignore_case(comando,(char*)EXIT_PROGRAM);
+	}
+
+ void ejecutar_programa(t_pcb* pcb){
+	pedir_proxima_instruccion(pcb);
+	char* mje_inst = recibir_instruccion();
+
+	bool es_fin = es_exit(mje_inst);
+	while (mje_inst!=NULL && !es_fin)
+	{		
+		if(!es_fin){
+			ejecutar_instruccion(pcb,mje_inst);
+			pedir_proxima_instruccion(pcb);
+			mje_inst = recibir_instruccion();
+		}	
+		
+		es_fin = es_exit(mje_inst);
+
+	}
+	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
+	free(mje_inst);	
+ }
+

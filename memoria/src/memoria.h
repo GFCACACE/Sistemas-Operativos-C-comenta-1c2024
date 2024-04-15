@@ -45,6 +45,7 @@ extern t_dictionary* procesos;
 char* proxima_instruccion_de(t_pcb*);
 t_list* get_instrucciones(char*);
 void cargar_programa_de(t_pcb*,char*);
-
+void enviar_proxima_instruccion (t_pcb* pcb);
+int buscar_instrucciones();
 
 #endif /* kernel.h*/

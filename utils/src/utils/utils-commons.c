@@ -29,8 +29,9 @@ void loguear_pcb(t_pcb* pcb){
 	loguear("Reg CX: %d",pcb->registros_cpu->CX);
 	loguear("Reg DX: %d",pcb->registros_cpu->DX);
 	loguear("Cant. de archivos abiertos: %d",list_size( pcb->archivos_abiertos));
+    loguear("PATH: %s",pcb->path);
 	printf("==========================----- \n");
-	loguear("PATH: %s",pcb->path);
+
 	printf("FIN LOGUEO PCB\n");
 }
 
@@ -50,6 +51,7 @@ bool is_numeric(const char* str) {
 
     return true;
 }
+
 
 void path_resolve(char* dest, const char* path, const char* filename)
 {

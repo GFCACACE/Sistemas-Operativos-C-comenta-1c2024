@@ -46,8 +46,20 @@ int crear_conexion(char *ip, int puerto)
 	return socket_cliente;
 }
 
+
+void enviar_stream(void*stream,int size,int socket,op_code codigo_operacion){
+	//loguear("enviar_mensaje");
+	t_paquete* paquete = crear_paquete(codigo_operacion);	
+	agregar_a_paquete(paquete,stream,size);	
+	enviar_paquete(paquete,socket);
+	eliminar_paquete(paquete);
+}
+
 void enviar_mensaje(char* mensaje, int socket_cliente)
 {
+	// loguear("Se va a enviar el mensaje %s.", mensaje);
+	// loguear("Length:%ld",strlen(mensaje));
+	// loguear("Length:%ld",strlen("hola"));
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 
 	paquete->codigo_operacion = MENSAJE;
@@ -67,18 +79,28 @@ void enviar_mensaje(char* mensaje, int socket_cliente)
 }
 
 
-void crear_buffer(t_paquete* paquete)
+// void crear_buffer(t_paquete* paquete)
+// {
+// 	paquete->buffer = malloc(sizeof(t_buffer));
+// 	paquete->buffer->size = 0;
+// 	paquete->buffer->stream = NULL;
+// }
+t_buffer* crear_buffer(size_t size)
 {
-	paquete->buffer = malloc(sizeof(t_buffer));
-	paquete->buffer->size = 0;
-	paquete->buffer->stream = NULL;
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = size;
+	buffer->stream = malloc(buffer->size);
+	buffer->desplazamiento = 0;
+
+	return buffer;
 }
 
-t_paquete* crear_paquete(void)
+
+t_paquete* crear_paquete(op_code codigo_operacion)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = PAQUETE;
-	crear_buffer(paquete);
+	paquete->codigo_operacion = codigo_operacion;
+	paquete->buffer = crear_buffer(0);
 	return paquete;
 }
 
@@ -111,5 +133,56 @@ void eliminar_paquete(t_paquete* paquete)
 
 void liberar_conexion(int socket_cliente)
 {
-	close(socket_cliente);
+	 close(socket_cliente);
+}
+
+void agregar_a_buffer(t_buffer* buffer,const void* lugar_origen,size_t tam){
+	memcpy(buffer->stream+buffer->desplazamiento,lugar_origen,tam);
+	buffer->desplazamiento+=tam;
+}
+
+void* serializar_pcb(t_pcb* pcb,int* size)
+{	
+	
+	uint32_t path_size = strlen(pcb->path) + 1;
+	//		(PID,pc,size del path) + registros + prioridad + path_size
+	*size = sizeof(uint32_t) *3 + 4*sizeof(t_registro) + sizeof(uint8_t) + path_size ;
+	t_buffer* buffer = crear_buffer(*size);
+
+	//loguear("Size PCB:%d",*size);
+
+	agregar_a_buffer(buffer, &pcb->PID, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pcb->prioridad, sizeof(uint8_t));
+	agregar_a_buffer(buffer, &pcb->program_counter, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->AX, sizeof(t_registro));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->BX, sizeof(t_registro));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->CX, sizeof(t_registro));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->DX, sizeof(t_registro));
+	agregar_a_buffer(buffer, &path_size, sizeof(uint32_t));
+	agregar_a_buffer(buffer, pcb->path, path_size);
+
+	
+//	loguear("Path: %s",pcb->path);
+//	loguear("desplazamiento:%d",buffer->desplazamiento);	
+	void * stream = buffer->stream;
+	free(buffer);
+
+	return stream;
+}
+
+void enviar_pcb(t_pcb* pcb,op_code operacion,int socket){
+	int size;
+	void* stream = serializar_pcb(pcb,&size);
+	//	loguear_stream_pcb(stream,size);
+	loguear_pcb(pcb);
+	enviar_stream(stream,size,socket,operacion);
+
+
+	free(stream);
+}
+
+void enviar_texto(char* texto,op_code operacion,int socket){
+	int size = strlen(texto) + 1;
+	enviar_stream(texto,size,socket,operacion);
+
 }

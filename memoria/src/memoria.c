@@ -113,16 +113,22 @@ char *proxima_instruccion_de(t_pcb *pcb)
 	char* pid = uint_a_string(pcb->PID);
 	t_list *programa = get_instrucciones(pcb->path);
 	proxima_instruccion = list_get(programa, pcb->program_counter);
-	loguear("Próxima instruccción: %s", proxima_instruccion);
+	loguear("Próxima instruccción: %s.", proxima_instruccion);
+	printf("Próxima instruccción: %s.", proxima_instruccion);
 
 	free(pid);
 	free(programa);
 	return proxima_instruccion;
 }
 
-t_list *get_instrucciones(char *path)
+t_list *get_instrucciones(char *nombre_archivo)
 {
 	t_list *lista_instrucciones = list_create();
+	char* path = string_duplicate(config_memoria->PATH_INSTRUCCIONES);
+	int path_size = strlen(path);;
+	if(path[path_size - 1] != '/')
+		string_append(&path, "/");
+	string_append(&path, nombre_archivo);
 
 	FILE *archivo;
 
@@ -141,14 +147,61 @@ t_list *get_instrucciones(char *path)
 	{
 
 		char *linea = NULL;
+		int len;
 		getline(&linea, &line_size, archivo);
 		if (linea != NULL)
+		{	len = strlen(linea);
+			if(linea[len - 1] == '\n')
+      		{  //Eliminamos el salto de línea
+        		linea[len - 1] = '\0';
+				len--;
+			}
+			if(linea[len - 1] == '\r')
+      		  //Eliminamos el retorno de carro.
+        	linea[len - 1] = '\0';
+			
 			list_add(lista_instrucciones, linea);
+
+		}
 
 	//	loguear("la linea es:%s\n", linea);
 
 	}
-
+	free(path);
 	fclose(archivo);
 	return lista_instrucciones;
+}
+
+void enviar_proxima_instruccion (t_pcb* pcb){
+	char* instruccion =  proxima_instruccion_de(pcb); 
+	enviar_mensaje(instruccion,conexion_cpu);
+	pcb_destroy(pcb);
+	free(instruccion);
+}
+
+int buscar_instrucciones(){
+	 while (1) {
+         t_paquete *paquete = recibir_paquete(conexion_cpu);
+         int cod_op =paquete->codigo_operacion;
+
+
+		loguear("Cod op: %d", cod_op);
+        switch (cod_op) {
+            case PROXIMA_INSTRUCCION:
+                t_pcb *pcb = recibir_pcb(paquete); 
+                enviar_proxima_instruccion(pcb);
+
+                break;
+            case FIN_PROGRAMA:
+			    loguear("Fin programa");
+			return EXIT_SUCCESS;
+            case -1:
+			loguear_error("el cliente se desconectó. Terminando servidor");
+			return EXIT_FAILURE;
+		    default:
+			log_warning(logger,"Operacion desconocida. No quieras meter la pata");
+			return EXIT_FAILURE;
+        }
+
+    }
 }

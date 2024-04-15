@@ -18,7 +18,9 @@
 typedef enum
 {
 	MENSAJE,
-	PAQUETE
+	PAQUETE,
+	PROXIMA_INSTRUCCION,
+	FIN_PROGRAMA
 }op_code;
 
 typedef uint32_t t_registro;
