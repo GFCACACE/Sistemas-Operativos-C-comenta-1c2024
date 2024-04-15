@@ -67,9 +67,11 @@ bool iniciar_kernel(char* path_config){
     loguear("El Servidor iniciado correctamente");
 
 	//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
+	/*Averiguar cómo conectar cuando se tenga indefinidas I/O
+	 que se pueden conectar en cualquier momento*/
     conexion_io = esperar_cliente(kernel_escucha);
 	if(conexion_io == -1){
-		loguear_error("Falló la conexión con cpu");
+		loguear_error("Fallo en la conexión con entradasalida");
 		return false;
 	}
     
