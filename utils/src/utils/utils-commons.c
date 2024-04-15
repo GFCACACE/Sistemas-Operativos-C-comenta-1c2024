@@ -1,13 +1,14 @@
 #include "utils-commons.h"
 int ultimo_pid=0;
 
-t_pcb* pcb_create(){
+t_pcb* pcb_create(char* path_programa){
 	t_pcb* pcb = malloc(sizeof(t_pcb));
 	pcb->PID = ultimo_pid++;
 	pcb->archivos_abiertos = list_create();
 	pcb->registros_cpu = malloc(sizeof(t_registros_cpu));
 	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX=0;
 	pcb->program_counter = 0;
+    pcb->path = path_programa;
 
 	return pcb;
 }
@@ -28,8 +29,9 @@ void loguear_pcb(t_pcb* pcb){
 	loguear("Reg CX: %d",pcb->registros_cpu->CX);
 	loguear("Reg DX: %d",pcb->registros_cpu->DX);
 	loguear("Cant. de archivos abiertos: %d",list_size( pcb->archivos_abiertos));
+    loguear("PATH: %s",pcb->path);
 	printf("==========================----- \n");
-	loguear("PATH: %s",pcb->path);
+
 	printf("FIN LOGUEO PCB\n");
 }
 
@@ -49,6 +51,7 @@ bool is_numeric(const char* str) {
 
     return true;
 }
+
 
 void path_resolve(char* dest, const char* path, const char* filename)
 {
@@ -78,4 +81,10 @@ void path_resolve(char* dest, const char* path, const char* filename)
             strcat(dest, directory_separator);
         strcat(dest, filename);
     }
+}
+
+char * uint_a_string(uint num){
+    char* string = malloc(sizeof(char) * 20);
+	sprintf(string,"%u", num);
+    return string;
 }

@@ -18,7 +18,9 @@
 typedef enum
 {
 	MENSAJE,
-	PAQUETE
+	PAQUETE,
+	PROXIMA_INSTRUCCION,
+	FIN_PROGRAMA
 }op_code;
 
 typedef uint32_t t_registro;
@@ -41,10 +43,11 @@ typedef struct
 	char* path;
 } t_pcb;
 
-t_pcb* pcb_create(void);
+t_pcb* pcb_create(char*);
 void pcb_destroy(t_pcb*);
 bool is_numeric(const char*);
 void loguear_pcb(t_pcb*);
 void path_resolve(char*, const char*, const char*);
+char * uint_a_string(uint);
 
 #endif /* utils_commons_h */

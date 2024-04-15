@@ -7,6 +7,7 @@
 #include "utils/utils-client.h"
 #include "utils/utils-config.h"
 #define MODULO "cpu"
+#define EXIT_PROGRAM "EXIT"
 typedef struct
 {
 	char* IP_MEMORIA;
@@ -27,6 +28,7 @@ t_config_cpu* iniciar_config_cpu(char*);
 void config_destroy_cpu(t_config_cpu*);
 void finalizar_cpu();
 void loguear_config();
+void ejecutar_programa(t_pcb* pcb);
 int intentar_conexion(char*,int,char*);
 extern t_log* logger;
 extern t_config_cpu * config;

@@ -12,6 +12,7 @@
 #include <commons/config.h>
 #include <commons/string.h>
 #include<string.h>
+#include<utils/utils-serializacion.h>
 #include<utils/utils-commons.h>
 
 //#define PUERTO "4444"
@@ -24,8 +25,9 @@ void* recibir_buffer(int*, int);
 
 int iniciar_servidor(int);
 int esperar_cliente(int);
-t_list* recibir_paquete(int);
-void recibir_mensaje(int);
+t_paquete* recibir_paquete(int);
+char* recibir_mensaje(int);
 int recibir_operacion(int);
+t_pcb* recibir_pcb(t_paquete*);
 
 #endif /* utils_server_h */

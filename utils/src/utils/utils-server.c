@@ -64,15 +64,41 @@ void* recibir_buffer(int* size, int socket_cliente)
 	return buffer;
 }
 
-void recibir_mensaje(int socket_cliente)
+char* recibir_mensaje(int socket_cliente)
 {
 	int size;
 	char* buffer = recibir_buffer(&size, socket_cliente);
-	log_info(logger, "Me llego el mensaje %s", buffer);
-	free(buffer);
+	log_info(logger, "Me llegó el mensaje %s", buffer);
+	//free(buffer);
+	return buffer;
 }
 
-t_list* recibir_paquete(int socket_cliente)
+
+t_paquete* recibir_paquete(int socket_cliente)
+{
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+	paquete->buffer = malloc(sizeof(t_buffer));
+
+	//printf("Recibiendo de socket: %d\n",socket_cliente);
+
+	// Primero recibimos el codigo de operacion
+	recv(socket_cliente, &(paquete->codigo_operacion), sizeof(op_code), 0);
+	//loguear("tam opcode:%ld",sizeof(op_code));
+	//loguear("pqCodes:%d",paquete->codigo_operacion);	
+
+	if(paquete->codigo_operacion==-1)
+		return paquete;
+
+	// Después ya podemos recibir el buffer. Primero su tamaño seguido del contenido
+	recv(socket_cliente, &(paquete->buffer->size), sizeof(uint32_t), 0);
+	//loguear("bfSize:%d",paquete->buffer->size);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+	recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, 0);
+
+	return paquete;
+}
+
+t_list* recibir_lista(int socket_cliente)
 {
 	int size;
 	int desplazamiento = 0;
@@ -92,4 +118,38 @@ t_list* recibir_paquete(int socket_cliente)
 	}
 	free(buffer);
 	return valores;
+}
+
+void recibir_de_buffer(void* lugar_destino,t_buffer* buffer,size_t tam){
+	memcpy(lugar_destino,buffer->stream+buffer->desplazamiento,tam);
+	buffer->desplazamiento+=tam;
+}
+
+t_pcb* recibir_pcb(t_paquete* paquete)
+{
+	// loguear("                  ");
+	// loguear("    RECIBO PCB        ");
+	// loguear("                  ");
+	t_pcb* pcb = pcb_create("");
+	t_buffer* buffer = paquete->buffer;
+	buffer->desplazamiento = sizeof(uint32_t);
+	uint32_t path_size ;
+
+	recibir_de_buffer(&pcb->PID,buffer,sizeof(uint32_t));
+	recibir_de_buffer(&pcb->prioridad, buffer, sizeof(uint8_t));
+	recibir_de_buffer(&pcb->program_counter, buffer, sizeof(uint32_t));
+	recibir_de_buffer(&pcb->registros_cpu->AX, buffer, sizeof(t_registro));
+	recibir_de_buffer(&pcb->registros_cpu->BX, buffer, sizeof(t_registro));
+	recibir_de_buffer(&pcb->registros_cpu->CX, buffer, sizeof(t_registro));
+	recibir_de_buffer(&pcb->registros_cpu->DX, buffer, sizeof(t_registro));	
+	recibir_de_buffer(&path_size, buffer, sizeof(uint32_t));
+
+	pcb->path = malloc(path_size);
+	recibir_de_buffer(pcb->path, buffer, path_size);
+
+	// loguear("                  ");
+	// loguear("  FIN  RECIBO PCB        ");
+	// loguear("                  ");
+
+	return pcb;
 }
