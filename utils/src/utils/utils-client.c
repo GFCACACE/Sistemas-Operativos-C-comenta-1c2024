@@ -52,7 +52,7 @@ void enviar_stream(void*stream,int size,int socket,op_code codigo_operacion){
 	t_paquete* paquete = crear_paquete(codigo_operacion);	
 	agregar_a_paquete(paquete,stream,size);	
 	enviar_paquete(paquete,socket);
-	eliminar_paquete(paquete);
+	paquete_destroy(paquete);
 }
 
 void enviar_mensaje(char* mensaje, int socket_cliente)
@@ -75,7 +75,7 @@ void enviar_mensaje(char* mensaje, int socket_cliente)
 	send(socket_cliente, a_enviar, bytes, 0);
 
 	free(a_enviar);
-	eliminar_paquete(paquete);
+	paquete_destroy(paquete);
 }
 
 

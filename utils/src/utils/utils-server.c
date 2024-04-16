@@ -144,7 +144,7 @@ t_pcb* recibir_pcb(t_paquete* paquete)
 	recibir_de_buffer(&pcb->registros_cpu->DX, buffer, sizeof(t_registro));	
 	recibir_de_buffer(&path_size, buffer, sizeof(uint32_t));
 
-	pcb->path = malloc(path_size);
+	pcb->path = realloc(pcb->path,path_size);
 	recibir_de_buffer(pcb->path, buffer, path_size);
 
 	// loguear("                  ");

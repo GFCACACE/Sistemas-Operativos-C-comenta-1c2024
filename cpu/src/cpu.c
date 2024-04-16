@@ -115,19 +115,20 @@ bool es_exit(char* comando){
 	pedir_proxima_instruccion(pcb);
 	char* mje_inst = recibir_instruccion();
 
-	bool es_fin = es_exit(mje_inst);
-	while (mje_inst!=NULL && !es_fin)
-	{		
-		if(!es_fin){
-			ejecutar_instruccion(pcb,mje_inst);
-			pedir_proxima_instruccion(pcb);
-			mje_inst = recibir_instruccion();
-		}	
-		
-		es_fin = es_exit(mje_inst);
+	
+	while (mje_inst)
+	{	
+		bool es_fin = es_exit(mje_inst);
+		if(es_fin)
+			break;		
+		ejecutar_instruccion(pcb,mje_inst);
+		free(mje_inst);
+		pedir_proxima_instruccion(pcb);
+		mje_inst = recibir_instruccion();		
 
 	}
 	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
+	if(mje_inst!=NULL)
 	free(mje_inst);	
  }
 

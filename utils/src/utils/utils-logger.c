@@ -37,9 +37,9 @@ void loguear(const char* message_template, ...) {
 	
 	char*message;
 	va_list arguments;
-   	va_start(arguments, message_template);			
+   	va_start(arguments, message_template);		
+	message = string_from_vformat(message_template, arguments);	
 	va_end(arguments);		
-	message = string_from_vformat(message_template, arguments);
 
 	pthread_mutex_lock(&mx_log);
 	log_info(logger,message,"");
@@ -53,9 +53,9 @@ void loguear_error(const char* message_template, ...) {
 	
 	char*message;
 	va_list arguments;
-   	va_start(arguments, message_template);			
+   	va_start(arguments, message_template);	
+	message = string_from_vformat(message_template, arguments);		
 	va_end(arguments);		
-	message = string_from_vformat(message_template, arguments);
 
 	pthread_mutex_lock(&mx_log);
 	log_error(logger,message,"");
@@ -69,9 +69,10 @@ void loguear_warning(const char* message_template, ...) {
 	
 	char*message;
 	va_list arguments;
-   	va_start(arguments, message_template);			
+   	va_start(arguments, message_template);		
+	message = string_from_vformat(message_template, arguments);	
 	va_end(arguments);		
-	message = string_from_vformat(message_template, arguments);
+	
 
 	pthread_mutex_lock(&mx_log);
 	log_warning(logger,message,"");

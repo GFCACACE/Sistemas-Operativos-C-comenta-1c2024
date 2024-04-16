@@ -15,4 +15,6 @@ typedef struct
 	t_buffer* buffer;
 } t_paquete;
 
+void buffer_destroy(t_buffer* buffer);
+void paquete_destroy(t_paquete* paquete);
 #endif

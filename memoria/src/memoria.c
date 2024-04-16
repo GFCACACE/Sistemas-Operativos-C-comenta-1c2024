@@ -117,7 +117,7 @@ char *proxima_instruccion_de(t_pcb *pcb)
 	printf("Próxima instruccción: %s.", proxima_instruccion);
 
 	free(pid);
-	free(programa);
+	list_destroy(programa);
 	return proxima_instruccion;
 }
 
@@ -161,6 +161,7 @@ t_list *get_instrucciones(char *nombre_archivo)
         	linea[len - 1] = '\0';
 			
 			list_add(lista_instrucciones, linea);
+			free(linea);
 
 		}
 
@@ -190,16 +191,19 @@ int buscar_instrucciones(){
             case PROXIMA_INSTRUCCION:
                 t_pcb *pcb = recibir_pcb(paquete); 
                 enviar_proxima_instruccion(pcb);
-
+				paquete_destroy(paquete);
                 break;
             case FIN_PROGRAMA:
 			    loguear("Fin programa");
+				paquete_destroy(paquete);				
 			return EXIT_SUCCESS;
             case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");
+			paquete_destroy(paquete);
 			return EXIT_FAILURE;
 		    default:
 			log_warning(logger,"Operacion desconocida. No quieras meter la pata");
+			paquete_destroy(paquete);
 			return EXIT_FAILURE;
         }
 

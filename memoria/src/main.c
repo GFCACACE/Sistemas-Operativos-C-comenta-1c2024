@@ -16,22 +16,7 @@ int main(int argc, char** argv) {
     enviar_mensaje("Hola desde memoria",conexion_kernel);
 
     buscar_instrucciones();
-
-   
-
-
-/*
- 
-    t_pcb* pcb_prueba = pcb_create("programa1.txt");
-    //cargar_programa_de(pcb_prueba,"programa1.txt");
-    proxima_instruccion_de(pcb_prueba);
-
-    pcb_prueba->program_counter++;
-    proxima_instruccion_de(pcb_prueba);
-
     
-    pcb_destroy(pcb_prueba);*/
-
     //Si llega hasta acá es porque ya se ejecutó todo lo necesario
     //Finalizamos memoria y salimos del programa
     finalizar_memoria();

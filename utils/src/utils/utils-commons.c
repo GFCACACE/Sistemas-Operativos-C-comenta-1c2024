@@ -7,15 +7,15 @@ t_pcb* pcb_create(char* path_programa){
 	pcb->archivos_abiertos = list_create();
 	pcb->registros_cpu = malloc(sizeof(t_registros_cpu));
 	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX=0;
-	pcb->program_counter = 0;
-    pcb->path = path_programa;
-
-	return pcb;
+	pcb->program_counter = 0;    
+    pcb->path = string_duplicate(path_programa);
+   	return pcb;
 }
 
 void pcb_destroy(t_pcb* pcb){
 	list_destroy(pcb->archivos_abiertos);
 	free(pcb->registros_cpu);
+    free(pcb->path);
 	free(pcb);
 }
 
