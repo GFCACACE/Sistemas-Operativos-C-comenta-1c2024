@@ -10,7 +10,7 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 		return NULL;
 	t_config_kernel* config_kernel = malloc(sizeof(t_config_kernel));	
 
-	config_kernel->PUERTO_ESCUCHA= config_get_int_value(_config,"PUERTO_FILESYSTEM");
+	config_kernel->PUERTO_ESCUCHA= config_get_int_value(_config,"PUERTO_ESCUCHA");
 	config_kernel->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
 	config_kernel->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
 	//#config_kernel->IP_FILESYSTEM = config_get_string_value(_config,"IP_FILESYSTEM");
