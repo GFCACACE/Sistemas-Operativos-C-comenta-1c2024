@@ -13,7 +13,6 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 	config_kernel->PUERTO_ESCUCHA= config_get_int_value(_config,"PUERTO_ESCUCHA");
 	config_kernel->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
 	config_kernel->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
-	//#config_kernel->IP_FILESYSTEM = config_get_string_value(_config,"IP_FILESYSTEM");
 	config_kernel->IP_CPU = config_get_string_value(_config,"IP_CPU");
 	config_kernel->PUERTO_CPU_DISPATCH = config_get_int_value(_config,"PUERTO_CPU_DISPATCH");
 	config_kernel->PUERTO_CPU_INTERRUPT = config_get_int_value(_config,"PUERTO_CPU_INTERRUPT");
@@ -22,6 +21,7 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 	config_kernel->RECURSOS = config_get_array_value(_config,"RECURSOS");
 	config_kernel->INSTANCIAS_RECURSOS = config_get_array_value(_config,"INSTANCIAS_RECURSOS");
 	config_kernel->GRADO_MULTIPROGRAMACION = config_get_int_value(_config,"GRADO_MULTIPROGRAMACION_INI");
+	config_kernel->PATH_SCRIPTS = config_get_array_value(_config,"PATH_SCRIPTS");
 	config_kernel->config = _config;
 
 	return config_kernel;
@@ -153,18 +153,23 @@ bool parametros_iniciar_proceso_validos(char** parametros){
 	return validado;
 }
 
+void ejecutar_script(char** parametros){
+	loguear("Ejecutando script...");
+	imprimir_valores_leidos(parametros);
+
+}
+
 void iniciar_proceso(char** parametros){
 
  		loguear("iniciando proceso...");
-		imprimir_valores_leidos(parametros);
-		char *path = malloc(sizeof(parametros[1]));
-		strcpy(path, parametros[1]);
-		// loguear("PATH: %s",path);
+		imprimir_valores_leidos(parametros);	
 
 		if(!parametros_iniciar_proceso_validos(parametros))
 		return;
 
-
+		char *path = string_duplicate(parametros[1]);//malloc(sizeof(parametros[1]));
+		//strcpy(path, parametros[1]);
+		// loguear("PATH: %s",path);
 	
 }
 
@@ -180,6 +185,7 @@ void listar_comandos(){
 	int cant = 7;
 	int index =0;
 	int comandos[cant]; 
+	comandos[index++] = EJECUTAR_SCRIPT;
 	comandos[index++] = INICIAR_PROCESO;
 	comandos[index++] = FINALIZAR_PROCESO;
 	comandos[index++] = DETENER_PLANIFICACION;
@@ -194,48 +200,6 @@ void listar_comandos(){
         printf("\t%d. %s %s\n",i+1 ,codigo_op_a_texto(comandos[i]),parametros_segun_comando(comandos[i]));
     }
 	printf("\t\t*****************************************************\n");
-}
-
-
-void consola(){
-	char *cadenaLeida;
-	void _liberar(char*cadena,char**params){
-		string_array_destroy(params);
-		free(cadena);		
-	}
-	void _finalizar_consola(){
-		
-		loguear("Consola finalizada.");	
-	}
-	listar_comandos();
-	 while (1) {	
-		
-		char** parametros;    
-        cadenaLeida =  leer_texto_consola();	
-
-        if (!cadenaLeida)                  
-			break;                                                     
-        
-		parametros = string_split(cadenaLeida," ");    
-		op_code_kernel codigo_operacion = codigo_comando(parametros[0]);                
-        
-		switch( codigo_operacion ) {
-			case INICIAR_PROCESO: iniciar_proceso(parametros); break;
-			case FINALIZAR_PROCESO: finalizar_proceso(parametros); break;
-			case INICIAR_PLANIFICACION: iniciar_planificacion(parametros); break;
-			case MULTIPROGRAMACION: multiprogramacion(parametros);break;
-			case DETENER_PLANIFICACION: detener_planificacion(parametros); break;
-			case PROCESO_ESTADO: proceso_estado(parametros); break;
-			case EXIT:  _liberar(cadenaLeida,parametros);
-						_finalizar_consola();
-						return;break;
-			default: listar_comandos();break;
-
-		}
-		_liberar(cadenaLeida,parametros);
-    }
-	_finalizar_consola();
-
 }
 
 void iniciar_planificacion(char** substrings){
@@ -266,6 +230,50 @@ void multiprogramacion(char** substrings){
 }
 void detener_planificacion(char** substrings){}
 void proceso_estado(char** substrings){}
+
+void consola(){
+	char *cadenaLeida;
+	void _liberar(char*cadena,char**params){
+		string_array_destroy(params);
+		free(cadena);		
+	}
+	void _finalizar_consola(){
+		
+		loguear("Consola finalizada.");	
+	}
+	listar_comandos();
+	 while (1) {	
+		
+		char** parametros;    
+        cadenaLeida =  leer_texto_consola();	
+
+        if (!cadenaLeida)                  
+			break;                                                     
+        
+		parametros = string_split(cadenaLeida," ");    
+		op_code_kernel codigo_operacion = codigo_comando(parametros[0]);                
+        
+		switch( codigo_operacion ) {
+			case EJECUTAR_SCRIPT: ejecutar_script(parametros);break;
+			case INICIAR_PROCESO: iniciar_proceso(parametros); break;
+			case FINALIZAR_PROCESO: finalizar_proceso(parametros); break;
+			case INICIAR_PLANIFICACION: iniciar_planificacion(parametros); break;
+			case MULTIPROGRAMACION: multiprogramacion(parametros);break;
+			case DETENER_PLANIFICACION: detener_planificacion(parametros); break;
+			case PROCESO_ESTADO: proceso_estado(parametros); break;
+			case EXIT:  _liberar(cadenaLeida,parametros);
+						_finalizar_consola();
+						return;break;
+			default: listar_comandos();break;
+
+		}
+		_liberar(cadenaLeida,parametros);
+    }
+	_finalizar_consola();
+
+}
+
+
 
 void config_destroy_kernel(t_config_kernel * config){
 	config_destroy(config->config);

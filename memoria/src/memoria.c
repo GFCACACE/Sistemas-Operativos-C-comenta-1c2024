@@ -107,12 +107,17 @@ void list_iterate_loguear(void *element) {
     char *mensaje = (char *)element;
     loguear("%s\n", mensaje);
 }
+
+t_list* get_instrucciones_memoria(char* archivo){
+	return get_instrucciones(config_memoria->PATH_INSTRUCCIONES,archivo);
+}
+
 char *proxima_instruccion_de(t_pcb *pcb)
 {	
 	//char* pid = uint_a_string(pcb->PID);
 	
-	t_list *programa = get_instrucciones(pcb->path);
-	char* proxima_instruccion = "exit";// (char*)list_get(programa, pcb->program_counter);
+	t_list *programa = get_instrucciones_memoria(pcb->path);
+	char* proxima_instruccion = (char*)list_get(programa, pcb->program_counter);
 
 	loguear("Próxima instruccción: %s.", proxima_instruccion);
 	printf("Próxima instruccción: %s.", proxima_instruccion);
@@ -125,60 +130,6 @@ char *proxima_instruccion_de(t_pcb *pcb)
 	return proxima_instruccion;
 }
 
-t_list *get_instrucciones(char *nombre_archivo)
-{
-	t_list *lista_instrucciones = list_create();
-	char* path = string_duplicate(config_memoria->PATH_INSTRUCCIONES);
-	int path_size = strlen(path);;
-	if(path[path_size - 1] != '/')
-		string_append(&path, "/");
-	string_append(&path, nombre_archivo);
-	printf("sizeof(nombre_archivo) %ld",sizeof(nombre_archivo));
-	
-	FILE *archivo;
-
-	archivo = fopen(path, "r");
-	free(path);
-
-	if (archivo == NULL)
-	{
-		loguear_error("No se pudo abrir el archivo %s \n", path);
-		return NULL;
-	}
-
-	
-	size_t line_size = 0;
-
-	while (!feof(archivo))
-	{
-
-		char *linea = NULL;
-		
-		getline(&linea, &line_size, archivo);
-		if (linea != NULL)
-		{	int len = strlen(linea);
-			if(linea[len - 1] == '\n')
-      		{  //Eliminamos el salto de línea
-        		linea[len - 1] = '\0';
-				len--;
-			}
-			if(linea[len - 1] == '\r')
-      		  //Eliminamos el retorno de carro.
-        	linea[len - 1] = '\0';
-			
-			list_add(lista_instrucciones, linea);
-			free(linea);
-
-		}
-
-	//	loguear("la linea es:%s\n", linea);
-
-	}
-	
-	
-	fclose(archivo);
-	return lista_instrucciones;
-}
 
 void enviar_proxima_instruccion (t_pcb* pcb){
 	char* instruccion = proxima_instruccion_de(pcb); 

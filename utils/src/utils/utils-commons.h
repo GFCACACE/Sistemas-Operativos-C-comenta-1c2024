@@ -49,5 +49,6 @@ bool is_numeric(const char*);
 void loguear_pcb(t_pcb*);
 void path_resolve(char*, const char*, const char*);
 char * uint_a_string(uint);
+t_list* get_instrucciones(char* path_inicial,char *nombre_archivo);
 
 #endif /* utils_commons_h */

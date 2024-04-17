@@ -88,3 +88,59 @@ char * uint_a_string(uint num){
 	sprintf(string,"%u", num);
     return string;
 }
+
+
+t_list* get_instrucciones(char* path_inicial,char *nombre_archivo)
+{
+	t_list *lista_instrucciones = list_create();
+	char* path = string_duplicate(path_inicial);
+	int path_size = strlen(path);;
+	if(path[path_size - 1] != '/')
+		string_append(&path, "/");
+	string_append(&path, nombre_archivo);
+	printf("sizeof(nombre_archivo) %ld",sizeof(nombre_archivo));
+	
+	FILE *archivo;
+
+	archivo = fopen(path, "r");
+	free(path);
+
+	if (archivo == NULL)
+	{
+		loguear_error("No se pudo abrir el archivo %s \n", path);
+		return NULL;
+	}
+
+	
+	size_t line_size = 0;
+
+	while (!feof(archivo))
+	{
+
+		char *linea = NULL;
+		
+		getline(&linea, &line_size, archivo);
+		if (linea != NULL)
+		{	int len = strlen(linea);
+			if(linea[len - 1] == '\n')
+      		{  //Eliminamos el salto de línea
+        		linea[len - 1] = '\0';
+				len--;
+			}
+			if(linea[len - 1] == '\r')
+      		  //Eliminamos el retorno de carro.
+        	linea[len - 1] = '\0';
+			
+			list_add(lista_instrucciones, linea);
+			free(linea);
+
+		}
+
+	//	loguear("la linea es:%s\n", linea);
+
+	}
+	
+	
+	fclose(archivo);
+	return lista_instrucciones;
+}

@@ -25,6 +25,7 @@ typedef struct
 	char** RECURSOS;
 	char** INSTANCIAS_RECURSOS;
 	int GRADO_MULTIPROGRAMACION;
+	char* PATH_SCRIPTS;
 	
 	t_config* config;
 } t_config_kernel;
@@ -32,6 +33,7 @@ typedef struct
 
 typedef enum
 {
+	EJECUTAR_SCRIPT,
 	INICIAR_PROCESO,
 	FINALIZAR_PROCESO,
 	DETENER_PLANIFICACION,
