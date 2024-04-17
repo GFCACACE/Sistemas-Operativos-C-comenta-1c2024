@@ -3,6 +3,7 @@
 int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 int cod_op_kernel_dispatch;
 t_config_cpu * config;
+t_regist_cpu* registros_cpu;
 
 t_config_cpu* iniciar_config_cpu(char* path_config){
 	t_config* _config = config_create(path_config);
@@ -30,7 +31,13 @@ bool iniciar_cpu(char* path_config){
 		loguear_error("No se encuentra el archivo de las config");
 		return false;
 	}
-	loguear_config();	    
+	loguear_config();	
+	
+	registros_cpu = iniciar_registros_cpu();
+	if(registros_cpu == NULL){
+		loguear_error("No se pudieron iniciar los registros correctamente");
+		return false;
+	}
     dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
 	if(dispatch == -1 ) {
 		loguear_error("El servidor (dispatch) no pudo ser iniciado");
@@ -130,5 +137,10 @@ bool es_exit(char* comando){
 	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
 	if(mje_inst!=NULL)
 	free(mje_inst);	
+ }
+
+t_regist_cpu* iniciar_registros_cpu(){
+	t_regist_cpu* reg_cpu = malloc(sizeof(t_regist_cpu));
+	return reg_cpu;
  }
 
