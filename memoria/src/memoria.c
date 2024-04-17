@@ -108,15 +108,19 @@ void list_iterate_loguear(void *element) {
     loguear("%s\n", mensaje);
 }
 char *proxima_instruccion_de(t_pcb *pcb)
-{
-	char *proxima_instruccion = "";
-	char* pid = uint_a_string(pcb->PID);
+{	
+	//char* pid = uint_a_string(pcb->PID);
+	
 	t_list *programa = get_instrucciones(pcb->path);
-	proxima_instruccion = list_get(programa, pcb->program_counter);
+	char* proxima_instruccion = "exit";// (char*)list_get(programa, pcb->program_counter);
+
 	loguear("Próxima instruccción: %s.", proxima_instruccion);
 	printf("Próxima instruccción: %s.", proxima_instruccion);
+	
+	//free(proxima_instruccion);
 
-	free(pid);
+	//free(pid);
+	//list_iterate(programa,free);
 	list_destroy(programa);
 	return proxima_instruccion;
 }
@@ -129,10 +133,12 @@ t_list *get_instrucciones(char *nombre_archivo)
 	if(path[path_size - 1] != '/')
 		string_append(&path, "/");
 	string_append(&path, nombre_archivo);
-
+	printf("sizeof(nombre_archivo) %ld",sizeof(nombre_archivo));
+	
 	FILE *archivo;
 
 	archivo = fopen(path, "r");
+	free(path);
 
 	if (archivo == NULL)
 	{
@@ -147,10 +153,10 @@ t_list *get_instrucciones(char *nombre_archivo)
 	{
 
 		char *linea = NULL;
-		int len;
+		
 		getline(&linea, &line_size, archivo);
 		if (linea != NULL)
-		{	len = strlen(linea);
+		{	int len = strlen(linea);
 			if(linea[len - 1] == '\n')
       		{  //Eliminamos el salto de línea
         		linea[len - 1] = '\0';
@@ -168,16 +174,18 @@ t_list *get_instrucciones(char *nombre_archivo)
 	//	loguear("la linea es:%s\n", linea);
 
 	}
-	free(path);
+	
+	
 	fclose(archivo);
 	return lista_instrucciones;
 }
 
 void enviar_proxima_instruccion (t_pcb* pcb){
-	char* instruccion =  proxima_instruccion_de(pcb); 
+	char* instruccion = proxima_instruccion_de(pcb); 
 	enviar_mensaje(instruccion,conexion_cpu);
 	pcb_destroy(pcb);
-	free(instruccion);
+	
+	//free(instruccion);
 }
 
 int buscar_instrucciones(){
