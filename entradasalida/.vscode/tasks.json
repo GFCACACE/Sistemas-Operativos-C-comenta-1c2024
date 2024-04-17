@@ -22,5 +22,39 @@
       },
       "problemMatcher": []
     }
+    ,
+    {
+        "label": "exec",
+        "type": "shell",
+        "command": "./exec",
+        "group": {
+          "kind": "none"
+        },
+        "problemMatcher": [
+            "$gcc"
+        ]
+    },
+    {
+        "label": "valgrind exec",
+        "type": "shell",
+        "command": "./vexec",
+        "group": {
+          "kind": "none"
+        },
+        "problemMatcher": [
+            "$gcc"
+        ]
+    },
+    {
+        "label": "helgrind exec",
+        "type": "shell",
+        "command": "./hexec",
+        "group": {
+          "kind": "none"
+        },
+        "problemMatcher": [
+            "$gcc"
+        ]
+    }
   ]
 }
