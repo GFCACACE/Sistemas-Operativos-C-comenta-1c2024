@@ -25,17 +25,17 @@ typedef struct {
 
 typedef struct 
 {
-	uint32_t PC;
-	uint8_t AX;
-	uint8_t BX;
-	uint8_t CX;
-	uint8_t DX;
-	uint32_t EAX;
-	uint32_t EBX;
-	uint32_t ECX;
-	uint32_t EDX;
-	uint32_t SI;
-	uint32_t DI;
+	uint32_t* PC;
+	uint8_t* AX;
+	uint8_t* BX;
+	uint8_t* CX;
+	uint8_t* DX;
+	uint32_t* EAX;
+	uint32_t* EBX;
+	uint32_t* ECX;
+	uint32_t* EDX;
+	uint32_t* SI;
+	uint32_t* DI;
 } t_regist_cpu;
 
 
@@ -44,21 +44,23 @@ t_regist_cpu* iniciar_registros_cpu();
 t_config_cpu* iniciar_config_cpu(char*);
 void config_destroy_cpu(t_config_cpu*);
 void finalizar_cpu();
+void finalizar_estructuras_cpu();
 void loguear_config();
 void ejecutar_programa(t_pcb* pcb);
 int intentar_conexion(char*,int,char*);
 //Instrucciones//////////////////////
-bool exe_set(char*,uint32_t);
-bool exe_mov_in(char*,char*);
-bool exe_mov_out(char*,char*);
-bool exe_sum(char*,char*);
-bool exe_sub(char*,char*);
-bool exe_jnz(char*,char*);
+bool exe_set(uint32_t*,uint32_t);
+bool exe_mov_in(uint32_t*,uint32_t*);
+bool exe_mov_out(uint32_t*,uint32_t*);
+bool exe_sum(uint32_t*,uint32_t);
+bool exe_sub(uint32_t*,uint32_t);
+bool exe_jnz(uint32_t*,uint32_t);
 bool exe_resize(uint32_t);
 bool exe_copy_string(uint32_t);
 bool exe_wait(/*recurso*/);
 bool exe_signal(/*recurso*/);
 bool exe_exit();
+bool exe_io_gen_sleep(/*interfaz, unidades de trabajo*/);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 extern t_log* logger;

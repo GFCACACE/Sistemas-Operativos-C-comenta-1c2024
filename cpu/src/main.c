@@ -3,7 +3,7 @@
 #include <utils/hello.h>
 #include <unistd.h>
 #include "cpu.h"
-
+#include "cpu_test.h"
 
 
 
@@ -14,14 +14,7 @@ int main(int argc, char** argv) {
         finalizar_cpu();
         return EXIT_FAILURE;
         }
+
     return EXIT_SUCCESS;
 
-
-
-
-
-
-
 }
-
-

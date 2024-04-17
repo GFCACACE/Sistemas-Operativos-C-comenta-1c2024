@@ -69,12 +69,26 @@ void config_destroy_cpu(t_config_cpu* config){
 void finalizar_cpu(){
 	if (config) config_destroy_cpu(config);
 	if(logger) log_destroy(logger);
-	if (registros_cpu) free(registros_cpu);
+	finalizar_estructuras_cpu();
 	if (conexion_memoria !=-1) 
 		liberar_conexion(conexion_memoria);
 
 }
-
+void finalizar_estructuras_cpu(){
+	if(registros_cpu){
+		free(registros_cpu->AX);
+		free(registros_cpu->BX);
+		free(registros_cpu->CX);
+		free(registros_cpu->DX);
+		free(registros_cpu->EAX);
+		free(registros_cpu->EBX);
+		free(registros_cpu->ECX);
+		free(registros_cpu->EDX);
+		free(registros_cpu->DI);
+		free(registros_cpu->SI);	
+		free(registros_cpu);
+	}
+}
 int intentar_conexion(char* ip, int puerto,char* modulo_servidor){
 	 log_info(logger,"Intentando conectar con %s...",modulo_servidor);
      int conexion_memoria = crear_conexion(ip,puerto);
@@ -145,3 +159,23 @@ t_regist_cpu* iniciar_registros_cpu(){
 	return reg_cpu;
  }
 
+bool exe_set(uint32_t* registro,uint32_t valor){
+	*registro = valor;
+	return true;
+}
+bool exe_sum(uint32_t* registro_destino,uint32_t incremento){
+	*registro_destino = *registro_destino + incremento;
+	return true;
+}
+
+bool exe_sub(uint32_t* registro_destino,uint32_t decremento){
+	*registro_destino = *registro_destino - decremento;
+	return true;
+}
+
+bool exe_jnz(uint32_t*registro_destino,uint32_t nro_instruccion){
+
+	if(*registro_destino) registros_cpu->PC = nro_instruccion; 
+
+	return true;
+}
