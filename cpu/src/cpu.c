@@ -32,7 +32,7 @@ bool iniciar_cpu(char* path_config){
 		return false;
 	}
 	loguear_config();	
-	
+
 	registros_cpu = iniciar_registros_cpu();
 	if(registros_cpu == NULL){
 		loguear_error("No se pudieron iniciar los registros correctamente");
@@ -69,6 +69,7 @@ void config_destroy_cpu(t_config_cpu* config){
 void finalizar_cpu(){
 	if (config) config_destroy_cpu(config);
 	if(logger) log_destroy(logger);
+	if (registros_cpu) free(registros_cpu);
 	if (conexion_memoria !=-1) 
 		liberar_conexion(conexion_memoria);
 

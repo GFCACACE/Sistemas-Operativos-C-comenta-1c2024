@@ -48,17 +48,17 @@ void loguear_config();
 void ejecutar_programa(t_pcb* pcb);
 int intentar_conexion(char*,int,char*);
 //Instrucciones//////////////////////
-bool set(char*,uint32_t);
-bool mov_in(char*,char*);
-bool mov_out(char*,char*);
-bool sum(char*,char*);
-bool sub(char*,char*);
-bool jnz(char*,char*);
-bool resize(uint32_t);
-bool copy_string(uint32_t);
-bool wait(/*recurso*/);
-bool signal(/*recurso*/);
-bool exit();
+bool exe_set(char*,uint32_t);
+bool exe_mov_in(char*,char*);
+bool exe_mov_out(char*,char*);
+bool exe_sum(char*,char*);
+bool exe_sub(char*,char*);
+bool exe_jnz(char*,char*);
+bool exe_resize(uint32_t);
+bool exe_copy_string(uint32_t);
+bool exe_wait(/*recurso*/);
+bool exe_signal(/*recurso*/);
+bool exe_exit();
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 extern t_log* logger;
