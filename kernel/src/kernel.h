@@ -61,7 +61,7 @@ void multiprogramacion(char**);
 void detener_planificacion(char**);
 void proceso_estado(char**);
 void listar_comandos();
-op_code_kernel codigo_comando(char*);
+t_list* get_comandos();
 void loguear_config();
 void finalizar_kernel();
 
