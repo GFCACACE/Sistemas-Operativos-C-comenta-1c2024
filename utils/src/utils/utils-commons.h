@@ -38,6 +38,7 @@ typedef struct
 	uint32_t PID;
 	uint32_t program_counter;
 	uint8_t prioridad;
+	uint32_t quantum;
 	t_registros_cpu* registros_cpu;
 	t_list* archivos_abiertos;
 	char* path;

@@ -138,6 +138,7 @@ t_pcb* recibir_pcb(t_paquete* paquete)
 	recibir_de_buffer(&pcb->PID,buffer,sizeof(uint32_t));
 	recibir_de_buffer(&pcb->prioridad, buffer, sizeof(uint8_t));
 	recibir_de_buffer(&pcb->program_counter, buffer, sizeof(uint32_t));
+	recibir_de_buffer(&pcb->quantum, buffer, sizeof(uint32_t));
 	recibir_de_buffer(&pcb->registros_cpu->AX, buffer, sizeof(t_registro));
 	recibir_de_buffer(&pcb->registros_cpu->BX, buffer, sizeof(t_registro));
 	recibir_de_buffer(&pcb->registros_cpu->CX, buffer, sizeof(t_registro));

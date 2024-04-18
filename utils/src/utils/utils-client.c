@@ -13,7 +13,7 @@ void* serializar_paquete(t_paquete* paquete, int bytes)
 	memcpy(magic + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
 	desplazamiento+= paquete->buffer->size;
 
-	return magic;
+	return magic;  // MAGIC?
 }
 
 int crear_conexion(char *ip, int puerto)
@@ -145,8 +145,8 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 {	
 	
 	uint32_t path_size = strlen(pcb->path) + 1;
-	//		(PID,pc,size del path) + registros + prioridad + path_size
-	*size = sizeof(uint32_t) *3 + 4*sizeof(t_registro) + sizeof(uint8_t) + path_size ;
+	//		(PID,pc,quantum,size del path) + registros + prioridad + path_size
+	*size = sizeof(uint32_t) *4 + 4*sizeof(t_registro) + sizeof(uint8_t) + path_size ;
 	t_buffer* buffer = crear_buffer(*size);
 
 	//loguear("Size PCB:%d",*size);
@@ -154,6 +154,7 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 	agregar_a_buffer(buffer, &pcb->PID, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &pcb->prioridad, sizeof(uint8_t));
 	agregar_a_buffer(buffer, &pcb->program_counter, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pcb->quantum, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &pcb->registros_cpu->AX, sizeof(t_registro));
 	agregar_a_buffer(buffer, &pcb->registros_cpu->BX, sizeof(t_registro));
 	agregar_a_buffer(buffer, &pcb->registros_cpu->CX, sizeof(t_registro));

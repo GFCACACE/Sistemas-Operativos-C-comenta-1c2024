@@ -1,4 +1,5 @@
 #include "utils-commons.h"
+#
 int ultimo_pid=0;
 
 t_pcb* pcb_create(char* path_programa){
@@ -8,6 +9,7 @@ t_pcb* pcb_create(char* path_programa){
 	pcb->registros_cpu = malloc(sizeof(t_registros_cpu));
 	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX=0;
 	pcb->program_counter = 0;    
+	pcb->quantum = 0; // En caso de necesitarlo, el planificador de corto plazo lo inicializará con el valor adecuado 
     pcb->path = string_duplicate(path_programa);
    	return pcb;
 }
@@ -24,6 +26,7 @@ void loguear_pcb(t_pcb* pcb){
 	loguear("PID: %d",pcb->PID);
 	loguear("program_counter: %d",pcb->program_counter);
 	loguear("Prioridad: %d",pcb->prioridad);
+	loguear("Quantum: %d", pcb->quantum);
 	loguear("Reg AX: %d",pcb->registros_cpu->AX);
 	loguear("Reg BX: %d",pcb->registros_cpu->BX);
 	loguear("Reg CX: %d",pcb->registros_cpu->CX);
