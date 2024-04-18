@@ -48,7 +48,11 @@ void finalizar_estructuras_cpu();
 void loguear_config();
 void ejecutar_programa(t_pcb* pcb);
 int intentar_conexion(char*,int,char*);
-//Instrucciones//////////////////////
+
+//Ciclo de Instrucción//////////////////////
+bool fetch();
+bool decode();
+bool execute();
 bool exe_set(uint32_t*,uint32_t);
 bool exe_mov_in(uint32_t*,uint32_t*);
 bool exe_mov_out(uint32_t*,uint32_t*);
@@ -63,6 +67,7 @@ bool exe_exit();
 bool exe_io_gen_sleep(/*interfaz, unidades de trabajo*/);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
+
 extern t_log* logger;
 extern t_config_cpu * config;
 extern t_regist_cpu* registros_cpu;
