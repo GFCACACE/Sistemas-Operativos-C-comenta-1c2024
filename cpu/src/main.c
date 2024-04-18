@@ -14,6 +14,7 @@ int main(int argc, char** argv) {
         finalizar_cpu();
         return EXIT_FAILURE;
         }
+    test_instrucciones();
 
     return EXIT_SUCCESS;
 

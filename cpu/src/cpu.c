@@ -85,7 +85,8 @@ void finalizar_estructuras_cpu(){
 		free(registros_cpu->ECX);
 		free(registros_cpu->EDX);
 		free(registros_cpu->DI);
-		free(registros_cpu->SI);	
+		free(registros_cpu->SI);
+		free(registros_cpu->IR);
 		free(registros_cpu);
 	}
 }
@@ -109,11 +110,13 @@ void loguear_config(){
 
  void pedir_proxima_instruccion(t_pcb* pcb){
 	enviar_pcb(pcb,PROXIMA_INSTRUCCION,conexion_memoria);
+	//Signal semáforo de memoria
  }
 
  
  char* recibir_instruccion(){
 	char* mje_inst = NULL;
+	//Wait semáforo de memoria
 	int op = recibir_operacion(conexion_memoria);
 	if(op==MENSAJE)
 		mje_inst =  recibir_mensaje(conexion_memoria);
@@ -159,6 +162,22 @@ t_regist_cpu* iniciar_registros_cpu(){
 	return reg_cpu;
  }
 
+bool fetch(t_pcb* pcb){
+	pedir_proxima_instruccion(pcb);
+	registros_cpu->IR = recibir_instruccion();
+	if (registros_cpu->IR == NULL) return false;
+	return true;
+}
+
+bool decode(){
+	char** sep_instruction= string_split(registros_cpu->IR," ");
+	registros_cpu->INSTID = sep_instruction[0];
+	if(registros_cpu == NULL) return false;
+	if (sep_instruction[1]) registros_cpu->PARAM1=sep_instruction[1];
+	if (sep_instruction[2]) registros_cpu->PARAM2=sep_instruction[2];
+	if (sep_instruction[3]) registros_cpu->PARAM3=sep_instruction[3];
+	return true;
+}
 bool exe_set(uint32_t* registro,uint32_t valor){
 	*registro = valor;
 	return true;

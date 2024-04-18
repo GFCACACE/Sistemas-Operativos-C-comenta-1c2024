@@ -3,6 +3,7 @@
 
 #include<commons/config.h>
 #include<commons/log.h>
+#include<commons/string.h>
 #include "utils/utils-server.h"
 #include "utils/utils-client.h"
 #include "utils/utils-config.h"
@@ -36,6 +37,13 @@ typedef struct
 	uint32_t* EDX;
 	uint32_t* SI;
 	uint32_t* DI;
+	 /*Consultar si se puede poner junto a la estructura*/
+	char* IR;
+	char* INSTID;
+	char* PARAM1;
+	char* PARAM2;
+	char* PARAM3;
+	
 } t_regist_cpu;
 
 
@@ -50,7 +58,8 @@ void ejecutar_programa(t_pcb* pcb);
 int intentar_conexion(char*,int,char*);
 
 //Ciclo de Instrucción//////////////////////
-bool fetch();
+void ciclo_de_instruccion();
+bool fetch(t_pcb*);
 bool decode();
 bool execute();
 bool exe_set(uint32_t*,uint32_t);

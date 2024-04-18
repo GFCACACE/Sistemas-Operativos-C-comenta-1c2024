@@ -11,4 +11,8 @@ void test_instrucciones(){
     loguear("SUB AX BX -> AX: %d",registros_cpu->AX);
     exe_jnz(&registros_cpu->AX,(uint32_t)15);
     loguear("JNZ AX 15 -> PC: %d",registros_cpu->PC);
+    bool flag_decode = decode("SET AX 45");
+    if(flag_decode == false){ loguear_error("%s",registros_cpu->IR); return EXIT_FAILURE;}
+    loguear("ID:%s P1:%s P2:%s P3:%s",registros_cpu->INSTID,registros_cpu->PARAM1,registros_cpu->PARAM2,registros_cpu->PARAM3);
+
 }
