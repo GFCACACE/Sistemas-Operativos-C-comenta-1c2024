@@ -136,7 +136,7 @@ void enviar_proxima_instruccion (t_pcb* pcb){
 	enviar_mensaje(instruccion,conexion_cpu);
 	pcb_destroy(pcb);
 	
-	//free(instruccion);
+	free(instruccion);
 }
 
 int buscar_instrucciones(){

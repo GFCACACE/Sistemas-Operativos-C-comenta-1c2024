@@ -15,6 +15,10 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
         }
 
+    t_pcb* pcb_prueba = pcb_create("programa3.txt");
+    ejecutar_programa(pcb_prueba);
+    pcb_destroy(pcb_prueba);
+
     return EXIT_SUCCESS;
 
 }
