@@ -87,6 +87,10 @@ void finalizar_estructuras_cpu(){
 		free(registros_cpu->DI);
 		free(registros_cpu->SI);
 		free(registros_cpu->IR);
+		free(registros_cpu->INSTID);
+		free(registros_cpu->PARAM1);
+		free(registros_cpu->PARAM2);
+		free(registros_cpu->PARAM3);
 		free(registros_cpu);
 	}
 }
@@ -159,6 +163,11 @@ bool es_exit(char* comando){
 
 t_regist_cpu* iniciar_registros_cpu(){
 	t_regist_cpu* reg_cpu = malloc(sizeof(t_regist_cpu));
+	reg_cpu->IR=string_new();
+	reg_cpu->INSTID=string_new();
+	reg_cpu->PARAM1=string_new();
+	reg_cpu->PARAM2=string_new();
+	reg_cpu->PARAM3=string_new();
 	return reg_cpu;
  }
 
@@ -170,12 +179,21 @@ bool fetch(t_pcb* pcb){
 }
 
 bool decode(){
-	char** sep_instruction= string_split(registros_cpu->IR," ");
-	registros_cpu->INSTID = sep_instruction[0];
+	registros_cpu->INSTID = "\0";
+	registros_cpu->PARAM1="\0";
+	registros_cpu->PARAM2="\0";
+	registros_cpu->PARAM3="\0";
+	char**sep_instruction = string_array_new();
+	char* registros = string_new();
+	registros=string_duplicate(registros_cpu->IR);
+	sep_instruction = string_split(registros," ");
+	registros_cpu->INSTID = string_duplicate(sep_instruction[0]);
 	if(registros_cpu == NULL) return false;
-	if (sep_instruction[1]) registros_cpu->PARAM1=sep_instruction[1];
-	if (sep_instruction[2]) registros_cpu->PARAM2=sep_instruction[2];
-	if (sep_instruction[3]) registros_cpu->PARAM3=sep_instruction[3];
+	if (sep_instruction[1]) registros_cpu->PARAM1=string_duplicate(sep_instruction[1]);
+	if (sep_instruction[2]) registros_cpu->PARAM2=string_duplicate(sep_instruction[2]);
+	if (sep_instruction[3]) registros_cpu->PARAM3=string_duplicate(sep_instruction[3]);
+	string_array_destroy(sep_instruction);
+	free(registros);
 	return true;
 }
 bool exe_set(uint32_t* registro,uint32_t valor){
