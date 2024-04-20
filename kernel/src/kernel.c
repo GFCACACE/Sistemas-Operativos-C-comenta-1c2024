@@ -1,5 +1,7 @@
 #include "kernel.h"
 
+
+t_queue* estado_new;
 int conexion_memoria, cpu_dispatch,cpu_interrupt;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
@@ -119,7 +121,7 @@ bool iniciar_kernel(char* path_config){
 	iniciar_interrupt()&&
 	iniciar_estados_planificacion()&&
 	iniciar_colas_entrada_salida();
-	iniciar_consola();
+	//iniciar_consola();
 }
 
 bool iniciar_consola(){
@@ -272,7 +274,7 @@ bool iniciar_proceso(char** parametros){
 	//strcpy(path, parametros[1]);
 	loguear("PATH: %s",path);
 	t_pcb* pcb = pcb_create(path);   // Se crea el PCB y se agrega a New
-	//queue_push(estado_new,pcb);
+	queue_push(estado_new,pcb);
 	free(path);
 		
 	return true;

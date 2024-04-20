@@ -35,7 +35,7 @@ int main_kernel(int argc, char** argv) {
     // mje = recibir_mensaje(cpu_interrupt);
     // free(mje);
 
-	//consola();
+	consola();
 
     finalizar_kernel();
 

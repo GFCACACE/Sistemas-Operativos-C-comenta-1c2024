@@ -67,14 +67,14 @@ extern t_config_kernel* config;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 extern t_queue* estado_new;
-extern t_queue* estado_ready;
+/*extern t_queue* estado_ready;
 extern t_queue* estado_ready_plus;
 extern t_queue* estado_blocked;
 extern t_queue* estado_exit;
 extern t_queue* io_stdin;
 extern t_queue* io_stdout;
 extern t_queue* io_generica;
-extern t_queue* io_dialfs;
+extern t_queue* io_dialfs;*/
 
 
 bool iniciar_kernel(char*);
