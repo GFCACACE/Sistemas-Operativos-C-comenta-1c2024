@@ -45,7 +45,7 @@ bool inicializar_comandos(){
 	comandos_consola  =  dictionary_create();
     agregar_comando(EJECUTAR_SCRIPT,"EJECUTAR_SCRIPT","[PATH]",&ejecutar_scripts_de_archivo);
     agregar_comando(INICIAR_PROCESO,"INICIAR_PROCESO","[PATH] [SIZE] [PRIORIDAD]",&iniciar_proceso);
-	agregar_comando(FINALIZAR_PROCESO,"FINALIZAR_PROCESO","PID]",&finalizar_proceso);
+	agregar_comando(FINALIZAR_PROCESO,"FINALIZAR_PROCESO","[PID]",&finalizar_proceso);
     agregar_comando(DETENER_PLANIFICACION,"DETENER_PLANIFICACION","[]",&iniciar_planificacion);
 	agregar_comando(INICIAR_PLANIFICACION,"INICIAR_PLANIFICACION","[]",&multiprogramacion);
     agregar_comando(MULTIPROGRAMACION,"MULTIPROGRAMACION","[VALOR]",&detener_planificacion);
@@ -176,17 +176,17 @@ bool ejecutar_scripts_de_archivo(char** parametros){
 	loguear("Ejecutando script...");
 	imprimir_valores_leidos(parametros);
 
-	if(parametros_ejecutar_script_validos(parametros))
-	{
+	if(!parametros_ejecutar_script_validos(parametros))
+		return false;
 
-		char *path = string_duplicate(parametros[1]);
+	char *path = string_duplicate(parametros[1]);
 
-		t_list* instrucciones_sript = get_instrucciones_kernel(path);
-		free(path);
+	t_list* instrucciones_sript = get_instrucciones_kernel(path);
+	free(path);
 
-		if(instrucciones_sript!=NULL)
-		list_iterate(instrucciones_sript,ejecutar_sript);
-	}
+	if(instrucciones_sript!=NULL)
+	list_iterate(instrucciones_sript,ejecutar_sript);
+	
 	return true;
 
 }
@@ -223,16 +223,17 @@ bool iniciar_proceso(char** parametros){
 		return validado;
 	}
 
- 		loguear("iniciando proceso...");
-		imprimir_valores_leidos(parametros);	
+	loguear("iniciando proceso...");
+	imprimir_valores_leidos(parametros);	
 
-		if(parametros_iniciar_proceso_validos(parametros))
-		{
-			char *path = string_duplicate(parametros[1]);//malloc(sizeof(parametros[1]));
-			//strcpy(path, parametros[1]);
-			loguear("PATH: %s",path);
-			free(path);
-		}
+	if(!parametros_iniciar_proceso_validos(parametros))
+	return false;
+		
+	char *path = string_duplicate(parametros[1]);//malloc(sizeof(parametros[1]));
+	//strcpy(path, parametros[1]);
+	loguear("PATH: %s",path);
+	free(path);
+		
 	return true;
 }
 
