@@ -35,16 +35,22 @@ int main_kernel(int argc, char** argv) {
     // mje = recibir_mensaje(cpu_interrupt);
     // free(mje);
 
-	consola();
+	//consola();
 
     finalizar_kernel();
 
     return EXIT_SUCCESS;
 }
 
+
+
+
+
+// TESTS
 int main(int argc, char** argv) {
         if(argc > 1 && strcmp(argv[1],"-test")==0)
         run_tests();
     else 
         main_kernel(argc,argv);
 }
+

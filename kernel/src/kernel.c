@@ -86,14 +86,53 @@ bool iniciar_interrupt(){
 	return true;
 }
 
+bool iniciar_colas_entrada_salida(){
+	t_queue* io_stdin = queue_create();
+	t_queue* io_stdout = queue_create();
+	t_queue* io_generica = queue_create();
+	t_queue* io_dialfs = queue_create();
+	///VALIDAR? SON COMMONS!!!!!!
+	return true;
+}
+
+bool iniciar_estados_planificacion(){
+
+	t_queue* estado_new = queue_create();
+	t_queue* estado_ready = queue_create();
+	t_queue* estado_blocked = queue_create();
+	t_queue* estado_exit = queue_create();
+	if(config->ALGORITMO_PLANIFICACION == VRR){
+		t_queue* estado_ready_plus = queue_create();
+	}
+	//VALIDAR? SON COMMONS!!!!!!
+	return true;
+}
+
+
+
 bool iniciar_kernel(char* path_config){
 	return
 	iniciar_logger_config(path_config)&&
 	inicializar_comandos()&&
 	iniciar_conexion_memoria()&&
 	iniciar_dispatch()&&
-	iniciar_interrupt();  
+	iniciar_interrupt()&&
+	iniciar_estados_planificacion()&&
+	iniciar_colas_entrada_salida();
+	iniciar_consola();
 }
+
+bool iniciar_consola(){
+	pthread_t thread_consola; //Inicializo el thread
+	pthread_create(&thread_consola,NULL,consola,NULL);
+	pthread_detach(thread_consola);
+	if (thread_consola == -1){
+		loguear_error("No se pudo iniciar la consola");
+		return false;
+	}
+	return true;
+}
+
 
 void config_kernel_destroy(t_config_kernel* config){
 
@@ -228,14 +267,21 @@ bool iniciar_proceso(char** parametros){
 
 	if(!parametros_iniciar_proceso_validos(parametros))
 	return false;
-		
+	
 	char *path = string_duplicate(parametros[1]);//malloc(sizeof(parametros[1]));
 	//strcpy(path, parametros[1]);
 	loguear("PATH: %s",path);
+	t_pcb* pcb = pcb_create(path);   // Se crea el PCB y se agrega a New
+	//queue_push(estado_new,pcb);
 	free(path);
 		
 	return true;
 }
+
+void planificador_largo_plazo(){
+
+}
+
 
 bool finalizar_proceso(char** substrings){	
 		imprimir_valores_leidos(substrings);

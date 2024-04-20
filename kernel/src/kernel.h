@@ -43,6 +43,16 @@ typedef enum
 	EXIT
 }op_code_kernel;
 
+
+typedef enum
+{
+	FIFO,
+	RR,
+	VRR
+}alg_planificador;
+
+
+
 typedef struct t_comando_consola {
 	op_code_kernel comando;
 	char* parametros;
@@ -56,6 +66,15 @@ extern t_log* logger;
 extern t_config_kernel* config;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
+extern t_queue* estado_new;
+extern t_queue* estado_ready;
+extern t_queue* estado_ready_plus;
+extern t_queue* estado_blocked;
+extern t_queue* estado_exit;
+extern t_queue* io_stdin;
+extern t_queue* io_stdout;
+extern t_queue* io_generica;
+extern t_queue* io_dialfs;
 
 
 bool iniciar_kernel(char*);
@@ -77,5 +96,8 @@ void finalizar_kernel();
 bool ejecutar_comando_consola(char*params);
 bool ejecutar_scripts_de_archivo(char** parametros);
 void agregar_comando(op_code_kernel code,char* nombre,char* params, bool(*funcion)(char**));
+bool iniciar_estados_planificacion();
+bool iniciar_colas_entrada_salida();
+bool iniciar_consola();
 
 #endif /* kernel.h*/
