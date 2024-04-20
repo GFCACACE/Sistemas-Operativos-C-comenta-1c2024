@@ -43,6 +43,13 @@ typedef enum
 	EXIT
 }op_code_kernel;
 
+typedef struct t_comando_consola {
+	op_code_kernel comando;
+	char* parametros;
+	char* nombre;
+	bool (*funcion)(char**);
+}t_comando_consola;
+
 t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
@@ -52,17 +59,23 @@ extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 
 
 bool iniciar_kernel(char*);
+bool iniciar_logger_config();
+bool inicializar_comandos();
 void consola();
 char* leer_texto_consola();
-void iniciar_proceso(char** parametros);
-void finalizar_proceso(char**);
-void iniciar_planificacion(char**);
-void multiprogramacion(char**);
-void detener_planificacion(char**);
-void proceso_estado(char**);
+bool iniciar_proceso(char** parametros);
+bool finalizar_proceso(char**);
+bool iniciar_planificacion(char**);
+bool multiprogramacion(char**);
+bool detener_planificacion(char**);
+bool proceso_estado(char**);
+bool finalizar_consola(char**);
 void listar_comandos();
 t_list* get_comandos();
 void loguear_config();
 void finalizar_kernel();
+bool ejecutar_comando_consola(char*params);
+bool ejecutar_scripts_de_archivo(char** parametros);
+void agregar_comando(op_code_kernel code,char* nombre,char* params, bool(*funcion)(char**));
 
 #endif /* kernel.h*/

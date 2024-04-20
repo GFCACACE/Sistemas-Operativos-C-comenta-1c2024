@@ -3,7 +3,7 @@
 int conexion_memoria, cpu_dispatch,cpu_interrupt;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
-t_list* comandos_consola;
+t_dictionary * comandos_consola;
 
 t_config_kernel* iniciar_config_kernel(char* path_config){
 	t_config* _config = config_create(path_config);
@@ -28,7 +28,7 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 	return config_kernel;
 }
 
-bool iniciar_kernel(char* path_config){
+bool iniciar_logger_config(char* path_config){
 	decir_hola(MODULO);
     logger = iniciar_logger(MODULO);
 	if(logger == NULL) printf("EL LOGGER NO PUDO SER INICIADO.\n");
@@ -37,27 +37,62 @@ bool iniciar_kernel(char* path_config){
 		loguear_error("No se encuentra el archivo de las config");
 		return false;
 	}
-	loguear_config();	    
-	comandos_consola = get_comandos();
-   conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
+	loguear_config();	
+	return true;
+}
+
+bool inicializar_comandos(){
+	comandos_consola  =  dictionary_create();
+    agregar_comando(EJECUTAR_SCRIPT,"EJECUTAR_SCRIPT","[PATH]",&ejecutar_scripts_de_archivo);
+    agregar_comando(INICIAR_PROCESO,"INICIAR_PROCESO","[PATH] [SIZE] [PRIORIDAD]",&iniciar_proceso);
+	agregar_comando(FINALIZAR_PROCESO,"FINALIZAR_PROCESO","PID]",&finalizar_proceso);
+    agregar_comando(DETENER_PLANIFICACION,"DETENER_PLANIFICACION","[]",&iniciar_planificacion);
+	agregar_comando(INICIAR_PLANIFICACION,"INICIAR_PLANIFICACION","[]",&multiprogramacion);
+    agregar_comando(MULTIPROGRAMACION,"MULTIPROGRAMACION","[VALOR]",&detener_planificacion);
+	agregar_comando(PROCESO_ESTADO,"PROCESO_ESTADO","[]",&proceso_estado);
+    agregar_comando(EXIT,"EXIT","[]",&finalizar_consola);
+
+	return true;
+}
+
+bool iniciar_conexion_memoria(){
+	  conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
 	if(conexion_memoria ==-1){
 		
 		loguear_error("No se pudo conectar memoria");
 		return false;
 	} 
-    cpu_dispatch = crear_conexion(config->IP_CPU, config->PUERTO_CPU_DISPATCH);
+
+	return true;
+}
+
+bool iniciar_dispatch(){
+	cpu_dispatch = crear_conexion(config->IP_CPU, config->PUERTO_CPU_DISPATCH);
 	if(cpu_dispatch ==-1){
 		
 		loguear_error("No se pudo conectar cpu (dispatch)");
 		return false;
 	} 
-    cpu_interrupt = crear_conexion(config->IP_CPU, config->PUERTO_CPU_INTERRUPT);
+	return true;
+}
+
+bool iniciar_interrupt(){
+	 cpu_interrupt = crear_conexion(config->IP_CPU, config->PUERTO_CPU_INTERRUPT);
 	if(cpu_interrupt ==-1){
 		
 		loguear_error("No se pudo conectar cpu (interrupt)");
 		return false;
 	} 
 	return true;
+}
+
+bool iniciar_kernel(char* path_config){
+	return
+	iniciar_logger_config(path_config)&&
+	inicializar_comandos()&&
+	iniciar_conexion_memoria()&&
+	iniciar_dispatch()&&
+	iniciar_interrupt();  
 }
 
 void config_kernel_destroy(t_config_kernel* config){
@@ -84,76 +119,27 @@ char* leer_texto_consola(){
 	return readline(">");
 }
 
-char * codigo_op_a_texto( op_code_kernel codigo ) {
+void agregar_comando(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**)){
+    
+    t_comando_consola* comando = malloc(sizeof(t_comando_consola));
+    comando->comando = code;
+    comando->parametros = params;
+    comando->funcion = funcion;
+	comando->nombre= nombre;
 
-	switch ( codigo ) {
-		case EJECUTAR_SCRIPT:       return "EJECUTAR_SCRIPT"; break;
-		case INICIAR_PROCESO:       return "INICIAR_PROCESO"; break;
-		case FINALIZAR_PROCESO: 	return "FINALIZAR_PROCESO"; break;
-		case DETENER_PLANIFICACION: return "DETENER_PLANIFICACION"; break;
-		case INICIAR_PLANIFICACION: return "INICIAR_PLANIFICACION"; break;
-		case MULTIPROGRAMACION:		return "MULTIPROGRAMACION"; break;
-		case PROCESO_ESTADO:   		return "PROCESO_ESTADO"; break;
-		case EXIT:   				return "EXIT"; break;
-		default:          			return NULL; break;
-	}
-
-}
-t_list* get_comandos(){
-	  t_list* comandos = list_create();
-
-    for (op_code_kernel i = EJECUTAR_SCRIPT; i <= EXIT; i++) {
-        op_code_kernel *code_ptr = malloc(sizeof(op_code_kernel));
-        *code_ptr = i;
-        list_add(comandos, code_ptr);
+    void _agregar_comando_(char* texto){
+        dictionary_put(comandos_consola,texto,comando);
     }
-	return comandos;
-}
 
-
-op_code_kernel* codigo_comando(char* comando){
-/*
-	if ( es_comando(comando)) return atoi(comando); else
-	return EXIT_FAILURE;*/
-
-	bool es_comando_del_texto(void* codigo){
-		char* tex= codigo_op_a_texto(*(op_code_kernel*)codigo);
-		return tex!=NULL && string_equals_ignore_case(tex,comando);
-	}
-	bool es_comando_del_numero(void* codigo){
-		return is_numeric(comando) && (atoi(comando)== *(op_code_kernel*)codigo) ;
-	}
-	bool _es_el_comando(void* codigo){
-		return es_comando_del_numero(codigo) || es_comando_del_texto(codigo); 
-	}
-
-	return  (op_code_kernel*)list_find(comandos_consola,_es_el_comando);
-}
-
-
-
-bool es_comando(char* comando){
-
-	op_code_kernel* cod = codigo_comando(comando);
-	return cod >0;
-}
-
-char * parametros_segun_comando( op_code_kernel codigo ) {
-
-	switch ( codigo ) {
-		case EJECUTAR_SCRIPT:		return "[PATH]"; break;
-		case INICIAR_PROCESO:       return "[PATH] [SIZE] [PRIORIDAD]"; break;
-		case FINALIZAR_PROCESO: 	return "[PID]"; break;
-		case DETENER_PLANIFICACION: return "[]"; break;
-		case INICIAR_PLANIFICACION: return "[]"; break;
-		case MULTIPROGRAMACION:		return "[VALOR]"; break;
-		case PROCESO_ESTADO:   		return "[]"; break;
-		case EXIT:   				return "[]"; break;
-		default:          			return NULL; break;
-	}
+    _agregar_comando_(string_itoa(code));
+    _agregar_comando_(nombre);
 
 }
 
+
+bool existe_comando(char* comando){
+   return (dictionary_has_key(comandos_consola,comando));
+}
 
 void imprimir_valores_leidos(char** substrings){
 
@@ -164,17 +150,7 @@ void imprimir_valores_leidos(char** substrings){
 	string_iterate_lines(substrings,imprimir_valor);
 }
 
-bool parametros_iniciar_proceso_validos(char** parametros){
-	bool validado = 
-	string_array_size(parametros)==4 &&
-	is_numeric(parametros[2]) &&
-	is_numeric(parametros[3]);
-	
-	if(!validado)
-		printf("\tINICIAR_PROCESO debe recibir 3 parámetros:\n\tPath (string)\n\tSize (int)\n\tPrioridad (int)\n");
 
-	return validado;
-}
 bool parametros_ejecutar_script_validos(char** parametros){
 	bool validado = string_array_size(parametros)==2;
 	
@@ -191,65 +167,106 @@ t_list* get_instrucciones_kernel(char* archivo){
 }
 
 void ejecutar_sript(void* script){
-	printf("Script: %s", (char*)script);
+	
+	printf("Ejecutando script...%s",(char*)script);
+	ejecutar_comando_consola((char*)script);
 }
-void ejecutar_scripts_de_archivo(char** parametros){
+
+bool ejecutar_scripts_de_archivo(char** parametros){
 	loguear("Ejecutando script...");
 	imprimir_valores_leidos(parametros);
 
-	if(!parametros_ejecutar_script_validos(parametros))
-	return;
+	if(parametros_ejecutar_script_validos(parametros))
+	{
 
-	char *path = string_duplicate(parametros[1]);
+		char *path = string_duplicate(parametros[1]);
 
-	t_list* instrucciones_sript = get_instrucciones_kernel(path);
-	free(path);
+		t_list* instrucciones_sript = get_instrucciones_kernel(path);
+		free(path);
 
-	if(instrucciones_sript!=NULL)
-	list_iterate(instrucciones_sript,ejecutar_sript);
+		if(instrucciones_sript!=NULL)
+		list_iterate(instrucciones_sript,ejecutar_sript);
+	}
+	return true;
 
 }
+bool ejecutar_comando_consola(char*params){
 
-void iniciar_proceso(char** parametros){
+	char** parametros = string_split(params," ");  
+	char* comando = parametros[0]; 
+	string_to_upper(comando);
+	bool existe = existe_comando(comando); 
+	bool ejecutado = false;
+		 if(existe)
+			{
+				t_comando_consola* comando_consola = dictionary_get(comandos_consola,comando);
+				if(comando_consola->comando!=EXIT)
+       				ejecutado = comando_consola->funcion(parametros);
+			}
+			else listar_comandos();
+	free(parametros);
+	return ejecutado;
+}
+
+
+bool iniciar_proceso(char** parametros){
+
+	bool parametros_iniciar_proceso_validos(char** parametros){
+		bool validado = 
+		string_array_size(parametros)==4 &&
+		is_numeric(parametros[2]) &&
+		is_numeric(parametros[3]);
+		
+		if(!validado)
+			printf("\tINICIAR_PROCESO debe recibir 3 parámetros:\n\tPath (string)\n\tSize (int)\n\tPrioridad (int)\n");
+
+		return validado;
+	}
 
  		loguear("iniciando proceso...");
 		imprimir_valores_leidos(parametros);	
 
-		if(!parametros_iniciar_proceso_validos(parametros))
-		return;
-
-		char *path = string_duplicate(parametros[1]);//malloc(sizeof(parametros[1]));
-		//strcpy(path, parametros[1]);
-		 loguear("PATH: %s",path);
-		 free(path);
-	
+		if(parametros_iniciar_proceso_validos(parametros))
+		{
+			char *path = string_duplicate(parametros[1]);//malloc(sizeof(parametros[1]));
+			//strcpy(path, parametros[1]);
+			loguear("PATH: %s",path);
+			free(path);
+		}
+	return true;
 }
 
-void finalizar_proceso(char** substrings){	
+bool finalizar_proceso(char** substrings){	
 		imprimir_valores_leidos(substrings);
 
 		loguear("Finaliza el proceso <PID> - Motivo: Finalizado por consola");
+
+		return true;
 }
 
 
 
 void listar_comandos(){
 	printf("Los comandos disponibles son:\n");
-	printf("\t\t*****************************************************\n");
+	char* decoracion= "\t\t*****************************************************\n";
+	printf("%s",decoracion);
+	int cantidad = dictionary_size(comandos_consola)/2;
 
-	for (int i = 0; i <=EXIT; i++) {
-        printf("\t%d. %s %s\n",i ,codigo_op_a_texto(i),parametros_segun_comando(i));
+
+	for (int i = 0; i < cantidad; i++) {
+		t_comando_consola* comando = dictionary_get(comandos_consola,string_itoa(i));
+        printf("\t%d. %s %s\n",i ,comando->nombre ,comando->parametros);
     }
-	printf("\t\t*****************************************************\n");
+	printf("%s",decoracion);
 }
 
-void iniciar_planificacion(char** substrings){
+bool iniciar_planificacion(char** substrings){
 	
-	
+	return true;
 
 }
 
-void multiprogramacion(char** substrings){
+bool multiprogramacion(char** substrings){
 
 	loguear("El grado de multiprogramación anterior es: %d",config->GRADO_MULTIPROGRAMACION);
 	if(string_array_size(substrings)>0){
@@ -267,51 +284,26 @@ void multiprogramacion(char** substrings){
 		loguear("No se especificó ningún grado de multiprogramación");
 	}
 	
+	return true;
 
 }
-void detener_planificacion(char** substrings){}
-void proceso_estado(char** substrings){}
+bool detener_planificacion(char** substrings){return true;}
+bool proceso_estado(char** substrings){return true;}
+bool finalizar_consola(char** parametros){
+	loguear("Consola finalizada.");	
+	return false;}
 
 void consola(){
 	char *cadenaLeida;
-	void _liberar(char*cadena,char**params){
-		string_array_destroy(params);
-		free(cadena);		
-	}
-	void _finalizar_consola(){
-		
-		loguear("Consola finalizada.");	
-	}
 	listar_comandos();
-	 while (1) {	
-		
-		char** parametros;    
+	bool continuar=true;
+	 while (continuar) {	
         cadenaLeida =  leer_texto_consola();	
-
         if (!cadenaLeida)                  
-			break;                                                     
-        
-
-		parametros = string_split(cadenaLeida," ");    
-		op_code_kernel* codigo_operacion = codigo_comando(parametros[0]);                
-        
-		switch( *codigo_operacion) {
-			case EJECUTAR_SCRIPT: ejecutar_scripts_de_archivo(parametros);break;
-			case INICIAR_PROCESO: iniciar_proceso(parametros); break;
-			case FINALIZAR_PROCESO: finalizar_proceso(parametros); break;
-			case INICIAR_PLANIFICACION: iniciar_planificacion(parametros); break;
-			case MULTIPROGRAMACION: multiprogramacion(parametros);break;
-			case DETENER_PLANIFICACION: detener_planificacion(parametros); break;
-			case PROCESO_ESTADO: proceso_estado(parametros); break;
-			case EXIT:  _liberar(cadenaLeida,parametros);
-						_finalizar_consola();
-						return;break;
-			default: listar_comandos();break;
-
-		}
-		_liberar(cadenaLeida,parametros);
-    }
-	_finalizar_consola();
+			break; 
+		continuar = ejecutar_comando_consola(cadenaLeida);  		 		
+		free(cadenaLeida);
+    }	
 
 }
 
@@ -331,5 +323,5 @@ void finalizar_kernel(){
 	if (cpu_interrupt != -1) liberar_conexion(cpu_interrupt);
 	if(config!=NULL) config_destroy_kernel(config);
 	if(logger!=NULL) log_destroy(logger);
-	if(comandos_consola!=NULL) list_destroy(comandos_consola);
+	if(comandos_consola!=NULL) dictionary_destroy(comandos_consola);
 }

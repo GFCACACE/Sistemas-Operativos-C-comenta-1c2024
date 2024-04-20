@@ -19,7 +19,7 @@ t_config_cpu* iniciar_config_cpu(char* path_config){
 	 return config_cpu;
 }
 
-bool iniciar_cpu(char* path_config){
+bool iniciar_log_config(char* path_config){
 	decir_hola(MODULO);
     logger = iniciar_logger(MODULO);
 	if(logger == NULL){
@@ -32,23 +32,38 @@ bool iniciar_cpu(char* path_config){
 		return false;
 	}
 	loguear_config();	
+	return true;
+}
 
-	registros_cpu = iniciar_registros_cpu();
+bool iniciar_registros_cpu(){
+	t_regist_cpu* reg_cpu = malloc(sizeof(t_regist_cpu));
+	/*
 	if(registros_cpu == NULL){
 		loguear_error("No se pudieron iniciar los registros correctamente");
 		return false;
-	}
-    dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
+	}*/
+
+	return true;
+ }
+
+bool iniciar_dispatch(){
+	  dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
 	if(dispatch == -1 ) {
 		loguear_error("El servidor (dispatch) no pudo ser iniciado");
 		return false;
 		}
-    conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
-    if(conexion_memoria == -1 ) {
-		loguear_error("Fallo en la conexión con Memoria");
-		return false;
-		}
-	
+	return true;
+}
+
+bool iniciar_conexion_memoria(){
+	conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
+	if(conexion_memoria == -1 ) {
+	loguear_error("Fallo en la conexión con Memoria");
+	return false;
+	}
+}
+
+bool iniciar_conexion_kernel(){
 	kernel_dispatch = esperar_cliente(dispatch);
     interrupt= iniciar_servidor(config->PUERTO_ESCUCHA_INTERRUPT);
 	if(interrupt == -1 ) {
@@ -56,8 +71,17 @@ bool iniciar_cpu(char* path_config){
 		return false;
 		}
     kernel_interrupt = esperar_cliente(interrupt);
-	
 	return true;
+}
+
+bool iniciar_cpu(char* path_config){
+	return
+	iniciar_log_config(path_config) &&
+	iniciar_registros_cpu()	&&
+	iniciar_dispatch()&&
+	iniciar_conexion_memoria()
+	&&iniciar_conexion_kernel();
+
 }
 
 void config_destroy_cpu(t_config_cpu* config){
@@ -107,10 +131,7 @@ void loguear_config(){
 	loguear("PUERTO_ESCUCHA_INTERRUPT: %d",config->PUERTO_ESCUCHA_INTERRUPT);
 }
 
- void pedir_proxima_instruccion(t_pcb* pcb){
-	enviar_pcb(pcb,PROXIMA_INSTRUCCION,conexion_memoria);
- }
-
+ 
  
  char* recibir_instruccion(){
 	char* mje_inst = NULL;
@@ -119,6 +140,11 @@ void loguear_config(){
 		mje_inst =  recibir_mensaje(conexion_memoria);
 	
 	return mje_inst;
+ }
+
+ char* pedir_proxima_instruccion(t_pcb* pcb){
+	enviar_pcb(pcb,PROXIMA_INSTRUCCION,conexion_memoria);
+	return recibir_instruccion(); 
  }
 
 
@@ -134,19 +160,15 @@ bool es_exit(char* comando){
 	}
 
  void ejecutar_programa(t_pcb* pcb){
-	pedir_proxima_instruccion(pcb);
-	char* mje_inst = recibir_instruccion();
+	
+	char* mje_inst = pedir_proxima_instruccion(pcb);
 
 	
-	while (mje_inst)
-	{	
-		bool es_fin = es_exit(mje_inst);
-		if(es_fin)
-			break;		
+	while (!es_exit(mje_inst))
+	{		
 		ejecutar_instruccion(pcb,mje_inst);
-		free(mje_inst);
-		pedir_proxima_instruccion(pcb);
-		mje_inst = recibir_instruccion();		
+		free(mje_inst);		
+		mje_inst = pedir_proxima_instruccion(pcb);
 
 	}
 	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
@@ -154,10 +176,6 @@ bool es_exit(char* comando){
 	free(mje_inst);	
  }
 
-t_regist_cpu* iniciar_registros_cpu(){
-	t_regist_cpu* reg_cpu = malloc(sizeof(t_regist_cpu));
-	return reg_cpu;
- }
 
 bool exe_set(uint32_t* registro,uint32_t valor){
 	*registro = valor;

@@ -38,9 +38,14 @@ typedef struct
 	uint32_t* DI;
 } t_regist_cpu;
 
+bool iniciar_log_config();
+bool iniciar_registros_cpu();
+bool iniciar_dispatch();
+bool iniciar_conexion_memoria();
+bool iniciar_conexion_kernel();
 
 bool iniciar_cpu(char*);
-t_regist_cpu* iniciar_registros_cpu();
+
 t_config_cpu* iniciar_config_cpu(char*);
 void config_destroy_cpu(t_config_cpu*);
 void finalizar_cpu();
@@ -48,6 +53,7 @@ void finalizar_estructuras_cpu();
 void loguear_config();
 void ejecutar_programa(t_pcb* pcb);
 int intentar_conexion(char*,int,char*);
+char* pedir_proxima_instruccion(t_pcb* pcb);
 //Instrucciones//////////////////////
 bool exe_set(uint32_t*,uint32_t);
 bool exe_mov_in(uint32_t*,uint32_t*);

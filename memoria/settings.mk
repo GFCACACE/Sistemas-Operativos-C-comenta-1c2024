@@ -1,5 +1,5 @@
 # Libraries
-LIBS=utils commons pthread readline m
+LIBS=utils commons pthread readline m readline cunit rt
 
 # Custom libraries' paths
 STATIC_LIBPATHS=../utils

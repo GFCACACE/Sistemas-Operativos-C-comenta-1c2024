@@ -3,14 +3,13 @@
 #include <utils/hello.h>
 #include <unistd.h>
 #include "cpu.h"
-#include "cpu_test.h"
+#include "test.h"
 
 
-
-int main(int argc, char** argv) {
+int main_cpu(int argc, char** argv) {
     
-    bool flag_iniciar_cpu = iniciar_cpu(argv[1]);
-    if(flag_iniciar_cpu == false){ 
+    bool cpu_iniciada = iniciar_cpu(argv[1]);
+    if(!cpu_iniciada){ 
         finalizar_cpu();
         return EXIT_FAILURE;
         }
@@ -21,4 +20,11 @@ int main(int argc, char** argv) {
 
     return EXIT_SUCCESS;
 
+}
+
+int main(int argc, char** argv) {
+        if(argc > 1 && strcmp(argv[1],"-test")==0)
+        run_tests();
+    else 
+        main_cpu(argc,argv);
 }

@@ -42,9 +42,8 @@ void loguear_config_memoria()
 	loguear("RETARDO_RESPUESTA: %d", config_memoria->RETARDO_RESPUESTA);
 }
 
-bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las configs*/)
-{
 
+bool iniciar_logger_config(char* path_config){
 	// en el "memoria.h" se hizo un "#define" con el nombre del MODULO
 	decir_hola(MODULO);
 
@@ -70,7 +69,12 @@ bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las
 
 	// Registramos en el log todos los parámetros de la config de memoria
 	loguear_config_memoria();
-	
+	return true;
+
+}
+
+bool iniciar_servidor_memoria(){
+
 		//Iniciamos el servidor con el puerto indicado en la config
 		memoria_escucha= iniciar_servidor(config_memoria->PUERTO_ESCUCHA);
 		if(memoria_escucha == -1){
@@ -78,6 +82,10 @@ bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las
 			return false;
 		}
 		loguear("El Servidor iniciado correctamente");
+		return true;
+}
+
+bool iniciar_conexion_cpu(){
 
 		//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
 		conexion_cpu = esperar_cliente(memoria_escucha);
@@ -85,12 +93,17 @@ bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las
 			loguear_error("Falló la conexión con cpu");
 			return false;
 		}
-		conexion_kernel = esperar_cliente(memoria_escucha);
-		if(conexion_kernel == -1){
-			loguear_error("Falló la conexión con kernel");
-			return false;
-		}
-	return true;
+
+		return true;
+}
+
+bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las configs*/)
+{
+	return
+		iniciar_logger_config(path_config)&&
+		iniciar_servidor_memoria() &&
+		iniciar_conexion_cpu();
+	
 }
 
 
