@@ -398,6 +398,21 @@ void config_destroy_kernel(t_config_kernel * config){
 	free(config);
 }
 
+void liberar_colas(){
+	void liberar_cola(t_queue* cola){
+		if(cola!=NULL)
+			queue_destroy(cola);
+	};
+
+	liberar_cola(estado_blocked);
+	liberar_cola(estado_exec);
+	liberar_cola(estado_exit);
+	liberar_cola(estado_new);
+	liberar_cola(estado_ready);
+	liberar_cola(estado_ready_plus);
+	
+}
+
 void finalizar_kernel(){
 	
 	if (conexion_memoria != -1) liberar_conexion(conexion_memoria);
@@ -406,4 +421,5 @@ void finalizar_kernel(){
 	if(config!=NULL) config_destroy_kernel(config);
 	if(logger!=NULL) log_destroy(logger);
 	if(comandos_consola!=NULL) dictionary_destroy(comandos_consola);
+	liberar_colas();
 }
