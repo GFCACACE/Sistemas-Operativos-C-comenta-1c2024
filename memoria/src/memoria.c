@@ -129,8 +129,8 @@ char *proxima_instruccion_de(t_pcb *pcb)
 {	
 	//char* pid = uint_a_string(pcb->PID);
 	
-	t_list *programa = get_instrucciones_memoria(pcb->path);
-	char* proxima_instruccion = (char*)list_get(programa, pcb->program_counter);
+	//t_list *programa = get_instrucciones_memoria(pcb->path);
+	char* proxima_instruccion = get_linea_archivo(config_memoria->PATH_INSTRUCCIONES,pcb->path, pcb->program_counter);
 
 	loguear("Próxima instruccción: %s.", proxima_instruccion);
 	printf("Próxima instruccción: %s.", proxima_instruccion);
@@ -139,7 +139,7 @@ char *proxima_instruccion_de(t_pcb *pcb)
 
 	//free(pid);
 	//list_iterate(programa,free);
-	list_destroy(programa);
+	//list_destroy(programa);
 	return proxima_instruccion;
 }
 

@@ -48,8 +48,9 @@ t_pcb* pcb_create(char*);
 void pcb_destroy(t_pcb*);
 bool is_numeric(const char*);
 void loguear_pcb(t_pcb*);
-void path_resolve(char*, const char*, const char*);
+char* path_resolve(char*, char*);
 char * uint_a_string(uint);
 t_list* get_instrucciones(char* path_inicial,char *nombre_archivo);
+char* get_linea_archivo(char* directorio,char* nombre_archivo,int posicion);
 
 #endif /* utils_commons_h */
