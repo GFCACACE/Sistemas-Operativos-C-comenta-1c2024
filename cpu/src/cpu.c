@@ -81,7 +81,7 @@ void finalizar_cpu(){
 
 }
 void finalizar_estructuras_cpu(){
-	if(registros_cpu){
+	if(registros_cpu != NULL){
 		free(registros_cpu->AX);
 		free(registros_cpu->BX);
 		free(registros_cpu->CX);
@@ -229,20 +229,20 @@ bool decode(){
 	return true;
 }
 bool execute(){
-	if(strcmp(registros_cpu->INSTID,"SET")) {
-		exe_set(&registros_cpu->PARAM1,registros_cpu->PARAM2);
+	if(!strcmp(registros_cpu->INSTID,"SET")) {
+		exe_set((uint32_t*)registros_cpu->PARAM1,registros_cpu->PARAM2);
 		return true;
 	}
-	if(strcmp(registros_cpu->INSTID,"SUM")){ 
-		exe_sum(&registros_cpu->PARAM1,registros_cpu->PARAM2);
+	if(!strcmp(registros_cpu->INSTID,"SUM")){ 
+		exe_sum((uint32_t*)registros_cpu->PARAM1,registros_cpu->PARAM2);
 		return true;
 	}
-	if(strcmp(registros_cpu->INSTID,"SUB")){
-		exe_sub(&registros_cpu->PARAM1,registros_cpu->PARAM2);
+	if(!strcmp(registros_cpu->INSTID,"SUB")){
+		exe_sub((uint32_t*)registros_cpu->PARAM1,registros_cpu->PARAM2);
 		return true;
 	}
-	if(strcmp(registros_cpu->INSTID,"JNZ")){
-		exe_jnz(&registros_cpu->PARAM1,registros_cpu->PARAM2);
+	if(!strcmp(registros_cpu->INSTID,"JNZ")){
+		exe_jnz((uint32_t*)registros_cpu->PARAM1,registros_cpu->PARAM2);
 		return true;
 	}
 	return false;
