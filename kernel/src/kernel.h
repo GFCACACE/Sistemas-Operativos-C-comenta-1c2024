@@ -66,7 +66,7 @@ extern t_log* logger;
 extern t_config_kernel* config;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
-extern t_queue* estado_new;
+extern t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus;
 /*extern t_queue* estado_ready;
 extern t_queue* estado_ready_plus;
 extern t_queue* estado_blocked;
@@ -87,7 +87,7 @@ bool finalizar_proceso(char**);
 bool iniciar_planificacion(char**);
 bool multiprogramacion(char**);
 bool detener_planificacion(char**);
-bool proceso_estado(char**);
+bool proceso_estado();
 bool finalizar_consola(char**);
 void listar_comandos();
 t_list* get_comandos();
@@ -99,5 +99,6 @@ void agregar_comando(op_code_kernel code,char* nombre,char* params, bool(*funcio
 bool iniciar_estados_planificacion();
 bool iniciar_colas_entrada_salida();
 bool iniciar_consola();
+bool es_vrr();
 
 #endif /* kernel.h*/

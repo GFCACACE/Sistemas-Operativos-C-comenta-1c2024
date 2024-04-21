@@ -1,11 +1,11 @@
 #include "kernel.h"
 
 
-t_queue* estado_new;
 int conexion_memoria, cpu_dispatch,cpu_interrupt;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
+t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus;
 
 t_config_kernel* iniciar_config_kernel(char* path_config){
 	t_config* _config = config_create(path_config);
@@ -99,13 +99,13 @@ bool iniciar_colas_entrada_salida(){
 
 bool iniciar_estados_planificacion(){
 
-	t_queue* estado_new = queue_create();
-	t_queue* estado_ready = queue_create();
-	t_queue* estado_blocked = queue_create();
-	t_queue* estado_exit = queue_create();
-	if(config->ALGORITMO_PLANIFICACION == VRR){
-		t_queue* estado_ready_plus = queue_create();
-	}
+	estado_new = queue_create();
+	estado_ready = queue_create();
+	estado_blocked = queue_create();
+	estado_exit = queue_create();
+	if(es_vrr())
+		estado_ready_plus = queue_create();
+	
 	//VALIDAR? SON COMMONS!!!!!!
 	return true;
 }
@@ -209,12 +209,12 @@ t_list* get_instrucciones_kernel(char* archivo){
 
 void ejecutar_sript(void* script){
 	
-	printf("Ejecutando script...%s",(char*)script);
+	printf("Ejecutando script...%s\n",(char*)script);
 	ejecutar_comando_consola((char*)script);
 }
 
 bool ejecutar_scripts_de_archivo(char** parametros){
-	loguear("Ejecutando script...");
+	
 	imprimir_valores_leidos(parametros);
 
 	if(!parametros_ejecutar_script_validos(parametros))
@@ -270,8 +270,7 @@ bool iniciar_proceso(char** parametros){
 	if(!parametros_iniciar_proceso_validos(parametros))
 	return false;
 	
-	char *path = string_duplicate(parametros[1]);//malloc(sizeof(parametros[1]));
-	//strcpy(path, parametros[1]);
+	char *path = string_duplicate(parametros[1]);
 	loguear("PATH: %s",path);
 	t_pcb* pcb = pcb_create(path);   // Se crea el PCB y se agrega a New
 	queue_push(estado_new,pcb);
@@ -337,7 +336,39 @@ bool multiprogramacion(char** substrings){
 
 }
 bool detener_planificacion(char** substrings){return true;}
-bool proceso_estado(char** substrings){return true;}
+
+void imprimir_cola(t_queue *cola, const char *estado) {
+
+	void imprimir_estado(void* elem){
+		t_pcb* pcb = (t_pcb*)elem;
+		 printf("| %-10d | %-20s | %-15s |\n", pcb->PID,pcb->path ,estado);
+	}
+    printf("Estado: %s\n", estado);
+    printf("| %-10s | %-20s | %-15s |\n", "PID", "Nombre", "Estado");
+    printf("|------------|----------------------|-----------------|\n");
+
+	list_iterate(cola->elements,imprimir_estado);
+
+    printf("|------------|----------------------|-----------------|\n");
+}
+
+bool es_vrr(){
+	return string_equals_ignore_case(config->ALGORITMO_PLANIFICACION,"VRR");
+}
+
+bool proceso_estado(){
+	
+	imprimir_cola(estado_new, "Nuevo");
+    imprimir_cola(estado_ready, "Listo");
+    imprimir_cola(estado_blocked, "Suspendido");
+	imprimir_cola(estado_exit, "Finalizado");
+	if( es_vrr())
+	imprimir_cola(estado_ready_plus,"Listo VRR");
+	
+	return true;
+}
+
+
 bool finalizar_consola(char** parametros){
 	loguear("Consola finalizada.");	
 	return false;}

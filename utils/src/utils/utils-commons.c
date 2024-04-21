@@ -101,8 +101,7 @@ t_list* get_instrucciones(char* path_inicial,char *nombre_archivo)
 	if(path[path_size - 1] != '/')
 		string_append(&path, "/");
 	string_append(&path, nombre_archivo);
-	loguear("Archivo a ejecutar: %s", path);
-	printf("sizeof(nombre_archivo) %ld",sizeof(nombre_archivo));
+	//loguear("Archivo a ejecutar: %s", path);
 	
 	FILE *archivo;
 
@@ -136,7 +135,7 @@ t_list* get_instrucciones(char* path_inicial,char *nombre_archivo)
         	linea[len - 1] = '\0';
 			
 			list_add(lista_instrucciones, linea);
-			loguear("la linea es:%s\n", linea);
+			//loguear("la linea es:%s\n", linea);
 
 			//free(linea);
 
