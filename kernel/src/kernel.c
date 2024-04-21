@@ -5,7 +5,7 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
-t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus;
+t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_exec;
 
 t_config_kernel* iniciar_config_kernel(char* path_config){
 	t_config* _config = config_create(path_config);
@@ -103,6 +103,7 @@ bool iniciar_estados_planificacion(){
 	estado_ready = queue_create();
 	estado_blocked = queue_create();
 	estado_exit = queue_create();
+	estado_exec = queue_create();
 	if(es_vrr())
 		estado_ready_plus = queue_create();
 	
@@ -361,6 +362,7 @@ bool proceso_estado(){
 	imprimir_cola(estado_new, "Nuevo");
     imprimir_cola(estado_ready, "Listo");
     imprimir_cola(estado_blocked, "Suspendido");
+	imprimir_cola(estado_exec, "Ejecutando");
 	imprimir_cola(estado_exit, "Finalizado");
 	if( es_vrr())
 	imprimir_cola(estado_ready_plus,"Listo VRR");
