@@ -6,6 +6,7 @@ int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_exec;
+t_pcb* pcb_exec;
 
 
 t_alg_planificador get_algoritmo(char* nombre){
@@ -182,7 +183,6 @@ bool iniciar_planificadores(){
 void planificador_largo(){
 	loguear("Se inicio el planificador largo.");
 	
-
 }
 void planificador_corto(){
 		loguear("Se inicio el planificador corto.");
