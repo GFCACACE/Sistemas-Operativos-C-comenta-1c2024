@@ -15,6 +15,15 @@ int main_kernel(int argc, char** argv) {
         finalizar_kernel();
         return EXIT_FAILURE;
     } 
+    /*bool iniciar_planifi = iniciar_planificadores();
+    if(!iniciar_planifi){
+        finalizar_kernel();
+        return EXIT_FAILURE;
+    }
+    else{
+        loguear("iniciar planificador se abrio correctamente.");
+    }*/
+
     
     // enviar_mensaje("Hola desde kernel",cpu_dispatch);
 
@@ -35,7 +44,7 @@ int main_kernel(int argc, char** argv) {
     // mje = recibir_mensaje(cpu_interrupt);
     // free(mje);
 
-	consola();
+	iniciar_consola();
 
     finalizar_kernel();
 

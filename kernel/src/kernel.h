@@ -76,7 +76,6 @@ extern t_queue* io_dialfs;*/
 bool iniciar_kernel(char*);
 bool iniciar_logger_config();
 bool inicializar_comandos();
-void consola();
 char* leer_texto_consola();
 bool iniciar_proceso(char** parametros);
 bool finalizar_proceso(char**);
@@ -89,12 +88,15 @@ void listar_comandos();
 t_list* get_comandos();
 void loguear_config();
 void finalizar_kernel();
-bool ejecutar_comando_consola(char*params);
+int ejecutar_comando_consola(char*params);
 bool ejecutar_scripts_de_archivo(char** parametros);
 void agregar_comando(op_code_kernel code,char* nombre,char* params, bool(*funcion)(char**));
 bool iniciar_estados_planificacion();
 bool iniciar_colas_entrada_salida();
-bool iniciar_consola();
+void iniciar_consola();
+bool iniciar_planificadores();
+void planificador_corto();
+void planificador_largo();
 bool es_vrr();
 
 #endif /* kernel.h*/

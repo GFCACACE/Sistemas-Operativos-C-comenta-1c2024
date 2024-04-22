@@ -16,7 +16,7 @@ t_alg_planificador get_algoritmo(char* nombre){
 	t_alg_planificador algoritmo;
 
     // Función para agregar un algoritmo al diccionario
-    void _agregar(char* _nombre, t_alg_planificador tipo) {
+    void _agregar(char* _nombre, t_alg_planificador tipo){
 		t_alg_planificador *tipo_ptr = malloc(sizeof(t_alg_planificador));
 		*tipo_ptr = tipo;
         dictionary_put(algoritmos, _nombre, tipo_ptr);
@@ -156,20 +156,38 @@ bool iniciar_kernel(char* path_config){
 	iniciar_interrupt()&&
 	iniciar_estados_planificacion()&&
 	iniciar_colas_entrada_salida();
-	//iniciar_consola();
+	//iniciar_planificadores();
 }
 
-bool iniciar_consola(){
-	pthread_t thread_consola; //Inicializo el thread
-	pthread_create(&thread_consola,NULL,consola,NULL);
-	pthread_detach(thread_consola);
-	if (thread_consola == -1){
-		loguear_error("No se pudo iniciar la consola");
+bool iniciar_planificadores(){
+	pthread_t thread_planificador_largo;
+	pthread_t thread_planificador_corto;//Inicializo el thread
+
+	pthread_create(&thread_planificador_largo,NULL, planificador_largo,NULL);
+	pthread_create(&thread_planificador_corto,NULL,planificador_corto,NULL);
+
+	pthread_detach(thread_planificador_largo);
+	if (thread_planificador_largo == -1){
+		loguear_error("No se pudo iniciar el planificador de largo plazo.");
+		return false;
+	}
+	pthread_detach(thread_planificador_corto);
+	if (thread_planificador_corto == -1){
+		loguear_error("No se pudo iniciar el planificador de corto plazo.");
 		return false;
 	}
 	return true;
 }
 
+void planificador_largo(){
+	loguear("Se inicio el planificador largo.");
+	
+
+}
+void planificador_corto(){
+		loguear("Se inicio el planificador corto.");
+
+}
 
 void config_kernel_destroy(t_config_kernel* config){
 
@@ -192,7 +210,9 @@ void loguear_config(){
 
 
 char* leer_texto_consola(){
+	
 	return readline(">");
+
 }
 
 void agregar_comando(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**)){
@@ -213,9 +233,7 @@ void agregar_comando(op_code_kernel code,char* nombre,char* params,bool(*funcion
 }
 
 
-bool existe_comando(char* comando){
-   return (dictionary_has_key(comandos_consola,comando));
-}
+
 
 void imprimir_valores_leidos(char** substrings){
 
@@ -266,22 +284,26 @@ bool ejecutar_scripts_de_archivo(char** parametros){
 	return true;
 
 }
-bool ejecutar_comando_consola(char*params){
+
+bool existe_comando(char* comando){
+   return (dictionary_has_key(comandos_consola,comando));
+}
+int ejecutar_comando_consola(char*params){
 
 	char** parametros = string_split(params," ");  
 	char* comando = parametros[0]; 
 	string_to_upper(comando);
-	bool existe = existe_comando(comando); 
-	bool ejecutado = false;
-		 if(existe)
-			{
-				t_comando_consola* comando_consola = dictionary_get(comandos_consola,comando);
-				if(comando_consola->comando!=EXIT)
-       				ejecutado = comando_consola->funcion(parametros);
-			}
-			else listar_comandos();
+	t_comando_consola* comando_consola = NULL;
+	int numero_comando = NULL;
+	if(existe_comando(comando)){
+		comando_consola = dictionary_get(comandos_consola,comando);
+		numero_comando = comando_consola->comando;
+		if(comando_consola->comando != EXIT){
+       		comando_consola->funcion(parametros);
+		}
+	}
 	free(parametros);
-	return ejecutado;
+	return numero_comando;
 }
 
 
@@ -407,19 +429,19 @@ bool proceso_estado(){
 
 bool finalizar_consola(char** parametros){
 	loguear("Consola finalizada.");	
-	return false;}
+	return false;
+}
 
-void consola(){
+void iniciar_consola(){
 	char *cadenaLeida;
-	listar_comandos();
-	bool continuar=true;
-	 while (continuar) {	
+	int comando = NULL;
+	 while (comando == NULL || comando != EXIT) {
+		listar_comandos();
         cadenaLeida =  leer_texto_consola();	
-        if (!cadenaLeida)                  
-			break; 
-		continuar = ejecutar_comando_consola(cadenaLeida);  		 		
+		comando = ejecutar_comando_consola(cadenaLeida);
 		free(cadenaLeida);
-    }	
+    }
+	
 
 }
 

@@ -32,7 +32,7 @@ int init_suite(void) {
    
     if(  iniciar_kernel_prueba()){
     crear_procesos();
-     consola();
+    iniciar_consola();
 
     }
     
