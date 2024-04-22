@@ -11,6 +11,12 @@
 #include <readline/readline.h>
 #define MODULO "kernel"
 
+typedef enum
+{
+	FIFO,
+	RR,
+	VRR
+}t_alg_planificador;
 typedef struct
 {
 	int PUERTO_ESCUCHA;
@@ -20,7 +26,7 @@ typedef struct
 	char* IP_CPU;
 	int PUERTO_CPU_DISPATCH;
 	int PUERTO_CPU_INTERRUPT;
-	char*  ALGORITMO_PLANIFICACION;
+	t_alg_planificador ALGORITMO_PLANIFICACION;
 	int QUANTUM;
 	char** RECURSOS;
 	char** INSTANCIAS_RECURSOS;
@@ -42,16 +48,6 @@ typedef enum
 	PROCESO_ESTADO,
 	EXIT
 }op_code_kernel;
-
-
-typedef enum
-{
-	FIFO,
-	RR,
-	VRR
-}alg_planificador;
-
-
 
 typedef struct t_comando_consola {
 	op_code_kernel comando;

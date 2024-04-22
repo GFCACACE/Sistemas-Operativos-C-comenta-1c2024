@@ -7,6 +7,39 @@ t_config_kernel* config;
 t_dictionary * comandos_consola;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_exec;
 
+
+t_alg_planificador get_algoritmo(char* nombre){
+
+
+	 // Crear el diccionario de algoritmos
+    t_dictionary *algoritmos = dictionary_create();
+	t_alg_planificador algoritmo;
+
+    // Función para agregar un algoritmo al diccionario
+    void _agregar(char* _nombre, t_alg_planificador tipo) {
+		t_alg_planificador *tipo_ptr = malloc(sizeof(t_alg_planificador));
+		*tipo_ptr = tipo;
+        dictionary_put(algoritmos, _nombre, tipo_ptr);
+    };
+
+	_agregar("FIFO",FIFO);
+	_agregar("RR",RR);
+	_agregar("VRR",VRR);
+
+	t_alg_planificador* algoritmo_ptr= (t_alg_planificador*)dictionary_get(algoritmos, nombre);
+	if(algoritmo_ptr==NULL)	
+	{	
+		perror("Algoritmo de planificación no válido");
+
+		exit(EXIT_FAILURE);
+	}
+	else algoritmo=*algoritmo_ptr;
+	
+	dictionary_destroy_and_destroy_elements(algoritmos,free);
+	return algoritmo;
+
+}
+
 t_config_kernel* iniciar_config_kernel(char* path_config){
 	t_config* _config = config_create(path_config);
 	if(_config ==NULL)
@@ -19,14 +52,15 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 	config_kernel->IP_CPU = config_get_string_value(_config,"IP_CPU");
 	config_kernel->PUERTO_CPU_DISPATCH = config_get_int_value(_config,"PUERTO_CPU_DISPATCH");
 	config_kernel->PUERTO_CPU_INTERRUPT = config_get_int_value(_config,"PUERTO_CPU_INTERRUPT");
-	config_kernel->ALGORITMO_PLANIFICACION = config_get_string_value(_config,"ALGORITMO_PLANIFICACION");
+	config_kernel->ALGORITMO_PLANIFICACION = get_algoritmo(config_get_string_value(_config,"ALGORITMO_PLANIFICACION"));
 	config_kernel->QUANTUM = config_get_int_value(_config,"QUANTUM");
 	config_kernel->RECURSOS = config_get_array_value(_config,"RECURSOS");
 	config_kernel->INSTANCIAS_RECURSOS = config_get_array_value(_config,"INSTANCIAS_RECURSOS");
 	config_kernel->GRADO_MULTIPROGRAMACION = config_get_int_value(_config,"GRADO_MULTIPROGRAMACION_INI");
 	config_kernel->PATH_SCRIPTS = config_get_string_value(_config,"PATH_SCRIPTS");
 	config_kernel->config = _config;
-
+	if(config_kernel->ALGORITMO_PLANIFICACION==-1)
+		return NULL;
 	return config_kernel;
 }
 
@@ -354,7 +388,7 @@ void imprimir_cola(t_queue *cola, const char *estado) {
 }
 
 bool es_vrr(){
-	return string_equals_ignore_case(config->ALGORITMO_PLANIFICACION,"VRR");
+	return config->ALGORITMO_PLANIFICACION == VRR;
 }
 
 bool proceso_estado(){

@@ -52,8 +52,10 @@ void test_sum() {
     CU_ASSERT_EQUAL(sum(0, 0), 0);
     CU_ASSERT_EQUAL(sum(10, -5), 5);
 }
-
-
+void es_FIFO()
+{
+    CU_ASSERT_EQUAL(config->ALGORITMO_PLANIFICACION,FIFO);
+}
 int run_tests() {
     // Ejecutar el test
     
@@ -65,6 +67,7 @@ int run_tests() {
 
     // Añadir las pruebas a la suite
     CU_add_test(suite, "test_sum", test_sum);   
+    CU_add_test(suite, "es_fifo", es_FIFO);   
 
     resumen_tests();
 
