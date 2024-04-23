@@ -60,13 +60,12 @@ t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
 extern t_config_kernel* config;
+extern int grado_multiprogamacion_actual;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 extern t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus,*estado_exec;
-/*extern t_queue* estado_ready;
-extern t_queue* estado_ready_plus;
-extern t_queue* estado_blocked;
-extern t_queue* estado_exit;
+extern t_pcb* pcb_exec;
+/*
 extern t_queue* io_stdin;
 extern t_queue* io_stdout;
 extern t_queue* io_generica;

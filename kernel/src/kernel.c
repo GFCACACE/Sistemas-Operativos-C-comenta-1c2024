@@ -1,12 +1,12 @@
 #include "kernel.h"
 
-
+int grado_multiprogamacion_actual;
 int conexion_memoria, cpu_dispatch,cpu_interrupt;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_exec;
-t_pcb* pcb_exec;
+//t_pcb* pcb_exec;  CAMBIAR DE COLA A UNICO PCB POST MODIFICAR LAS FUNCIONES QUE IMPLEMENTO JOACO
 
 
 t_alg_planificador get_algoritmo(char* nombre){
@@ -99,7 +99,6 @@ bool iniciar_conexion_memoria(){
 		loguear_error("No se pudo conectar memoria");
 		return false;
 	} 
-
 	return true;
 }
 
@@ -115,8 +114,7 @@ bool iniciar_dispatch(){
 
 bool iniciar_interrupt(){
 	 cpu_interrupt = crear_conexion(config->IP_CPU, config->PUERTO_CPU_INTERRUPT);
-	if(cpu_interrupt ==-1){
-		
+	if(cpu_interrupt ==-1){	
 		loguear_error("No se pudo conectar cpu (interrupt)");
 		return false;
 	} 
@@ -183,7 +181,17 @@ bool iniciar_planificadores(){
 void planificador_largo(){
 	loguear("Se inicio el planificador largo.");
 	
+	
 }
+
+/*uint32_t grado_multiprogamacion_actual(){
+	uint32_t grado;
+	grado = list_size(estado_ready->elements) + list_size(estado_blocked->elements);
+	if (pcb_exec != NULL){
+		grado++;
+	}
+}*/
+
 void planificador_corto(){
 		loguear("Se inicio el planificador corto.");
 
