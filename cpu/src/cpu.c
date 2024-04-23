@@ -197,9 +197,12 @@ t_dictionary* iniciar_diccionario_cpu(){
 
 void* interpretar_valor_instruccion(char* valor){
 	if(dictionary_has_key(diccionario_registros_cpu,valor)==true){
-	return dictionary_get(diccionario_registros_cpu,valor);
+	return dictionary_get(diccionario_registros_cpu,valor);//cuando es un puntero que apunta a un registro funciona joya
 	} else{
-		return (void*)(uint32_t)atoi(valor);
+		//Acá me hago lío
+		void* valor_numerico = malloc(sizeof(uint32_t));
+		valor_numerico = (uint32_t*)atoi(valor); 
+		return &valor_numerico;
 	}
 }
 
@@ -221,8 +224,9 @@ bool decode(){
 	sep_instruction = string_split(registros," ");
 	registros_cpu->INSTID = string_duplicate(sep_instruction[0]);
 	if(registros_cpu == NULL) return false;
+	//Acá están las funciones
 	if (sep_instruction[1]) registros_cpu->PARAM1=interpretar_valor_instruccion(sep_instruction[1]);
-	if (sep_instruction[2]) registros_cpu->PARAM2=interpretar_valor_instruccion(sep_instruction[2]);
+	if (sep_instruction[2]) registros_cpu->PARAM2=interpretar_valor_instruccion(sep_instruction[2]);//esta de acá
 	if (sep_instruction[3]) registros_cpu->PARAM3=interpretar_valor_instruccion(sep_instruction[3]);
 	string_array_destroy(sep_instruction);
 	free(registros);
@@ -230,40 +234,40 @@ bool decode(){
 }
 bool execute(){
 	if(!strcmp(registros_cpu->INSTID,"SET")) {
-		exe_set((uint32_t*)registros_cpu->PARAM1,registros_cpu->PARAM2);
+		exe_set(registros_cpu->PARAM1,registros_cpu->PARAM2);
 		return true;
 	}
 	if(!strcmp(registros_cpu->INSTID,"SUM")){ 
-		exe_sum((uint32_t*)registros_cpu->PARAM1,registros_cpu->PARAM2);
+		exe_sum((uint32_t*)registros_cpu->PARAM1,(uint32_t*)registros_cpu->PARAM2);
 		return true;
 	}
 	if(!strcmp(registros_cpu->INSTID,"SUB")){
-		exe_sub((uint32_t*)registros_cpu->PARAM1,registros_cpu->PARAM2);
+		exe_sub((uint32_t*)registros_cpu->PARAM1,(uint32_t*)registros_cpu->PARAM2);
 		return true;
 	}
 	if(!strcmp(registros_cpu->INSTID,"JNZ")){
-		exe_jnz((uint32_t*)registros_cpu->PARAM1,registros_cpu->PARAM2);
+		exe_jnz((uint32_t*)registros_cpu->PARAM1,(uint32_t*)registros_cpu->PARAM2);
 		return true;
 	}
 	return false;
 }
-bool exe_set(uint32_t* registro,uint32_t valor){
-	*registro = valor;
+bool exe_set(void* registro,void* valor){
+	*(uint32_t*)registro =*(uint32_t*)valor;
 	return true;
 }
-bool exe_sum(uint32_t* registro_destino,uint32_t incremento){
-	*registro_destino = *registro_destino + incremento;
-	return true;
-}
-
-bool exe_sub(uint32_t* registro_destino,uint32_t decremento){
-	*registro_destino = *registro_destino - decremento;
+bool exe_sum(uint32_t* registro_destino,uint32_t* incremento){
+	*registro_destino = *registro_destino + *incremento;
 	return true;
 }
 
-bool exe_jnz(uint32_t*registro_destino,uint32_t nro_instruccion){
+bool exe_sub(uint32_t* registro_destino,uint32_t *decremento){
+	*registro_destino = *registro_destino - *decremento;
+	return true;
+}
 
-	if(*registro_destino) registros_cpu->PC = nro_instruccion; 
+bool exe_jnz(uint32_t*registro_destino,uint32_t *nro_instruccion){
+
+	if(*registro_destino) registros_cpu->PC = *nro_instruccion; 
 
 	return true;
 }
