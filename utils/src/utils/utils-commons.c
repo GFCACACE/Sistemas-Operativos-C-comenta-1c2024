@@ -9,7 +9,7 @@ t_pcb* pcb_create(char* path_programa){
 	pcb->registros_cpu = malloc(sizeof(t_registros_cpu));
 	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX=0;
 	pcb->program_counter = 0;    
-	//pcb->quantum = (uint32_t)NULL; // En caso de necesitarlo, el planificador de corto plazo lo inicializará con el valor adecuado 
+	pcb->quantum = 0; // En caso de necesitarlo, el planificador de corto plazo lo inicializará con el valor adecuado 
     pcb->path = string_duplicate(path_programa);
    	return pcb;
 }

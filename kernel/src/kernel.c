@@ -6,38 +6,40 @@ int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_exec;
-//t_pcb* pcb_exec;  CAMBIAR DE COLA A UNICO PCB POST MODIFICAR LAS FUNCIONES QUE IMPLEMENTO JOACO
+t_pcb* pcb_exec;  //CAMBIAR DE COLA A UNICO PCB POST MODIFICAR LAS FUNCIONES QUE IMPLEMENTO JOACO
 
 
-t_alg_planificador get_algoritmo(char* nombre){
+t_planificador get_algoritmo(char* nombre){
 
 
 	 // Crear el diccionario de algoritmos
     t_dictionary *algoritmos = dictionary_create();
-	t_alg_planificador algoritmo;
+	t_planificador planificador;
 
     // Función para agregar un algoritmo al diccionario
-    void _agregar(char* _nombre, t_alg_planificador tipo){
-		t_alg_planificador *tipo_ptr = malloc(sizeof(t_alg_planificador));
-		*tipo_ptr = tipo;
-        dictionary_put(algoritmos, _nombre, tipo_ptr);
+    void _agregar(char* _nombre, t_alg_planificador tipo,void(*funcion)(void*)){
+		t_planificador* planif = malloc(sizeof(t_planificador));
+		planif->id = tipo;
+		planif->planificar = funcion; 		
+		//t_planificador* planif_ptr=*planif;
+        dictionary_put(algoritmos, _nombre, planif);
     };
 
-	_agregar("FIFO",FIFO);
-	_agregar("RR",RR);
-	_agregar("VRR",VRR);
+	_agregar("FIFO",FIFO,&planificacion_FIFO);
+	_agregar("RR",RR,&planificacion_RR);
+	_agregar("VRR",VRR,&planificacion_VRR);
 
-	t_alg_planificador* algoritmo_ptr= (t_alg_planificador*)dictionary_get(algoritmos, nombre);
-	if(algoritmo_ptr==NULL)	
+	t_planificador* planificador_ptr= (t_planificador*)dictionary_get(algoritmos, nombre);
+	if(planificador_ptr==NULL)	
 	{	
 		perror("Algoritmo de planificación no válido");
 
 		exit(EXIT_FAILURE);
 	}
-	else algoritmo=*algoritmo_ptr;
+	else planificador=*planificador_ptr;
 	
 	dictionary_destroy_and_destroy_elements(algoritmos,free);
-	return algoritmo;
+	return planificador;
 
 }
 
@@ -60,7 +62,7 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 	config_kernel->GRADO_MULTIPROGRAMACION = config_get_int_value(_config,"GRADO_MULTIPROGRAMACION_INI");
 	config_kernel->PATH_SCRIPTS = config_get_string_value(_config,"PATH_SCRIPTS");
 	config_kernel->config = _config;
-	if(config_kernel->ALGORITMO_PLANIFICACION==-1)
+	if(config_kernel->ALGORITMO_PLANIFICACION.planificar ==NULL)
 		return NULL;
 	return config_kernel;
 }
@@ -418,7 +420,7 @@ void imprimir_cola(t_queue *cola, const char *estado) {
 }
 
 bool es_vrr(){
-	return config->ALGORITMO_PLANIFICACION == VRR;
+	return config->ALGORITMO_PLANIFICACION.id == VRR;
 }
 
 bool proceso_estado(){
@@ -453,6 +455,30 @@ void iniciar_consola(){
 
 }
 
+void ejecutar_planificacion(){
+	config->ALGORITMO_PLANIFICACION.planificar();
+}
+
+void planificacion_FIFO(){
+	loguear("Planificando por FIFO");
+	t_pcb* pcb = (t_pcb*)queue_pop(estado_ready);
+	if(pcb!=NULL)
+	{	pcb_exec = pcb;
+		loguear_pcb(pcb_exec);
+	}
+
+};
+void planificacion_RR(){
+	loguear("Planificando por Round Robbin");
+	// if(pcb_exec->quantum==0)
+	// 	{
+	// 		t_pcb* pcb = list_get_minimum(estado_ready.el)
+	// 	}
+
+}
+void planificacion_VRR(){
+	loguear("Planificando por Virtual Round Robbin");
+}
 
 
 void config_destroy_kernel(t_config_kernel * config){

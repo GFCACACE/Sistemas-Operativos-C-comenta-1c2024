@@ -17,16 +17,20 @@ typedef enum
 	RR,
 	VRR
 }t_alg_planificador;
+
+typedef struct{
+	t_alg_planificador id;
+	void (*planificar)(void);
+}t_planificador;
 typedef struct
 {
 	int PUERTO_ESCUCHA;
 	char* IP_MEMORIA;
 	int PUERTO_MEMORIA;
-	//char* IP_FILESYSTEM;
 	char* IP_CPU;
 	int PUERTO_CPU_DISPATCH;
 	int PUERTO_CPU_INTERRUPT;
-	t_alg_planificador ALGORITMO_PLANIFICACION;
+	t_planificador ALGORITMO_PLANIFICACION;
 	int QUANTUM;
 	char** RECURSOS;
 	char** INSTANCIAS_RECURSOS;
@@ -97,5 +101,8 @@ bool iniciar_planificadores();
 void planificador_corto();
 void planificador_largo();
 bool es_vrr();
+void planificacion_FIFO();
+void planificacion_RR();
+void planificacion_VRR();
 
 #endif /* kernel.h*/

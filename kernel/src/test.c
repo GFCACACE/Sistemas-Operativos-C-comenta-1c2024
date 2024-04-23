@@ -54,7 +54,8 @@ void test_sum() {
 }
 void es_FIFO()
 {
-    CU_ASSERT_EQUAL(config->ALGORITMO_PLANIFICACION,FIFO);
+    CU_ASSERT_EQUAL(config->ALGORITMO_PLANIFICACION.id,FIFO);
+    ejecutar_planificacion();
 }
 int run_tests() {
     // Ejecutar el test
