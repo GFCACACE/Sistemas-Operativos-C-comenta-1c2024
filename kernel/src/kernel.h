@@ -104,5 +104,6 @@ bool es_vrr();
 void planificacion_FIFO();
 void planificacion_RR();
 void planificacion_VRR();
+void ejecutar_planificacion();
 
 #endif /* kernel.h*/

@@ -5,7 +5,7 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
-t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_exec;
+t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus;
 t_pcb* pcb_exec;  //CAMBIAR DE COLA A UNICO PCB POST MODIFICAR LAS FUNCIONES QUE IMPLEMENTO JOACO
 
 
@@ -17,7 +17,7 @@ t_planificador get_algoritmo(char* nombre){
 	t_planificador planificador;
 
     // Función para agregar un algoritmo al diccionario
-    void _agregar(char* _nombre, t_alg_planificador tipo,void(*funcion)(void*)){
+    void _agregar(char* _nombre, t_alg_planificador tipo,void(*funcion)(void)){
 		t_planificador* planif = malloc(sizeof(t_planificador));
 		planif->id = tipo;
 		planif->planificar = funcion; 		
@@ -137,8 +137,7 @@ bool iniciar_estados_planificacion(){
 	estado_new = queue_create();
 	estado_ready = queue_create();
 	estado_blocked = queue_create();
-	estado_exit = queue_create();
-	estado_exec = queue_create();
+	estado_exit = queue_create();	
 	if(es_vrr())
 		estado_ready_plus = queue_create();
 	
@@ -304,7 +303,7 @@ int ejecutar_comando_consola(char*params){
 	char* comando = parametros[0]; 
 	string_to_upper(comando);
 	t_comando_consola* comando_consola = NULL;
-	int numero_comando = NULL;
+	int numero_comando = -1;
 	if(existe_comando(comando)){
 		comando_consola = dictionary_get(comandos_consola,comando);
 		numero_comando = comando_consola->comando;
@@ -424,14 +423,19 @@ bool es_vrr(){
 }
 
 bool proceso_estado(){
-	
+	t_queue* estado_exec = queue_create();
+	if(pcb_exec!=NULL)
+		queue_push(estado_exec,pcb_exec);
+
 	imprimir_cola(estado_new, "Nuevo");
     imprimir_cola(estado_ready, "Listo");
     imprimir_cola(estado_blocked, "Suspendido");
-	imprimir_cola(estado_exec, "Ejecutando");
+	imprimir_cola(estado_exec, "Ejecutando");	
 	imprimir_cola(estado_exit, "Finalizado");
 	if( es_vrr())
 	imprimir_cola(estado_ready_plus,"Listo VRR");
+
+	queue_destroy(estado_exec);
 	
 	return true;
 }
@@ -444,8 +448,8 @@ bool finalizar_consola(char** parametros){
 
 void iniciar_consola(){
 	char *cadenaLeida;
-	int comando = NULL;
-	 while (comando == NULL || comando != EXIT) {
+	int comando = -1;
+	 while (comando == -1 || comando != EXIT) {
 		listar_comandos();
         cadenaLeida =  leer_texto_consola();	
 		comando = ejecutar_comando_consola(cadenaLeida);
@@ -495,7 +499,6 @@ void liberar_colas(){
 	};
 
 	liberar_cola(estado_blocked);
-	liberar_cola(estado_exec);
 	liberar_cola(estado_exit);
 	liberar_cola(estado_new);
 	liberar_cola(estado_ready);

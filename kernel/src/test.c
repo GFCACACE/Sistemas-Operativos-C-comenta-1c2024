@@ -13,7 +13,7 @@ void crear_procesos(){
      queue_push(estado_blocked,  pcb_create("programa4"));
       queue_push(estado_ready,  pcb_create("programa5"));
 
-       queue_push(estado_exec,  pcb_create("programa6"));
+      pcb_exec =  pcb_create("programa6");
        //queue_push(estado_ready_plus,  pcb_create("programa7"));
     
 }
