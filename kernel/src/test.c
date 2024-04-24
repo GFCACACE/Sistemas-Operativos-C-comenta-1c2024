@@ -6,14 +6,16 @@ int sum(int a, int b) {
 }
 
 void crear_procesos(){
-    queue_push(estado_new,  pcb_create("programa1"));
-     queue_push(estado_new,  pcb_create("programa2"));
 
-     queue_push(estado_ready,  pcb_create("programa3"));
-     queue_push(estado_blocked,  pcb_create("programa4"));
-      queue_push(estado_ready,  pcb_create("programa5"));
+    queue_push(estado_new,  pcb_create_quantum("programa1",2));
+     queue_push(estado_new,  pcb_create_quantum("programa2",3));
+
+     queue_push(estado_ready,  pcb_create_quantum("programa3",3));
+     queue_push(estado_blocked,  pcb_create_quantum("programa4",5));
+      queue_push(estado_ready,  pcb_create_quantum("programa5",2));
 
       pcb_exec =  pcb_create("programa6");
+      pcb_exec->quantum = 0;
        //queue_push(estado_ready_plus,  pcb_create("programa7"));
     
 }
@@ -54,7 +56,7 @@ void test_sum() {
 }
 void es_FIFO()
 {
-    CU_ASSERT_EQUAL(config->ALGORITMO_PLANIFICACION.id,FIFO);
+    CU_ASSERT_EQUAL(config->ALGORITMO_PLANIFICACION.id,RR);
     ejecutar_planificacion();
 }
 int run_tests() {

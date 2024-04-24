@@ -14,6 +14,12 @@ t_pcb* pcb_create(char* path_programa){
    	return pcb;
 }
 
+t_pcb* pcb_create_quantum(char* path_programa,int quantum){
+	t_pcb* pcb = pcb_create(path_programa);
+	pcb->quantum=quantum;
+	return pcb;
+}
+
 void pcb_destroy(t_pcb* pcb){
 	list_destroy(pcb->archivos_abiertos);
 	free(pcb->registros_cpu);

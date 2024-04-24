@@ -45,6 +45,7 @@ typedef struct
 } t_pcb;
 
 t_pcb* pcb_create(char*);
+t_pcb* pcb_create_quantum(char* path_programa,int quantum);
 void pcb_destroy(t_pcb*);
 bool is_numeric(const char*);
 void loguear_pcb(t_pcb*);

@@ -472,12 +472,32 @@ void planificacion_FIFO(){
 	}
 
 };
+
+void ejecutar_proceso(){
+
+	loguear("Se debe enviar el pcb en exec a la cpu");
+}
+
+void interrumpir_por_fin_quantum(){
+	loguear("Se debe pasar el pcb a ready y notificar a la cpu");
+	t_pcb* pcb = pcb_exec;
+	pcb_exec = NULL;
+	queue_push(estado_ready,pcb);
+
+}
+
 void planificacion_RR(){
 	loguear("Planificando por Round Robbin");
-	// if(pcb_exec->quantum==0)
-	// 	{
-	// 		t_pcb* pcb = list_get_minimum(estado_ready.el)
-	// 	}
+	if(pcb_exec->quantum==0)
+		{			
+			t_pcb* pcb = queue_pop(estado_ready);
+			if(pcb!=NULL)
+			{
+				interrumpir_por_fin_quantum();
+				pcb_exec = pcb;				
+			}
+		}
+	ejecutar_proceso();
 
 }
 void planificacion_VRR(){
