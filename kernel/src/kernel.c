@@ -517,9 +517,14 @@ void config_destroy_kernel(t_config_kernel * config){
 }
 
 void liberar_colas(){
+
+	void liberar_pcb(void *pcb){
+		pcb_destroy((t_pcb*)pcb);
+	}
+
 	void liberar_cola(t_queue* cola){
 		if(cola!=NULL)
-			queue_destroy(cola);
+			queue_destroy_and_destroy_elements(cola,liberar_pcb);
 	};
 
 	liberar_cola(estado_blocked);
@@ -527,6 +532,8 @@ void liberar_colas(){
 	liberar_cola(estado_new);
 	liberar_cola(estado_ready);
 	liberar_cola(estado_ready_plus);
+	if(pcb_exec!=NULL)
+		pcb_destroy(pcb_exec);
 	
 }
 
