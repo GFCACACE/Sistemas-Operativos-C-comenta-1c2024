@@ -467,8 +467,7 @@ void planificacion_FIFO(){
 	loguear("Planificando por FIFO");
 	t_pcb* pcb = (t_pcb*)queue_pop(estado_ready);
 	if(pcb!=NULL)
-	{	pcb_exec = pcb;
-		loguear_pcb(pcb_exec);
+	{	pcb_exec = pcb;		
 		ejecutar_proceso();
 	}
 
