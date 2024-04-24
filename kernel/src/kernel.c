@@ -469,6 +469,7 @@ void planificacion_FIFO(){
 	if(pcb!=NULL)
 	{	pcb_exec = pcb;
 		loguear_pcb(pcb_exec);
+		ejecutar_proceso();
 	}
 
 };
@@ -476,13 +477,17 @@ void planificacion_FIFO(){
 void ejecutar_proceso(){
 
 	loguear("Se debe enviar el pcb en exec a la cpu");
+	loguear_pcb(pcb_exec);
+
 }
 
 void interrumpir_por_fin_quantum(){
 	loguear("Se debe pasar el pcb a ready y notificar a la cpu");
+
 	t_pcb* pcb = pcb_exec;
 	pcb_exec = NULL;
 	queue_push(estado_ready,pcb);
+		loguear_pcb(pcb);
 
 }
 

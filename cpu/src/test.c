@@ -86,7 +86,7 @@ int run_tests() {
     CU_add_test(suite, "test_proxima_instruccion", test_proxima_instruccion);
 
     resumen_tests();
-
+test_instrucciones();
 
     return 0;
 }
