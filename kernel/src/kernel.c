@@ -1,6 +1,8 @@
 #include "kernel.h"
+#include "semaphore.h"
 
-int grado_multiprogamacion_actual;
+sem_t sem_grado_multiprogamacion;
+
 int conexion_memoria, cpu_dispatch,cpu_interrupt;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
@@ -155,8 +157,12 @@ bool iniciar_kernel(char* path_config){
 	iniciar_dispatch()&&
 	iniciar_interrupt()&&
 	iniciar_estados_planificacion()&&
-	iniciar_colas_entrada_salida();
-	//iniciar_planificadores();
+	iniciar_colas_entrada_salida()&&
+	iniciar_sem_multiprogramacion();
+}
+bool iniciar_sem_multiprogramacion(){
+	sem_init(&sem_grado_multiprogamacion,0,config->GRADO_MULTIPROGRAMACION);
+	return true;
 }
 
 bool iniciar_planificadores(){
@@ -179,10 +185,14 @@ bool iniciar_planificadores(){
 	return true;
 }
 
+//Este método se llama cuando se inicia un proceso
 void planificador_largo(){
-	loguear("Se inicio el planificador largo.");
-	
-	
+	//Faltaría algo que no haga que arranque esta ejecución cuando inicia el hilo
+	sem_wait(&sem_grado_multiprogamacion); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
+	bool mod = modificacion_estado(estado_new,estado_ready);
+	if(mod){
+		loguear("El proceso ingresó correctamente a la lista de ready");
+	}
 }
 
 /*uint32_t grado_multiprogamacion_actual(){
@@ -352,7 +362,9 @@ void planificador_largo_plazo(){
 
 bool finalizar_proceso(char** substrings){	
 		imprimir_valores_leidos(substrings);
-
+		
+		
+		
 		loguear("Finaliza el proceso <PID> - Motivo: Finalizado por consola");
 
 		return true;
@@ -546,4 +558,24 @@ void finalizar_kernel(){
 	if(logger!=NULL) log_destroy(logger);
 	if(comandos_consola!=NULL) dictionary_destroy(comandos_consola);
 	liberar_colas();
+	sem_destroy(&sem_grado_multiprogamacion);
+}
+
+
+bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
+	if (estado_destino==estado_new){
+		return false;
+	}
+	if(estado_origen==estado_exit){
+		return false;
+	}
+	if(estado_destino==estado_ready && estado_origen==estado_exit){
+		return false;
+	}
+	
+	if(estado_destino==estado_blocked && estado_origen!=estado_new){
+		return false;
+	}	
+	
+	return true;
 }

@@ -86,6 +86,7 @@ bool iniciar_planificacion(char**);
 bool multiprogramacion(char**);
 bool detener_planificacion(char**);
 bool proceso_estado();
+bool modificacion_estado();
 bool finalizar_consola(char**);
 void listar_comandos();
 t_list* get_comandos();
@@ -98,6 +99,7 @@ bool iniciar_estados_planificacion();
 bool iniciar_colas_entrada_salida();
 void iniciar_consola();
 bool iniciar_planificadores();
+bool iniciar_sem_multiprogramacion();
 void planificador_corto();
 void planificador_largo();
 bool es_vrr();
@@ -105,5 +107,13 @@ void planificacion_FIFO();
 void planificacion_RR();
 void planificacion_VRR();
 void ejecutar_planificacion();
-
+void ejecutar_proceso();
 #endif /* kernel.h*/
+
+
+
+/*
+Semaforos necesarios:
+
+semáforo de ejecucion -> 1 valor
+*/
