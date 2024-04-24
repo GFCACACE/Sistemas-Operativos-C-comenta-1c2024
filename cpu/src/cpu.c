@@ -239,15 +239,15 @@ bool execute(){
 		return true;
 	}
 	if(!strcmp(registros_cpu->INSTID,"SUM")){ 
-		exe_sum((uint32_t*)registros_cpu->PARAM1,(uint32_t*)registros_cpu->PARAM2);
+		exe_sum(registros_cpu->PARAM1,registros_cpu->PARAM2);
 		return true;
 	}
 	if(!strcmp(registros_cpu->INSTID,"SUB")){
-		exe_sub((uint32_t*)registros_cpu->PARAM1,(uint32_t*)registros_cpu->PARAM2);
+		exe_sub(registros_cpu->PARAM1,registros_cpu->PARAM2);
 		return true;
 	}
 	if(!strcmp(registros_cpu->INSTID,"JNZ")){
-		exe_jnz((uint32_t*)registros_cpu->PARAM1,(uint32_t*)registros_cpu->PARAM2);
+		exe_jnz(registros_cpu->PARAM1,registros_cpu->PARAM2);
 		return true;
 	}
 	return false;
@@ -256,19 +256,19 @@ bool exe_set(void* registro,void* valor){
 	*(uint32_t*)registro =*(uint32_t*)valor;
 	return true;
 }
-bool exe_sum(uint32_t* registro_destino,uint32_t* incremento){
-	*registro_destino = *registro_destino + *incremento;
+bool exe_sum(void* registro_destino,void* incremento){
+	*(uint32_t*)registro_destino = *(uint32_t*)registro_destino + *(uint32_t*)incremento;
 	return true;
 }
 
-bool exe_sub(uint32_t* registro_destino,uint32_t *decremento){
-	*registro_destino = *registro_destino - *decremento;
+bool exe_sub(void* registro_destino,void *decremento){
+	*(uint32_t*)registro_destino = *(uint32_t*)registro_destino - *(uint32_t*)decremento;
 	return true;
 }
 
-bool exe_jnz(uint32_t*registro_destino,uint32_t *nro_instruccion){
+bool exe_jnz(void*registro_destino,void *nro_instruccion){
 
-	if(*registro_destino) registros_cpu->PC = *nro_instruccion; 
+	if(*(uint32_t*)registro_destino) registros_cpu->PC = *(uint32_t*)nro_instruccion; 
 
 	return true;
 }
