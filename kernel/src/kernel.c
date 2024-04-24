@@ -355,9 +355,7 @@ bool iniciar_proceso(char** parametros){
 	return true;
 }
 
-void planificador_largo_plazo(){
 
-}
 
 
 bool finalizar_proceso(char** substrings){	
@@ -413,6 +411,7 @@ bool multiprogramacion(char** substrings){
 	return true;
 
 }
+
 bool detener_planificacion(char** substrings){return true;}
 
 void imprimir_cola(t_queue *cola, const char *estado) {
@@ -477,11 +476,25 @@ void ejecutar_planificacion(){
 
 void planificacion_FIFO(){
 	loguear("Planificando por FIFO");
+	
+	/* ¿Esto convendria dividirlo en funciones, que cada una se encargue de un estado?
+	por ej, todo lo de abajo estaria en la funcion ready_a_running
+
+	// Antes de hacer el pop en ready, hay que validar que ya salio el proceso que estaba en running
+	// por ej: if (pcb_exec == NULL)
 	t_pcb* pcb = (t_pcb*)queue_pop(estado_ready);
 	if(pcb!=NULL)
 	{	pcb_exec = pcb;		
 		ejecutar_proceso();
 	}
+	*/
+	// faltaria tener en cuenta el resto de los estados, por ej
+	// running_a_ready
+	// running_a_blocked
+	// funcion blocked_a_ready
+	// ready_a_exit???? Esto no es largo plazo??
+
+	// RR podría usar lo mismo, solamente habria que agregar el validador del quantum
 
 };
 
@@ -493,7 +506,7 @@ void ejecutar_proceso(){
 }
 
 void interrumpir_por_fin_quantum(){
-	loguear("Se debe pasar el pcb a ready y notificar a la cpu");
+	loguear("FIN DE QUANTUM: Se debe pasar el pcb a ready y notificar a la cpu");
 
 	t_pcb* pcb = pcb_exec;
 	pcb_exec = NULL;
