@@ -2,7 +2,7 @@
 #define cpu_test_h
 #include "cpu.h"
 
-void test_instrucciones();
+void test_instrucciones(t_pcb* pcb);
 
 extern t_regist_cpu* registros_cpu;
 

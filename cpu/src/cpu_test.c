@@ -1,9 +1,7 @@
 #include "cpu_test.h"
 
-void test_instrucciones(){
-    registros_cpu->BX=1;
-    registros_cpu->CX=2;
-    registros_cpu->IR="SET AX 4";
+void test_instrucciones(t_pcb* pcb){
+    bool flag_fetch=fetch(pcb);
     bool flag_decode = decode();
     if(flag_decode == false){ loguear_error("%s",registros_cpu->IR); return EXIT_FAILURE;}
     loguear("ID:%s P1:%i P2:%i",

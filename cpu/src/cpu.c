@@ -197,12 +197,13 @@ t_dictionary* iniciar_diccionario_cpu(){
 
 void* interpretar_valor_instruccion(char* valor){
 	if(dictionary_has_key(diccionario_registros_cpu,valor)==true){
-	return dictionary_get(diccionario_registros_cpu,valor);//cuando es un puntero que apunta a un registro funciona joya
+	return dictionary_get(diccionario_registros_cpu,valor);
 	} else{
-		//Acá me hago lío
-		void* valor_numerico = malloc(sizeof(uint32_t));
-		valor_numerico = (uint32_t*)atoi(valor); 
-		return &valor_numerico;
+		
+		void* puntero_numerico = malloc(sizeof(uint32_t));
+		 * (uint32_t*)puntero_numerico = atoi(valor); 
+
+		return puntero_numerico;
 	}
 }
 
