@@ -46,7 +46,7 @@ int main_kernel(int argc, char** argv) {
     // printf("cod_op: %d",cod_op_interrupt);
     // mje = recibir_mensaje(cpu_interrupt);
     // free(mje);
-
+    
 	iniciar_consola();
 
     finalizar_kernel();

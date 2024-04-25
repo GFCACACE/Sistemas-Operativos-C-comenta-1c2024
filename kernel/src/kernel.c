@@ -482,12 +482,13 @@ void planificacion_FIFO(){
 
 	// Antes de hacer el pop en ready, hay que validar que ya salio el proceso que estaba en running
 	// por ej: if (pcb_exec == NULL)
+	*/
 	t_pcb* pcb = (t_pcb*)queue_pop(estado_ready);
 	if(pcb!=NULL)
 	{	pcb_exec = pcb;		
 		ejecutar_proceso();
 	}
-	*/
+	
 	// faltaria tener en cuenta el resto de los estados, por ej
 	// running_a_ready
 	// running_a_blocked
@@ -502,6 +503,7 @@ void ejecutar_proceso(){
 
 	loguear("Se debe enviar el pcb en exec a la cpu");
 	loguear_pcb(pcb_exec);
+	enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
 
 }
 

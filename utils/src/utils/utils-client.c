@@ -177,8 +177,6 @@ void enviar_pcb(t_pcb* pcb,op_code operacion,int socket){
 	//	loguear_stream_pcb(stream,size);
 	loguear_pcb(pcb);
 	enviar_stream(stream,size,socket,operacion);
-
-
 	free(stream);
 }
 

@@ -80,7 +80,8 @@ bool iniciar_cpu(char* path_config){
 	iniciar_registros_cpu()	&&
 	iniciar_dispatch()&&
 	iniciar_conexion_memoria()
-	&&iniciar_conexion_kernel();
+	&&
+	iniciar_conexion_kernel();
 
 }
 
@@ -187,4 +188,31 @@ bool exe_jnz(uint32_t*registro_destino,uint32_t nro_instruccion){
 	if(*registro_destino) registros_cpu->PC = nro_instruccion; 
 
 	return true;
+}
+
+void ejecutar_proceso_cpu(){
+	loguear("Arranco la ejecucion del proceso");
+	 while (1) {
+        t_paquete *paquete = recibir_paquete(kernel_dispatch);
+        int cod_op = paquete->codigo_operacion;
+		loguear("Cod op: %d", cod_op);
+        switch (cod_op) {
+            case EJECUTAR_PROCESO:
+                t_pcb *pcb = recibir_pcb(paquete); 
+                ejecutar_programa(pcb);
+				paquete_destroy(paquete);
+                break;				
+			return EXIT_SUCCESS;
+            case -1:
+			loguear_error("el cliente se desconectó. Terminando servidor");
+			paquete_destroy(paquete);
+			return EXIT_FAILURE;
+		    default:
+			log_warning(logger,"Operacion desconocida. No quieras meter la pata");
+			paquete_destroy(paquete);
+			return EXIT_FAILURE;
+        }
+		// Si no se agrega otro caso, convertir switch en IF
+
+    }
 }

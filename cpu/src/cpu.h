@@ -52,6 +52,7 @@ void finalizar_cpu();
 void finalizar_estructuras_cpu();
 void loguear_config();
 void ejecutar_programa(t_pcb* pcb);
+void ejecutar_proceso_cpu();
 int intentar_conexion(char*,int,char*);
 char* pedir_proxima_instruccion(t_pcb* pcb);
 //Instrucciones//////////////////////

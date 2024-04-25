@@ -24,7 +24,9 @@ void crear_procesos(){
 bool iniciar_kernel_prueba(){
  return   iniciar_logger_config("./kernel.config")&&
 	    inicializar_comandos()&&
-        iniciar_estados_planificacion();
+        iniciar_estados_planificacion()&&
+        iniciar_dispatch()&&
+        iniciar_interrupt();
 }
 
 // Función de inicialización de las pruebas
@@ -59,6 +61,12 @@ void es_FIFO()
     CU_ASSERT_EQUAL(config->ALGORITMO_PLANIFICACION.id,RR);
     ejecutar_planificacion();
 }
+
+void envia_pcb()
+{
+    ejecutar_proceso();
+}
+
 int run_tests() {
     // Ejecutar el test
     
@@ -70,7 +78,9 @@ int run_tests() {
 
     // Añadir las pruebas a la suite
     CU_add_test(suite, "test_sum", test_sum);   
-    CU_add_test(suite, "es_fifo", es_FIFO);   
+    CU_add_test(suite, "es_fifo", es_FIFO); 
+    CU_add_test(suite,"envia_pcb",envia_pcb);
+
 
     resumen_tests();
 
