@@ -4,6 +4,7 @@ int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 int cod_op_kernel_dispatch;
 t_config_cpu * config;
 t_regist_cpu* registros_cpu;
+t_dictionary* diccionario_registros_cpu;
 
 t_config_cpu* iniciar_config_cpu(char* path_config){
 	t_config* _config = config_create(path_config);
@@ -34,14 +35,35 @@ bool iniciar_log_config(char* path_config){
 	loguear_config();	
 	return true;
 }
+t_dictionary* iniciar_diccionario_cpu(){
+	t_dictionary* diccionario = dictionary_create();
+	dictionary_put(diccionario,"AX",&registros_cpu->AX);
+	dictionary_put(diccionario,"BX",&registros_cpu->BX);
+	dictionary_put(diccionario,"CX",&registros_cpu->CX);
+	dictionary_put(diccionario,"DX",&registros_cpu->DX);
+	dictionary_put(diccionario,"EAX",&registros_cpu->EAX);
+	dictionary_put(diccionario,"EBX",&registros_cpu->EBX);
+	dictionary_put(diccionario,"ECX",&registros_cpu->ECX);
+	dictionary_put(diccionario,"EDX",&registros_cpu->EDX);
+	dictionary_put(diccionario,"DI",&registros_cpu->DI);
+	dictionary_put(diccionario,"SI",&registros_cpu->SI);
+}
 
 bool iniciar_registros_cpu(){
-	t_regist_cpu* reg_cpu = malloc(sizeof(t_regist_cpu));
-	/*
+	registros_cpu = malloc(sizeof(t_regist_cpu));
+	registros_cpu->IR=string_new();
+	registros_cpu->INSTID=string_new();
+	registros_cpu->PARAM1=malloc(sizeof(uint32_t));
+	registros_cpu->PARAM2=malloc(sizeof(uint32_t));
+	registros_cpu->PARAM3=malloc(sizeof(uint32_t));
+
+	
 	if(registros_cpu == NULL){
 		loguear_error("No se pudieron iniciar los registros correctamente");
 		return false;
-	}*/
+	}
+
+	diccionario_registros_cpu = iniciar_diccionario_cpu();
 
 	return true;
  }
