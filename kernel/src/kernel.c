@@ -189,6 +189,8 @@ void planificador_largo(){
 	//Faltaría algo que no haga que arranque esta ejecución cuando inicia el hilo
 	sem_wait(&sem_grado_multiprogamacion); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
 	bool mod = modificacion_estado(estado_new,estado_ready);
+	// SUGERENCIA: la funcion cambio_de_estado verifica la transicion y además hace efectivo el cambio de colas
+    // bool mod = cambio_de_estado(estado_new, estado_ready);
 	if(mod){
 		loguear("El proceso ingresó correctamente a la lista de ready");
 	}
@@ -486,6 +488,9 @@ void planificacion_FIFO(){
 	if(pcb!=NULL)
 	{	pcb_exec = pcb;		
 		ejecutar_proceso();
+		/*SUGERENCIA
+    de_ready_a_exec();
+    */
 	}
 	
 	// faltaria tener en cuenta el resto de los estados, por ej
@@ -496,6 +501,7 @@ void planificacion_FIFO(){
 
 	// RR podría usar lo mismo, solamente habria que agregar el validador del quantum
 
+	
 };
 
 void ejecutar_proceso(){
@@ -593,3 +599,40 @@ bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
 	
 	return true;
 }
+
+/*SUGERENCIA: 
+funcion que verifique que la transicion pedida sea posible
+luego, con cambio_de_estado efectivizar el paso del pcb de una cola a la otra
+
+bool transicion_invalida(t_queue estado_origen,t_queue* estado_destino){
+    if (estado_destino==estado_new || estado_origen==estado_exit){
+        return false;
+    }
+    if(estado_destino==estado_ready && estado_origen==estado_exit){
+        return false;
+    }
+    if(estado_destino==estado_blocked && estado_origen!=estado_new){
+        return false;
+    }
+
+    return true;
+}
+
+bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino){
+    t_pcb* pcb;
+    bool transicion = transicion_invalida(estado_origen, estado_destino);
+    if(!transicion){
+        pcb = (t_pcb)queue_pop(estado_origen);
+        queue_push(estado_destino, pcb);
+    }
+    return true;
+}
+
+void de_ready_a_exec(){
+    t_pcb pcb = (t_pcb*)queue_pop(estado_ready);
+    if(pcb != NULL){
+        pcb_exec = pcb;
+        ejecutar_proceso();
+    }
+}
+*/
