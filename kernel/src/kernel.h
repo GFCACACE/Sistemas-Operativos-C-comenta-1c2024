@@ -75,7 +75,8 @@ extern t_queue* io_stdout;
 extern t_queue* io_generica;
 extern t_queue* io_dialfs;*/
 
-
+bool iniciar_interrupt();
+bool iniciar_dispatch();
 bool iniciar_kernel(char*);
 bool iniciar_logger_config();
 bool inicializar_comandos();
