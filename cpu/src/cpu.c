@@ -122,7 +122,7 @@ void finalizar_cpu(){
 
 }
 void finalizar_estructuras_cpu(){
-	if(registros_cpu){
+	if(registros_cpu != NULL){
 		free(registros_cpu->AX);
 		free(registros_cpu->BX);
 		free(registros_cpu->CX);
@@ -132,10 +132,20 @@ void finalizar_estructuras_cpu(){
 		free(registros_cpu->ECX);
 		free(registros_cpu->EDX);
 		free(registros_cpu->DI);
-		free(registros_cpu->SI);	
+		free(registros_cpu->SI);
+		free(registros_cpu->IR);
+		free(registros_cpu->INSTID);
+		free(registros_cpu->PARAM1);
+		free(registros_cpu->PARAM2);
+		free(registros_cpu->PARAM3);
 		free(registros_cpu);
 	}
+	if(diccionario_registros_cpu){
+		dictionary_clean(diccionario_registros_cpu);
+		dictionary_destroy(diccionario_registros_cpu);
+	}
 }
+
 
 
 void loguear_config(){
@@ -191,23 +201,94 @@ bool es_exit(char* comando){
  }
 
 
-bool exe_set(uint32_t* registro,uint32_t valor){
-	*registro = valor;
-	return true;
+t_dictionary* iniciar_diccionario_cpu(){
+	t_dictionary* diccionario = dictionary_create();
+	dictionary_put(diccionario,"AX",&registros_cpu->AX);
+	dictionary_put(diccionario,"BX",&registros_cpu->BX);
+	dictionary_put(diccionario,"CX",&registros_cpu->CX);
+	dictionary_put(diccionario,"DX",&registros_cpu->DX);
+	dictionary_put(diccionario,"EAX",&registros_cpu->EAX);
+	dictionary_put(diccionario,"EBX",&registros_cpu->EBX);
+	dictionary_put(diccionario,"ECX",&registros_cpu->ECX);
+	dictionary_put(diccionario,"EDX",&registros_cpu->EDX);
+	dictionary_put(diccionario,"DI",&registros_cpu->DI);
+	dictionary_put(diccionario,"SI",&registros_cpu->SI);
 }
-bool exe_sum(uint32_t* registro_destino,uint32_t incremento){
-	*registro_destino = *registro_destino + incremento;
+
+void* interpretar_valor_instruccion(char* valor){
+	if(dictionary_has_key(diccionario_registros_cpu,valor)==true){
+	return dictionary_get(diccionario_registros_cpu,valor);
+	} else{
+		
+		void* puntero_numerico = malloc(sizeof(uint32_t));
+		 * (uint32_t*)puntero_numerico = atoi(valor); 
+
+		return puntero_numerico;
+	}
+}
+
+bool fetch(t_pcb* pcb){
+	pedir_proxima_instruccion(pcb);
+	registros_cpu->IR = recibir_instruccion();
+	if (registros_cpu->IR == NULL) return false;
 	return true;
 }
 
-bool exe_sub(uint32_t* registro_destino,uint32_t decremento){
-	*registro_destino = *registro_destino - decremento;
+bool decode(){
+	registros_cpu->INSTID = NULL;
+	registros_cpu->PARAM1=NULL;
+	registros_cpu->PARAM2=NULL;
+	registros_cpu->PARAM3=NULL;
+	char**sep_instruction = string_array_new();
+	char* registros = string_new();
+	registros=string_duplicate(registros_cpu->IR);
+	sep_instruction = string_split(registros," ");
+	registros_cpu->INSTID = string_duplicate(sep_instruction[0]);
+	if(registros_cpu == NULL) return false;
+	//Acá están las funciones
+	if (sep_instruction[1]) registros_cpu->PARAM1=interpretar_valor_instruccion(sep_instruction[1]);
+	if (sep_instruction[2]) registros_cpu->PARAM2=interpretar_valor_instruccion(sep_instruction[2]);//esta de acá
+	if (sep_instruction[3]) registros_cpu->PARAM3=interpretar_valor_instruccion(sep_instruction[3]);
+	string_array_destroy(sep_instruction);
+	free(registros);
+	return true;
+}
+bool execute(){
+	if(!strcmp(registros_cpu->INSTID,"SET")) {
+		exe_set(registros_cpu->PARAM1,registros_cpu->PARAM2);
+		return true;
+	}
+	if(!strcmp(registros_cpu->INSTID,"SUM")){ 
+		exe_sum(registros_cpu->PARAM1,registros_cpu->PARAM2);
+		return true;
+	}
+	if(!strcmp(registros_cpu->INSTID,"SUB")){
+		exe_sub(registros_cpu->PARAM1,registros_cpu->PARAM2);
+		return true;
+	}
+	if(!strcmp(registros_cpu->INSTID,"JNZ")){
+		exe_jnz(registros_cpu->PARAM1,registros_cpu->PARAM2);
+		return true;
+	}
+	return false;
+}
+bool exe_set(void* registro,void* valor){
+	*(uint32_t*)registro =*(uint32_t*)valor;
+	return true;
+}
+bool exe_sum(void* registro_destino,void* incremento){
+	*(uint32_t*)registro_destino = *(uint32_t*)registro_destino + *(uint32_t*)incremento;
 	return true;
 }
 
-bool exe_jnz(uint32_t*registro_destino,uint32_t nro_instruccion){
+bool exe_sub(void* registro_destino,void *decremento){
+	*(uint32_t*)registro_destino = *(uint32_t*)registro_destino - *(uint32_t*)decremento;
+	return true;
+}
 
-	if(*registro_destino) registros_cpu->PC = nro_instruccion; 
+bool exe_jnz(void*registro_destino,void *nro_instruccion){
+
+	if(*(uint32_t*)registro_destino) registros_cpu->PC = *(uint32_t*)nro_instruccion; 
 
 	return true;
 }

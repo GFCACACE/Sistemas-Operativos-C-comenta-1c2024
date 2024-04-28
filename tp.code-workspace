@@ -11,7 +11,12 @@
 			"vector": "c",
 			"string_view": "c",
 			"initializer_list": "c",
-			"system_error": "c"
+			"system_error": "c",
+			"*.tcc": "c",
+			"string": "c",
+			"array": "c",
+			"string_view": "c",
+			"ostream": "c"
 		},
 		"C_Cpp.errorSquiggles": "disabled",
 	},

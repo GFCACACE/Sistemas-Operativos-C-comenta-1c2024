@@ -31,7 +31,7 @@ typedef struct{
  t_registro CX;
  t_registro DX;
 
-}t_registros_cpu;
+}t_registros_cpu; /*Sirven para otra cosa o puedo dejar los de CPU?*/
 
 
 typedef struct
