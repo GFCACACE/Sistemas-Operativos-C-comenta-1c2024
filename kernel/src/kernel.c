@@ -9,7 +9,7 @@ int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus;
-t_pcb* pcb_exec;  //CAMBIAR DE COLA A UNICO PCB POST MODIFICAR LAS FUNCIONES QUE IMPLEMENTO JOACO
+t_pcb* pcb_exec; 
 
 
 t_planificador get_algoritmo(char* nombre){
@@ -143,7 +143,7 @@ bool iniciar_estados_planificacion(){
 	if(es_vrr())
 		estado_ready_plus = queue_create();
 	
-	//VALIDAR? SON COMMONS!!!!!!
+	
 	return true;
 }
 
