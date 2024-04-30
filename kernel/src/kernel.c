@@ -98,7 +98,7 @@ bool inicializar_comandos(){
 }
 
 bool iniciar_conexion_memoria(){
-	  conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
+	conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
 	if(conexion_memoria ==-1){
 		
 		loguear_error("No se pudo conectar memoria");
@@ -118,7 +118,7 @@ bool iniciar_dispatch(){
 }
 
 bool iniciar_interrupt(){
-	 cpu_interrupt = crear_conexion(config->IP_CPU, config->PUERTO_CPU_INTERRUPT);
+	cpu_interrupt = crear_conexion(config->IP_CPU, config->PUERTO_CPU_INTERRUPT);
 	if(cpu_interrupt ==-1){	
 		loguear_error("No se pudo conectar cpu (interrupt)");
 		return false;
@@ -193,6 +193,7 @@ void planificador_largo(){
 	sem_wait(&sem_new); //Se enceuntra funcionando cuando se inicia un proceso
 	sem_wait(&sem_grado_multiprogamacion); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
 	// SUGERENCIA: la funcion cambio_de_estado verifica la transicion y además hace efectivo el cambio de colas
+	// bool mod = cambio_de_estado(estado_new, estado_ready);
     bool mod = modificacion_estado(estado_new, estado_ready);
 	if(mod){
 		loguear("El proceso ingresó correctamente a la lista de ready");
@@ -209,8 +210,7 @@ void planificador_largo(){
 }*/
 
 void planificador_corto(){
-		loguear("Se inicio el planificador corto.");
-
+	loguear("Se inicio el planificador corto.");
 }
 
 void config_kernel_destroy(t_config_kernel* config){
@@ -495,10 +495,10 @@ void planificacion_FIFO(){
 	if(pcb!=NULL)
 	{	pcb_exec = pcb;		
 		ejecutar_proceso();
-		/*SUGERENCIA
-    de_ready_a_exec();
-    */
 	}
+	/*SUGERENCIA
+	de_ready_a_exec();
+	*/
 	
 	// faltaria tener en cuenta el resto de los estados, por ej
 	// running_a_ready
@@ -611,35 +611,36 @@ bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
 funcion que verifique que la transicion pedida sea posible
 luego, con cambio_de_estado efectivizar el paso del pcb de una cola a la otra
 
-bool transicion_invalida(t_queue estado_origen,t_queue* estado_destino){
-    if (estado_destino==estado_new || estado_origen==estado_exit){
-        return false;
-    }
-    if(estado_destino==estado_ready && estado_origen==estado_exit){
-        return false;
-    }
-    if(estado_destino==estado_blocked && estado_origen!=estado_new){
-        return false;
-    }
-
-    return true;
+bool transicion_invalida(t_queue* estado_origen,t_queue* estado_destino){
+	if (estado_destino==estado_new || estado_origen==estado_exit){
+		return false;
+	}
+	if(estado_destino==estado_ready && estado_origen==estado_exit){
+		return false;
+	}
+	if(estado_destino==estado_blocked && estado_origen!=estado_new){
+		return false;
+	}	
+	
+	return true;
 }
 
 bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino){
-    t_pcb* pcb;
-    bool transicion = transicion_invalida(estado_origen, estado_destino);
-    if(!transicion){
-        pcb = (t_pcb)queue_pop(estado_origen);
-        queue_push(estado_destino, pcb);
-    }
-    return true;
+	t_pcb* pcb;
+	bool transicion = transicion_invalida(estado_origen, estado_destino);
+	if(!transicion){
+		pcb = (t_pcb*)queue_pop(estado_origen);
+		queue_push(estado_destino, pcb);
+	}
+	return true;
 }
 
 void de_ready_a_exec(){
-    t_pcb pcb = (t_pcb*)queue_pop(estado_ready);
-    if(pcb != NULL){
-        pcb_exec = pcb;
-        ejecutar_proceso();
-    }
+	t_pcb* pcb = (t_pcb*)queue_pop(estado_ready);
+	if(pcb != NULL){
+		pcb_exec = pcb;
+		ejecutar_proceso();
+	}
 }
 */
+
