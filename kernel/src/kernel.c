@@ -2,13 +2,14 @@
 #include "semaphore.h"
 
 sem_t sem_grado_multiprogamacion;
+sem_t sem_new;
 
 int conexion_memoria, cpu_dispatch,cpu_interrupt;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus;
-t_pcb* pcb_exec;  //CAMBIAR DE COLA A UNICO PCB POST MODIFICAR LAS FUNCIONES QUE IMPLEMENTO JOACO
+t_pcb* pcb_exec; 
 
 
 t_planificador get_algoritmo(char* nombre){
@@ -142,7 +143,7 @@ bool iniciar_estados_planificacion(){
 	if(es_vrr())
 		estado_ready_plus = queue_create();
 	
-	//VALIDAR? SON COMMONS!!!!!!
+	
 	return true;
 }
 
@@ -157,10 +158,11 @@ bool iniciar_kernel(char* path_config){
 	iniciar_interrupt()&&
 	iniciar_estados_planificacion()&&
 	iniciar_colas_entrada_salida()&&
-	iniciar_sem_multiprogramacion();
+	iniciar_semaforos();
 }
-bool iniciar_sem_multiprogramacion(){
+bool iniciar_semaforos(){
 	sem_init(&sem_grado_multiprogamacion,0,config->GRADO_MULTIPROGRAMACION);
+	sem_init(&sem_new,0,0);
 	return true;
 }
 
@@ -186,13 +188,16 @@ bool iniciar_planificadores(){
 
 //Este método se llama cuando se inicia un proceso
 void planificador_largo(){
-	//Faltaría algo que no haga que arranque esta ejecución cuando inicia el hilo
+	while(1){
+	//Este semáforo deja bloqueado al planificador de largo plazo
+	sem_wait(&sem_new); //Se enceuntra funcionando cuando se inicia un proceso
 	sem_wait(&sem_grado_multiprogamacion); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
-	bool mod = modificacion_estado(estado_new,estado_ready);
 	// SUGERENCIA: la funcion cambio_de_estado verifica la transicion y además hace efectivo el cambio de colas
 	// bool mod = cambio_de_estado(estado_new, estado_ready);
+    bool mod = modificacion_estado(estado_new, estado_ready);
 	if(mod){
 		loguear("El proceso ingresó correctamente a la lista de ready");
+	}
 	}
 }
 
@@ -327,7 +332,7 @@ int ejecutar_comando_consola(char*params){
 
 
 bool iniciar_proceso(char** parametros){
-
+	sem_post(&sem_new);
 	bool parametros_iniciar_proceso_validos(char** parametros){
 		bool validado = 
 		string_array_size(parametros)==4 &&
@@ -349,7 +354,10 @@ bool iniciar_proceso(char** parametros){
 	char *path = string_duplicate(parametros[1]);
 	loguear("PATH: %s",path);
 	t_pcb* pcb = pcb_create(path);   // Se crea el PCB y se agrega a New
+
 	queue_push(estado_new,pcb);
+	//sem_post(&sem_new);
+
 	free(path);
 		
 	return true;

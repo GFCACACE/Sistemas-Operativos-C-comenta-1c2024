@@ -88,6 +88,7 @@ bool multiprogramacion(char**);
 bool detener_planificacion(char**);
 bool proceso_estado();
 bool modificacion_estado();
+bool iniciar_semaforos();
 bool finalizar_consola(char**);
 void listar_comandos();
 t_list* get_comandos();
