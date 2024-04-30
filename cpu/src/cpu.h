@@ -8,6 +8,7 @@
 #include "utils/utils-server.h"
 #include "utils/utils-client.h"
 #include "utils/utils-config.h"
+#include "utils/utils-commons.h"
 #define MODULO "cpu"
 #define EXIT_PROGRAM "EXIT"
 typedef struct
@@ -25,27 +26,8 @@ typedef struct {
 	int memoria;
 } t_connections_cpu;
 
-typedef struct 
-{
-	uint32_t* PC;
-	uint8_t* AX;
-	uint8_t* BX;
-	uint8_t* CX;
-	uint8_t* DX;
-	uint32_t* EAX;
-	uint32_t* EBX;
-	uint32_t* ECX;
-	uint32_t* EDX;
-	uint32_t* SI;
-	uint32_t* DI;
-	 /*Consultar si se puede poner junto a la estructura*/
-	char* IR;
-	char* INSTID;
-	void* PARAM1;
-	void* PARAM2;
-	void* PARAM3;
-	
-} t_regist_cpu;
+
+
 
 bool iniciar_log_config();
 bool iniciar_registros_cpu();
@@ -91,8 +73,14 @@ bool exe_io_gen_sleep(/*interfaz, unidades de trabajo*/);
 
 extern t_log* logger;
 extern t_config_cpu * config;
-extern t_regist_cpu* registros_cpu;
+extern t_registros_cpu* registros_cpu;
 extern int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 extern int cod_op_kernel_dispatch;
 extern t_dictionary* diccionario_registros_cpu;
+// Cambiar funciones en base a esto!!!!
+extern char* IR;
+extern char* INSTID;
+extern void* PARAM1;
+extern void* PARAM2;
+extern void* PARAM3;
 #endif //cpu_h

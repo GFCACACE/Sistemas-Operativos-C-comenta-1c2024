@@ -139,10 +139,16 @@ t_pcb* recibir_pcb(t_paquete* paquete)
 	recibir_de_buffer(&pcb->prioridad, buffer, sizeof(uint8_t));
 	recibir_de_buffer(&pcb->program_counter, buffer, sizeof(uint32_t));
 	recibir_de_buffer(&pcb->quantum, buffer, sizeof(uint32_t));
-	recibir_de_buffer(&pcb->registros_cpu->AX, buffer, sizeof(t_registro));
-	recibir_de_buffer(&pcb->registros_cpu->BX, buffer, sizeof(t_registro));
-	recibir_de_buffer(&pcb->registros_cpu->CX, buffer, sizeof(t_registro));
-	recibir_de_buffer(&pcb->registros_cpu->DX, buffer, sizeof(t_registro));	
+	recibir_de_buffer(&pcb->registros_cpu->AX, buffer, sizeof(uint8_t));
+	recibir_de_buffer(&pcb->registros_cpu->BX, buffer, sizeof(uint8_t));
+	recibir_de_buffer(&pcb->registros_cpu->CX, buffer, sizeof(uint8_t));
+	recibir_de_buffer(&pcb->registros_cpu->DX, buffer, sizeof(uint8_t));
+	recibir_de_buffer(&pcb->registros_cpu->EAX, buffer, sizeof(uint32_t));	
+	recibir_de_buffer(&pcb->registros_cpu->EBX, buffer, sizeof(uint32_t));		
+	recibir_de_buffer(&pcb->registros_cpu->ECX, buffer, sizeof(uint32_t));	
+	recibir_de_buffer(&pcb->registros_cpu->EDX, buffer, sizeof(uint32_t));	
+	recibir_de_buffer(&pcb->registros_cpu->SI, buffer, sizeof(uint32_t));	
+	recibir_de_buffer(&pcb->registros_cpu->DI, buffer, sizeof(uint32_t));	
 	recibir_de_buffer(&path_size, buffer, sizeof(uint32_t));
 
 	pcb->path = realloc(pcb->path,path_size);

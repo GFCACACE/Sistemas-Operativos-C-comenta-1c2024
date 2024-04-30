@@ -2,8 +2,10 @@
 
 int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 int cod_op_kernel_dispatch;
+char* IR, *INSTID;
+void* PARAM1, *PARAM2, *PARAM3;
 t_config_cpu * config;
-t_regist_cpu* registros_cpu;
+t_registros_cpu* registros_cpu;
 t_dictionary* diccionario_registros_cpu;
 
 t_config_cpu* iniciar_config_cpu(char* path_config){
@@ -53,12 +55,12 @@ t_dictionary* iniciar_diccionario_cpu(){
 }
 
 bool iniciar_registros_cpu(){
-	registros_cpu = malloc(sizeof(t_regist_cpu));
-	registros_cpu->IR=string_new();
-	registros_cpu->INSTID=string_new();
-	registros_cpu->PARAM1=malloc(sizeof(uint32_t));
-	registros_cpu->PARAM2=malloc(sizeof(uint32_t));
-	registros_cpu->PARAM3=malloc(sizeof(uint32_t));
+	registros_cpu = malloc(sizeof(t_registros_cpu));
+	IR=string_new();
+	INSTID=string_new();
+	PARAM1=malloc(sizeof(uint32_t));
+	PARAM2=malloc(sizeof(uint32_t));
+	PARAM3=malloc(sizeof(uint32_t));
 
 	
 	if(registros_cpu == NULL){
@@ -138,11 +140,11 @@ void finalizar_estructuras_cpu(){
 		free(registros_cpu->EDX);
 		free(registros_cpu->DI);
 		free(registros_cpu->SI);
-		free(registros_cpu->IR);
-		free(registros_cpu->INSTID);
-		free(registros_cpu->PARAM1);
-		free(registros_cpu->PARAM2);
-		free(registros_cpu->PARAM3);
+		free(IR);
+		free(INSTID);
+		free(PARAM1);
+		free(PARAM2);
+		free(PARAM3);
 		free(registros_cpu);
 	}
 	if(diccionario_registros_cpu){
@@ -180,6 +182,7 @@ void loguear_config(){
  void ejecutar_instruccion(t_pcb* pcb,char* instruccion){
 
 	loguear("Ejecutando instrucción: %s ...", instruccion);
+	// HACER INSTRUCCION
 	pcb->program_counter++;
 
  }
@@ -191,20 +194,20 @@ bool es_exit(char* comando){
  void ejecutar_programa(t_pcb* pcb){
 	
 	fetch(pcb);
-	while (!es_exit(registros_cpu->IR ))
+	while (!es_exit(IR ))
 	{		
-		ejecutar_instruccion(pcb,registros_cpu->IR);
+		ejecutar_instruccion(pcb,IR);
 	/*	pedirinteerupicion(mensaje a kernel)
 		esperarrespuestakernel
 		hayINterrupcion?*/
-		free(registros_cpu->IR);
+		free(IR);
 		fetch(pcb);		
 	//	mje_inst = pedir_proxima_instruccion(pcb);
 
 	}
 	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
-	if(registros_cpu->IR!=NULL)
-	free(registros_cpu->IR);	
+	if(IR!=NULL)
+	free(IR);	
  }
 
 
@@ -224,46 +227,46 @@ void* interpretar_valor_instruccion(char* valor){
 
 bool fetch(t_pcb* pcb){	
 	
-	registros_cpu->IR = pedir_proxima_instruccion(pcb);
+	IR = pedir_proxima_instruccion(pcb);
 //TODO;	actualizar_pcb(pcb); //sincronizar registros cpu con pcb
-	if (registros_cpu->IR == NULL) return false;
+	if (IR == NULL) return false;
 	return true;
 }
 
 bool decode(){
-	registros_cpu->INSTID = NULL;
-	registros_cpu->PARAM1=NULL;
-	registros_cpu->PARAM2=NULL;
-	registros_cpu->PARAM3=NULL;
+	INSTID = NULL;
+	PARAM1=NULL;
+	PARAM2=NULL;
+	PARAM3=NULL;
 	char**sep_instruction = string_array_new();
 	char* registros = string_new();
-	registros=string_duplicate(registros_cpu->IR);
+	registros=string_duplicate(IR);
 	sep_instruction = string_split(registros," ");
-	registros_cpu->INSTID = string_duplicate(sep_instruction[0]);
-	if(registros_cpu == NULL) return false;
+	INSTID = string_duplicate(sep_instruction[0]);
+	if(registros_cpu == NULL) return false;  // Que valida esto???
 	//Acá están las funciones
-	if (sep_instruction[1]) registros_cpu->PARAM1=interpretar_valor_instruccion(sep_instruction[1]);
-	if (sep_instruction[2]) registros_cpu->PARAM2=interpretar_valor_instruccion(sep_instruction[2]);//esta de acá
-	if (sep_instruction[3]) registros_cpu->PARAM3=interpretar_valor_instruccion(sep_instruction[3]);
+	if (sep_instruction[1]) PARAM1=interpretar_valor_instruccion(sep_instruction[1]);
+	if (sep_instruction[2]) PARAM2=interpretar_valor_instruccion(sep_instruction[2]);//esta de acá
+	if (sep_instruction[3]) PARAM3=interpretar_valor_instruccion(sep_instruction[3]);
 	string_array_destroy(sep_instruction);
 	free(registros);
 	return true;
 }
 bool execute(){
-	if(!strcmp(registros_cpu->INSTID,"SET")) {
-		exe_set(registros_cpu->PARAM1,registros_cpu->PARAM2);
+	if(!strcmp(INSTID,"SET")) {
+		exe_set(PARAM1,PARAM2);
 		return true;
 	}
-	if(!strcmp(registros_cpu->INSTID,"SUM")){ 
-		exe_sum(registros_cpu->PARAM1,registros_cpu->PARAM2);
+	if(!strcmp(INSTID,"SUM")){ 
+		exe_sum(PARAM1,PARAM2);
 		return true;
 	}
-	if(!strcmp(registros_cpu->INSTID,"SUB")){
-		exe_sub(registros_cpu->PARAM1,registros_cpu->PARAM2);
+	if(!strcmp(INSTID,"SUB")){
+		exe_sub(PARAM1,PARAM2);
 		return true;
 	}
-	if(!strcmp(registros_cpu->INSTID,"JNZ")){
-		exe_jnz(registros_cpu->PARAM1,registros_cpu->PARAM2);
+	if(!strcmp(INSTID,"JNZ")){
+		exe_jnz(PARAM1,PARAM2);
 		return true;
 	}
 	return false;

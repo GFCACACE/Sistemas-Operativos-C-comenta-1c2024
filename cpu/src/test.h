@@ -4,6 +4,6 @@
 #include <utils/utils-tests.h>
 
 int run_tests() ;
-extern t_regist_cpu* registros_cpu;
+extern t_registros_cpu* registros_cpu;
 
 #endif

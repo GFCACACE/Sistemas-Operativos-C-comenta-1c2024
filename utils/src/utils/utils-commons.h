@@ -24,14 +24,22 @@ typedef enum
 	EJECUTAR_PROCESO
 }op_code;
 
-typedef uint32_t t_registro;
-typedef struct{
- t_registro AX;
- t_registro BX;
- t_registro CX;
- t_registro DX;
-
-}t_registros_cpu; /*Sirven para otra cosa o puedo dejar los de CPU?*/
+typedef struct 
+{
+	uint32_t* PC;
+	uint8_t* AX;
+	uint8_t* BX;
+	uint8_t* CX;
+	uint8_t* DX;
+	uint32_t* EAX;
+	uint32_t* EBX;
+	uint32_t* ECX;
+	uint32_t* EDX;
+	uint32_t* SI;
+	uint32_t* DI;
+	 /*Consultar si se puede poner junto a la estructura*/
+	
+} t_registros_cpu;
 
 
 typedef struct

@@ -146,7 +146,7 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 	
 	uint32_t path_size = strlen(pcb->path) + 1;
 	//		(PID,pc,quantum,size del path) + registros + prioridad + path_size
-	*size = sizeof(uint32_t) *4 + 4*sizeof(t_registro) + sizeof(uint8_t) + path_size ;
+	*size = sizeof(uint32_t) *10 +  + sizeof(uint8_t) *5 + path_size ;
 	t_buffer* buffer = crear_buffer(*size);
 
 	//loguear("Size PCB:%d",*size);
@@ -155,10 +155,16 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 	agregar_a_buffer(buffer, &pcb->prioridad, sizeof(uint8_t));
 	agregar_a_buffer(buffer, &pcb->program_counter, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &pcb->quantum, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &pcb->registros_cpu->AX, sizeof(t_registro));
-	agregar_a_buffer(buffer, &pcb->registros_cpu->BX, sizeof(t_registro));
-	agregar_a_buffer(buffer, &pcb->registros_cpu->CX, sizeof(t_registro));
-	agregar_a_buffer(buffer, &pcb->registros_cpu->DX, sizeof(t_registro));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->AX, sizeof(uint8_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->BX, sizeof(uint8_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->CX, sizeof(uint8_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->DX, sizeof(uint8_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->EAX, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->EBX, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->ECX, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->EDX, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->SI, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pcb->registros_cpu->DI, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &path_size, sizeof(uint32_t));
 	agregar_a_buffer(buffer, pcb->path, path_size);
 

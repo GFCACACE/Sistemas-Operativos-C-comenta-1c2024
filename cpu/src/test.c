@@ -62,10 +62,10 @@ void test_sum() {
 }
 
 void test_proxima_instruccion(){
-    t_pcb* pcb = pcb_create("programa5.txt");
+    t_pcb* pcb = pcb_create("programa1.txt");
 
-     CU_ASSERT_STRING_EQUAL(pedir_proxima_instruccion(pcb), "hola");
-     pcb->program_counter++;
+    CU_ASSERT_STRING_EQUAL(pedir_proxima_instruccion(pcb), "hola");
+    pcb->program_counter++;
     CU_ASSERT_STRING_EQUAL(pedir_proxima_instruccion(pcb), "que");
     pcb->program_counter++;
     CU_ASSERT_STRING_EQUAL(pedir_proxima_instruccion(pcb), "tal");
@@ -74,7 +74,7 @@ void test_proxima_instruccion(){
 }
 
 void test_ejecutar_programa(){
-    t_pcb* pcb = pcb_create("programa5.txt");
+    t_pcb* pcb = pcb_create("programa1.txt");
 
     ejecutar_programa(pcb);
 
@@ -96,7 +96,7 @@ int run_tests() {
     CU_add_test(suite, "test_ejecutar_programa", test_ejecutar_programa);
 
     resumen_tests();
-  //  test_instrucciones();
+    //  test_instrucciones();
 
     return 0;
 }
