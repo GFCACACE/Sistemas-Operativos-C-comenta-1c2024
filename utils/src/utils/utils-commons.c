@@ -7,7 +7,8 @@ t_pcb* pcb_create(char* path_programa){
 	pcb->PID = ultimo_pid++;
 	pcb->archivos_abiertos = list_create();
 	pcb->registros_cpu = malloc(sizeof(t_registros_cpu));
-	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX= registros_cpu->EAX = registros_cpu->EBX= registros_cpu->ECX= registros_cpu->EDX= registros_cpu->SI= registros_cpu->DI =0;
+	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX=0;
+	pcb->registros_cpu->EAX=pcb->registros_cpu->EBX=pcb->registros_cpu->ECX=pcb->registros_cpu->EDX=pcb->registros_cpu->SI=pcb->registros_cpu->DI=0;
 	pcb->program_counter = 0;    
 	pcb->quantum = 0; // En caso de necesitarlo, el planificador de corto plazo lo inicializará con el valor adecuado 
     pcb->path = string_duplicate(path_programa);

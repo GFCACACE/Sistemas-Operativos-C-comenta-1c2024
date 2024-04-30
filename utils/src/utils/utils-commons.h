@@ -37,7 +37,6 @@ typedef struct
 	uint32_t* EDX;
 	uint32_t* SI;
 	uint32_t* DI;
-	 /*Consultar si se puede poner junto a la estructura*/
 	
 } t_registros_cpu;
 
