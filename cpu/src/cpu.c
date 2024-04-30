@@ -35,6 +35,7 @@ bool iniciar_log_config(char* path_config){
 	loguear_config();	
 	return true;
 }
+
 t_dictionary* iniciar_diccionario_cpu(){
 	t_dictionary* diccionario = dictionary_create();
 	dictionary_put(diccionario,"AX",&registros_cpu->AX);
@@ -47,6 +48,8 @@ t_dictionary* iniciar_diccionario_cpu(){
 	dictionary_put(diccionario,"EDX",&registros_cpu->EDX);
 	dictionary_put(diccionario,"DI",&registros_cpu->DI);
 	dictionary_put(diccionario,"SI",&registros_cpu->SI);
+
+	return diccionario;	
 }
 
 bool iniciar_registros_cpu(){
@@ -83,6 +86,8 @@ bool iniciar_conexion_memoria(){
 	loguear_error("Fallo en la conexión con Memoria");
 	return false;
 	}
+
+	return true;
 }
 
 bool iniciar_conexion_kernel(){
@@ -185,35 +190,25 @@ bool es_exit(char* comando){
 
  void ejecutar_programa(t_pcb* pcb){
 	
-	char* mje_inst = pedir_proxima_instruccion(pcb);
-
-	
-	while (!es_exit(mje_inst))
+	fetch(pcb);
+	while (!es_exit(registros_cpu->IR ))
 	{		
-		ejecutar_instruccion(pcb,mje_inst);
-		free(mje_inst);		
-		mje_inst = pedir_proxima_instruccion(pcb);
+		ejecutar_instruccion(pcb,registros_cpu->IR);
+	/*	pedirinteerupicion(mensaje a kernel)
+		esperarrespuestakernel
+		hayINterrupcion?*/
+		free(registros_cpu->IR);
+		fetch(pcb);		
+	//	mje_inst = pedir_proxima_instruccion(pcb);
 
 	}
 	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
-	if(mje_inst!=NULL)
-	free(mje_inst);	
+	if(registros_cpu->IR!=NULL)
+	free(registros_cpu->IR);	
  }
 
 
-t_dictionary* iniciar_diccionario_cpu(){
-	t_dictionary* diccionario = dictionary_create();
-	dictionary_put(diccionario,"AX",&registros_cpu->AX);
-	dictionary_put(diccionario,"BX",&registros_cpu->BX);
-	dictionary_put(diccionario,"CX",&registros_cpu->CX);
-	dictionary_put(diccionario,"DX",&registros_cpu->DX);
-	dictionary_put(diccionario,"EAX",&registros_cpu->EAX);
-	dictionary_put(diccionario,"EBX",&registros_cpu->EBX);
-	dictionary_put(diccionario,"ECX",&registros_cpu->ECX);
-	dictionary_put(diccionario,"EDX",&registros_cpu->EDX);
-	dictionary_put(diccionario,"DI",&registros_cpu->DI);
-	dictionary_put(diccionario,"SI",&registros_cpu->SI);
-}
+
 
 void* interpretar_valor_instruccion(char* valor){
 	if(dictionary_has_key(diccionario_registros_cpu,valor)==true){
@@ -227,9 +222,10 @@ void* interpretar_valor_instruccion(char* valor){
 	}
 }
 
-bool fetch(t_pcb* pcb){
-	pedir_proxima_instruccion(pcb);
-	registros_cpu->IR = recibir_instruccion();
+bool fetch(t_pcb* pcb){	
+	
+	registros_cpu->IR = pedir_proxima_instruccion(pcb);
+//TODO;	actualizar_pcb(pcb); //sincronizar registros cpu con pcb
 	if (registros_cpu->IR == NULL) return false;
 	return true;
 }
@@ -288,12 +284,14 @@ bool exe_sub(void* registro_destino,void *decremento){
 
 bool exe_jnz(void*registro_destino,void *nro_instruccion){
 
-	if(*(uint32_t*)registro_destino) registros_cpu->PC = *(uint32_t*)nro_instruccion; 
+	if(registro_destino!=NULL && nro_instruccion!=NULL) {
+		*registros_cpu->PC = *(uint32_t*)nro_instruccion; 
+	}
 
 	return true;
 }
 
-void ejecutar_proceso_cpu(){
+int ejecutar_proceso_cpu(){
 	loguear("Arranco la ejecucion del proceso");
 	 while (1) {
         t_paquete *paquete = recibir_paquete(kernel_dispatch);

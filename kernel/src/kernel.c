@@ -130,7 +130,6 @@ bool iniciar_colas_entrada_salida(){
 	t_queue* io_stdout = queue_create();
 	t_queue* io_generica = queue_create();
 	t_queue* io_dialfs = queue_create();
-	///VALIDAR? SON COMMONS!!!!!!
 	return true;
 }
 
@@ -169,8 +168,8 @@ bool iniciar_planificadores(){
 	pthread_t thread_planificador_largo;
 	pthread_t thread_planificador_corto;//Inicializo el thread
 
-	pthread_create(&thread_planificador_largo,NULL, planificador_largo,NULL);
-	pthread_create(&thread_planificador_corto,NULL,planificador_corto,NULL);
+	pthread_create(&thread_planificador_largo,NULL, (void*)planificador_largo,NULL);
+	pthread_create(&thread_planificador_corto,NULL,(void*)planificador_corto,NULL);
 
 	pthread_detach(thread_planificador_largo);
 	if (thread_planificador_largo == -1){
@@ -501,6 +500,7 @@ void planificacion_FIFO(){
 
 	// RR podría usar lo mismo, solamente habria que agregar el validador del quantum
 
+	
 };
 
 void ejecutar_proceso(){

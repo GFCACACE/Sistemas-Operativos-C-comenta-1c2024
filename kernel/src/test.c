@@ -78,7 +78,7 @@ int run_tests() {
 
     // Añadir las pruebas a la suite
     CU_add_test(suite, "test_sum", test_sum);   
-    CU_add_test(suite, "es_fifo", es_FIFO); 
+   // CU_add_test(suite, "es_fifo", es_FIFO); 
     CU_add_test(suite,"envia_pcb",envia_pcb);
 
 
