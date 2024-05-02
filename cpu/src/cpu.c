@@ -294,6 +294,7 @@ bool execute(t_pcb* pcb){
 }
 bool exe_set(void* registro,void* valor){
 	*(uint32_t*)registro =*(uint32_t*)valor;
+	loguear("PC pre execute:%d",registros_cpu->PC);
 	registros_cpu->PC++;
 	loguear("PC post execute:%d",registros_cpu->PC);
 	return true;
