@@ -45,17 +45,19 @@ void config_destroy_cpu(t_config_cpu*);
 void finalizar_cpu();
 void finalizar_estructuras_cpu();
 void loguear_config();
-void ejecutar_programa(t_pcb* pcb);
 int ejecutar_proceso_cpu();
 int intentar_conexion(char*,int,char*);
 char* pedir_proxima_instruccion(t_pcb* pcb);
 
 //Ciclo de Instrucción//////////////////////
-void ciclo_de_instruccion();
+void ciclo_de_instruccion(t_pcb* pcb);
 void* interpretar_valor_instruccion(char*);
 bool fetch(t_pcb*);
 bool decode();
-bool execute();
+bool execute(t_pcb*);
+bool check_interrupt();
+bool actualizar_contexto(t_pcb*);
+bool actualizar_registros(t_pcb*);
 bool exe_set(void*,void*);
 bool exe_mov_in(void*,void*);
 bool exe_mov_out(void*,void*);
@@ -67,7 +69,7 @@ bool exe_copy_string(void*);
 bool exe_wait(/*recurso*/);
 bool exe_signal(/*recurso*/);
 bool exe_exit();
-bool exe_io_gen_sleep(/*interfaz, unidades de trabajo*/);
+bool exe_io_gen_sleep(void*,void*);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 

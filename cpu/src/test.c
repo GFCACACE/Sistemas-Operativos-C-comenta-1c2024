@@ -73,10 +73,10 @@ void test_proxima_instruccion(){
     pcb_destroy(pcb);
 }
 
-void test_ejecutar_programa(){
-    t_pcb* pcb = pcb_create("programa1.txt");
+void test_ciclo_de_instruccion(){
+    t_pcb* pcb = pcb_create("programa5.txt");
 
-    ejecutar_programa(pcb);
+    ciclo_de_instruccion(pcb);
 
     pcb_destroy(pcb);
 }
@@ -93,7 +93,7 @@ int run_tests() {
 
     // Añadir las pruebas a la suite
     CU_add_test(suite, "test_sum", test_sum);
-    CU_add_test(suite, "test_ejecutar_programa", test_ejecutar_programa);
+    CU_add_test(suite, "test_ciclo_de_instruccion", test_ciclo_de_instruccion);
 
     resumen_tests();
     //  test_instrucciones();

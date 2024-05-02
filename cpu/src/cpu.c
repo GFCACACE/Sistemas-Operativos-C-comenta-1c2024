@@ -191,16 +191,19 @@ bool es_exit(char* comando){
 		return string_equals_ignore_case(comando,(char*)EXIT_PROGRAM);
 	}
 
- void ejecutar_programa(t_pcb* pcb){
+ void ciclo_de_instruccion(t_pcb* pcb){
 	
 	fetch(pcb);
 	while (!es_exit(IR ))
 	{		
-		ejecutar_instruccion(pcb,IR);
+		// ejecutar_instruccion(pcb,IR);
 	/*	pedirinteerupicion(mensaje a kernel)
 		esperarrespuestakernel
 		hayINterrupcion?*/
-		free(IR);
+		decode();
+		execute(pcb);
+		// free(IR);
+		check_interrupt();
 		fetch(pcb);		
 	//	mje_inst = pedir_proxima_instruccion(pcb);
 
@@ -227,7 +230,11 @@ void* interpretar_valor_instruccion(char* valor){
 
 bool fetch(t_pcb* pcb){	
 	
+	actualizar_registros(pcb);
 	IR = pedir_proxima_instruccion(pcb);
+	loguear( "PID: <%i> - FETCH - Program Counter: <%i>",
+	pcb->PID,
+	pcb->program_counter);
 //TODO;	actualizar_pcb(pcb); //sincronizar registros cpu con pcb
 	if (IR == NULL) return false;
 	return true;
@@ -252,48 +259,97 @@ bool decode(){
 	free(registros);
 	return true;
 }
-bool execute(){
-	if(!strcmp(INSTID,"SET")) {
+bool execute(t_pcb* pcb){
+	if(strcmp(INSTID,"SET")==0) {
 		exe_set(PARAM1,PARAM2);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>",pcb->PID,INSTID,*(uint32_t*)PARAM1,*(uint32_t*)PARAM2);
+		actualizar_contexto(pcb);
 		return true;
 	}
 	if(!strcmp(INSTID,"SUM")){ 
 		exe_sum(PARAM1,PARAM2);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>",pcb->PID,INSTID,*(uint32_t*)PARAM1,*(uint32_t*)PARAM2);
+		actualizar_contexto(pcb);
 		return true;
 	}
 	if(!strcmp(INSTID,"SUB")){
 		exe_sub(PARAM1,PARAM2);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>",pcb->PID,INSTID,*(uint32_t*)PARAM1,*(uint32_t*)PARAM2);
+		actualizar_contexto(pcb);
 		return true;
 	}
 	if(!strcmp(INSTID,"JNZ")){
 		exe_jnz(PARAM1,PARAM2);
+		actualizar_contexto(pcb);
 		return true;
 	}
+	if(!strcmp(INSTID,"IO_GEN_SLEEP")){
+		exe_io_gen_sleep(PARAM1,PARAM2);
+
+		actualizar_contexto(pcb);
+		return true;
+	}
+	
 	return false;
 }
 bool exe_set(void* registro,void* valor){
 	*(uint32_t*)registro =*(uint32_t*)valor;
+	registros_cpu->PC++;
+	loguear("PC post execute:%d",registros_cpu->PC);
 	return true;
 }
 bool exe_sum(void* registro_destino,void* incremento){
 	*(uint32_t*)registro_destino = *(uint32_t*)registro_destino + *(uint32_t*)incremento;
+	registros_cpu->PC++;
 	return true;
 }
 
 bool exe_sub(void* registro_destino,void *decremento){
 	*(uint32_t*)registro_destino = *(uint32_t*)registro_destino - *(uint32_t*)decremento;
+	registros_cpu->PC++;
 	return true;
 }
 
 bool exe_jnz(void*registro_destino,void *nro_instruccion){
 
 	if(registro_destino!=NULL && nro_instruccion!=NULL) {
+		if(*(uint32_t*)registro_destino != 0)
 		*registros_cpu->PC = *(uint32_t*)nro_instruccion; 
+		else registros_cpu->PC++;
 	}
 
 	return true;
 }
 
+bool exe_io_gen_sleep(void*interfaz,void*unidades_de_trabajo){
+	*(uint32_t*)registros_cpu->PC++;
+	return true;
+}
+
+bool check_interrupt(){
+
+
+
+	return true;
+}
+
+bool actualizar_contexto(t_pcb* pcb){
+
+	*pcb->registros_cpu=*registros_cpu;
+	pcb->program_counter = registros_cpu->PC;
+
+	loguear("PC:%d AX:%d EAX:%d",
+	pcb->registros_cpu->PC,
+	pcb->registros_cpu->AX,
+	pcb->registros_cpu->EAX
+	);
+	return true;
+}
+bool actualizar_registros(t_pcb* pcb){
+	*registros_cpu = *pcb->registros_cpu;
+	registros_cpu->PC = pcb->program_counter;
+	return true;
+}
 int ejecutar_proceso_cpu(){
 	loguear("Arranco la ejecucion del proceso");
 	 while (1) {
@@ -303,7 +359,7 @@ int ejecutar_proceso_cpu(){
         switch (cod_op) {
             case EJECUTAR_PROCESO:
                 t_pcb *pcb = recibir_pcb(paquete); 
-                ejecutar_programa(pcb);
+                ciclo_de_instruccion(pcb);
 				paquete_destroy(paquete);
                 break;				
 			return EXIT_SUCCESS;
