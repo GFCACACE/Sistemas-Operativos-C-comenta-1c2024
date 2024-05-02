@@ -34,7 +34,7 @@ bool iniciar_registros_cpu();
 bool iniciar_dispatch();
 bool iniciar_conexion_memoria();
 bool iniciar_conexion_kernel();
-
+bool iniciar_semaforos();
 
 
 bool iniciar_cpu(char*);
@@ -56,6 +56,7 @@ bool fetch(t_pcb*);
 bool decode();
 bool execute(t_pcb*);
 bool check_interrupt();
+bool devolver_contexto(t_pcb*);
 bool actualizar_contexto(t_pcb*);
 bool actualizar_registros(t_pcb*);
 bool exe_set(void*,void*);
@@ -80,9 +81,11 @@ extern int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 extern int cod_op_kernel_dispatch;
 extern t_dictionary* diccionario_registros_cpu;
 // Cambiar funciones en base a esto!!!!
+extern pthread_t* mutex_interrupt;
 extern char* IR;
 extern char* INSTID;
 extern void* PARAM1;
 extern void* PARAM2;
 extern void* PARAM3;
+extern int cod_op_interrupt;
 #endif //cpu_h

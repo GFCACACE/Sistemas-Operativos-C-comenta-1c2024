@@ -2,8 +2,10 @@
 
 int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 int cod_op_kernel_dispatch;
+int cod_op_interrupt=EJECUTAR_CPU;
 char* IR, *INSTID;
 void* PARAM1, *PARAM2, *PARAM3;
+pthread_t * mutex_interrupt;
 t_config_cpu * config;
 t_registros_cpu* registros_cpu;
 t_dictionary* diccionario_registros_cpu;
@@ -110,10 +112,15 @@ bool iniciar_cpu(char* path_config){
 	iniciar_dispatch()&&
 	iniciar_conexion_memoria()
 	&&
-	iniciar_conexion_kernel();
+	iniciar_conexion_kernel()
+	&&
+	iniciar_semaforos();
 
 }
-
+bool iniciar_semaforos(){
+	pthread_mutex_init(mutex_interrupt,NULL);
+	return true;
+}
 void config_destroy_cpu(t_config_cpu* config){
 
 	 config_destroy(config->config);
@@ -150,6 +157,9 @@ void finalizar_estructuras_cpu(){
 	if(diccionario_registros_cpu){
 		dictionary_clean(diccionario_registros_cpu);
 		dictionary_destroy(diccionario_registros_cpu);
+	}
+	if(mutex_interrupt != NULL){
+		pthread_mutex_destroy(mutex_interrupt);
 	}
 }
 
@@ -327,9 +337,18 @@ bool exe_io_gen_sleep(void*interfaz,void*unidades_de_trabajo){
 	return true;
 }
 
-bool check_interrupt(){
-
-
+bool check_interrupt(t_pcb* pcb){
+	/*cod_op_interrupt debería ser modificada por un thread
+	 dedicado a recibir de kernel si desea interrumpir*/
+	
+	if(cod_op_interrupt = INTERRUMPIR_CPU){
+		devolver_contexto(pcb);
+	}
+	return true;
+}
+bool devolver_contexto(t_pcb* pcb){
+	// el pcb Siempre debe devolverse por dispatch
+	enviar_pcb(pcb,DEVOLVER_CONTEXTO,dispatch);
 
 	return true;
 }

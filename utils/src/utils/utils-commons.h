@@ -17,11 +17,19 @@
 #include <utils/hello.h>
 typedef enum
 {
+	//Genérico
 	MENSAJE,
 	PAQUETE,
-	PROXIMA_INSTRUCCION,
 	FIN_PROGRAMA,
-	EJECUTAR_PROCESO
+	//CPU - Memoria
+	PROXIMA_INSTRUCCION,
+	//Kernel - CPU
+	EJECUTAR_PROCESO,
+	INTERRUMPIR_CPU,
+	EJECUTAR_CPU,
+	//CPU - Kernel
+	DEVOLVER_CONTEXTO
+
 }op_code;
 
 typedef struct 
