@@ -28,7 +28,8 @@ typedef enum
 	INTERRUMPIR_CPU,
 	EJECUTAR_CPU,
 	//CPU - Kernel
-	DEVOLVER_CONTEXTO
+	CPU_INTERRUPT,
+	CPU_EXIT
 
 }op_code;
 

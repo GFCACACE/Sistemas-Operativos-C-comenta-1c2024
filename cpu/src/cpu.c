@@ -2,7 +2,7 @@
 
 int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 int cod_op_kernel_dispatch;
-int cod_op_interrupt=EJECUTAR_CPU;
+int cod_op_kernel_interrupt;
 char* IR, *INSTID;
 void* PARAM1, *PARAM2, *PARAM3;
 pthread_t * mutex_interrupt;
@@ -114,10 +114,11 @@ bool iniciar_cpu(char* path_config){
 	&&
 	iniciar_conexion_kernel()
 	&&
-	iniciar_semaforos();
+	iniciar_variables();
 
 }
-bool iniciar_semaforos(){
+bool iniciar_variables(){
+	cod_op_kernel_interrupt=EJECUTAR_CPU;
 	pthread_mutex_init(mutex_interrupt,NULL);
 	return true;
 }
@@ -137,21 +138,21 @@ void finalizar_cpu(){
 }
 void finalizar_estructuras_cpu(){
 	if(registros_cpu != NULL){
-		free(registros_cpu->AX);
-		free(registros_cpu->BX);
-		free(registros_cpu->CX);
-		free(registros_cpu->DX);
-		free(registros_cpu->EAX);
-		free(registros_cpu->EBX);
-		free(registros_cpu->ECX);
-		free(registros_cpu->EDX);
-		free(registros_cpu->DI);
-		free(registros_cpu->SI);
-		free(IR);
-		free(INSTID);
-		free(PARAM1);
-		free(PARAM2);
-		free(PARAM3);
+		if(registros_cpu->AX !=NULL)free(registros_cpu->AX);
+		// if(registros_cpu->BX !=NULL)free(registros_cpu->BX);
+		if(registros_cpu->CX !=NULL)free(registros_cpu->CX);
+		if(registros_cpu->DX !=NULL)free(registros_cpu->DX);
+		if(registros_cpu->EAX !=NULL)free(registros_cpu->EAX);
+		if(registros_cpu->EBX !=NULL)free(registros_cpu->EBX);
+		if(registros_cpu->ECX !=NULL)free(registros_cpu->ECX);
+		if(registros_cpu->EDX !=NULL)free(registros_cpu->EDX);
+		if(registros_cpu->DI !=NULL)free(registros_cpu->DI);
+		if(registros_cpu->SI !=NULL)free(registros_cpu->SI);
+		// if(IR !=NULL)free(IR);
+		if(INSTID !=NULL)free(INSTID);
+		if(PARAM1 !=NULL)free(PARAM1);
+		if(PARAM2 !=NULL)free(PARAM2);
+		if(PARAM3 !=NULL)free(PARAM3);
 		free(registros_cpu);
 	}
 	if(diccionario_registros_cpu){
@@ -202,25 +203,15 @@ bool es_exit(char* comando){
 	}
 
  void ciclo_de_instruccion(t_pcb* pcb){
-	
-	fetch(pcb);
-	while (!es_exit(IR ))
-	{		
-		// ejecutar_instruccion(pcb,IR);
-	/*	pedirinteerupicion(mensaje a kernel)
-		esperarrespuestakernel
-		hayINterrupcion?*/
+	do{		
+		fetch(pcb);
 		decode();
 		execute(pcb);
-		// free(IR);
-		check_interrupt();
-		fetch(pcb);		
-	//	mje_inst = pedir_proxima_instruccion(pcb);
+		check_interrupt(pcb);
 
-	}
+	}while (es_exit(IR)==false);
 	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
-	if(IR!=NULL)
-	free(IR);	
+	if(IR!=NULL) free(IR);	
  }
 
 
@@ -260,7 +251,8 @@ bool decode(){
 	registros=string_duplicate(IR);
 	sep_instruction = string_split(registros," ");
 	INSTID = string_duplicate(sep_instruction[0]);
-	if(registros_cpu == NULL) return false;  // Que valida esto???
+	if(sep_instruction == NULL||registros_cpu == NULL) return false;
+	if(!strcmp(INSTID,"EXIT")) return true;
 	//Acá están las funciones
 	if (sep_instruction[1]) PARAM1=interpretar_valor_instruccion(sep_instruction[1]);
 	if (sep_instruction[2]) PARAM2=interpretar_valor_instruccion(sep_instruction[2]);//esta de acá
@@ -270,25 +262,26 @@ bool decode(){
 	return true;
 }
 bool execute(t_pcb* pcb){
-	if(strcmp(INSTID,"SET")==0) {
-		exe_set(PARAM1,PARAM2);
+	if(!strcmp(INSTID,"SET")) {
 		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>",pcb->PID,INSTID,*(uint32_t*)PARAM1,*(uint32_t*)PARAM2);
+		exe_set(PARAM1,PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if(!strcmp(INSTID,"SUM")){ 
-		exe_sum(PARAM1,PARAM2);
 		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>",pcb->PID,INSTID,*(uint32_t*)PARAM1,*(uint32_t*)PARAM2);
+		exe_sum(PARAM1,PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if(!strcmp(INSTID,"SUB")){
-		exe_sub(PARAM1,PARAM2);
 		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>",pcb->PID,INSTID,*(uint32_t*)PARAM1,*(uint32_t*)PARAM2);
+		exe_sub(PARAM1,PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if(!strcmp(INSTID,"JNZ")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>",pcb->PID,INSTID,*(uint32_t*)PARAM1,*(uint32_t*)PARAM2);	
 		exe_jnz(PARAM1,PARAM2);
 		actualizar_contexto(pcb);
 		return true;
@@ -299,34 +292,47 @@ bool execute(t_pcb* pcb){
 		actualizar_contexto(pcb);
 		return true;
 	}
+	if(!strcmp(INSTID,"EXIT")){
+		loguear("PID: <%d> - Ejecutando: <%s>",pcb->PID,INSTID);
+		exe_exit(pcb);
+		loguear("Saliendo...");
+		return true;
+	}
 	
 	return false;
 }
 bool exe_set(void* registro,void* valor){
+	int PC = (int)registros_cpu->PC;
 	*(uint32_t*)registro =*(uint32_t*)valor;
-	loguear("PC pre execute:%d",registros_cpu->PC);
-	registros_cpu->PC++;
-	loguear("PC post execute:%d",registros_cpu->PC);
+	PC++;
+	registros_cpu->PC = (uint32_t)PC;
 	return true;
 }
 bool exe_sum(void* registro_destino,void* incremento){
+	int PC = (int)registros_cpu->PC;
 	*(uint32_t*)registro_destino = *(uint32_t*)registro_destino + *(uint32_t*)incremento;
-	registros_cpu->PC++;
+	PC++;
+	registros_cpu->PC = (uint32_t)PC;
 	return true;
 }
 
 bool exe_sub(void* registro_destino,void *decremento){
+	int PC = (int)registros_cpu->PC;
 	*(uint32_t*)registro_destino = *(uint32_t*)registro_destino - *(uint32_t*)decremento;
-	registros_cpu->PC++;
+	PC++;
+	registros_cpu->PC = (uint32_t)PC;
 	return true;
 }
 
 bool exe_jnz(void*registro_destino,void *nro_instruccion){
-
+	int PC = (int)registros_cpu->PC;
 	if(registro_destino!=NULL && nro_instruccion!=NULL) {
-		if(*(uint32_t*)registro_destino != 0)
-		*registros_cpu->PC = *(uint32_t*)nro_instruccion; 
-		else registros_cpu->PC++;
+		if(*(uint32_t*)registro_destino != (uint32_t)0)
+		registros_cpu->PC = *(uint32_t*)nro_instruccion; 
+		else {
+		PC++;
+		registros_cpu->PC = (uint32_t)PC;
+		}
 	}
 
 	return true;
@@ -337,19 +343,24 @@ bool exe_io_gen_sleep(void*interfaz,void*unidades_de_trabajo){
 	return true;
 }
 
+bool exe_exit(t_pcb* pcb){
+	// devolver_contexto(pcb);
+	return true;
+}
+
 bool check_interrupt(t_pcb* pcb){
 	/*cod_op_interrupt debería ser modificada por un thread
 	 dedicado a recibir de kernel si desea interrumpir*/
-	
-	if(cod_op_interrupt = INTERRUMPIR_CPU){
-		devolver_contexto(pcb);
+	if(cod_op_kernel_interrupt == INTERRUMPIR_CPU){
+		// devolver_contexto(pcb);
 	}
 	return true;
 }
 bool devolver_contexto(t_pcb* pcb){
 	// el pcb Siempre debe devolverse por dispatch
-	enviar_pcb(pcb,DEVOLVER_CONTEXTO,dispatch);
-
+	if(!strcmp(INSTID,"EXIT")) enviar_pcb(pcb,CPU_EXIT,dispatch);
+	else enviar_pcb(pcb,CPU_INTERRUPT,dispatch);
+	
 	return true;
 }
 
@@ -358,11 +369,6 @@ bool actualizar_contexto(t_pcb* pcb){
 	*pcb->registros_cpu=*registros_cpu;
 	pcb->program_counter = registros_cpu->PC;
 
-	loguear("PC:%d AX:%d EAX:%d",
-	pcb->registros_cpu->PC,
-	pcb->registros_cpu->AX,
-	pcb->registros_cpu->EAX
-	);
 	return true;
 }
 bool actualizar_registros(t_pcb* pcb){

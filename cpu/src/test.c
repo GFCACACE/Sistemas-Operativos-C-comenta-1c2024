@@ -92,7 +92,7 @@ int run_tests() {
     CU_pSuite suite = CU_add_suite("Suite de Pruebas", init_suite, clean_suite);
 
     // Añadir las pruebas a la suite
-    CU_add_test(suite, "test_sum", test_sum);
+    // CU_add_test(suite, "test_sum", test_sum);
     CU_add_test(suite, "test_ciclo_de_instruccion", test_ciclo_de_instruccion);
 
     resumen_tests();

@@ -34,7 +34,7 @@ bool iniciar_registros_cpu();
 bool iniciar_dispatch();
 bool iniciar_conexion_memoria();
 bool iniciar_conexion_kernel();
-bool iniciar_semaforos();
+bool iniciar_variables();//semáforos y variables globales
 
 
 bool iniciar_cpu(char*);
@@ -55,7 +55,7 @@ void* interpretar_valor_instruccion(char*);
 bool fetch(t_pcb*);
 bool decode();
 bool execute(t_pcb*);
-bool check_interrupt();
+bool check_interrupt(t_pcb*);
 bool devolver_contexto(t_pcb*);
 bool actualizar_contexto(t_pcb*);
 bool actualizar_registros(t_pcb*);
@@ -69,7 +69,7 @@ bool exe_resize(void*);
 bool exe_copy_string(void*);
 bool exe_wait(/*recurso*/);
 bool exe_signal(/*recurso*/);
-bool exe_exit();
+bool exe_exit(t_pcb*);
 bool exe_io_gen_sleep(void*,void*);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
