@@ -14,10 +14,12 @@ int main_cpu(int argc, char** argv) {
         return EXIT_FAILURE;
         }
 
-    //t_pcb* pcb_prueba = pcb_create("programa3.txt");
+    t_pcb* pcb_prueba = pcb_create("programa5.txt");
     //ejecutar_programa(pcb_prueba);
     //pcb_destroy(pcb_prueba);
-    ejecutar_proceso_cpu();
+    ciclo_de_instruccion(pcb_prueba);
+    pcb_destroy(pcb_prueba);
+    finalizar_cpu();
     
 
     return EXIT_SUCCESS;

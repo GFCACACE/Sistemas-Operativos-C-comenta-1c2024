@@ -499,6 +499,8 @@ void planificacion_FIFO(){
 	/*SUGERENCIA
 	de_ready_a_exec();
 	*/
+	// de exec a blocked
+	// y de blocked a ready
 	
 	// faltaria tener en cuenta el resto de los estados, por ej
 	// running_a_ready
@@ -525,12 +527,13 @@ void interrumpir_por_fin_quantum(){
 	t_pcb* pcb = pcb_exec;
 	pcb_exec = NULL;
 	queue_push(estado_ready,pcb);
-		loguear_pcb(pcb);
+	loguear_pcb(pcb);
 
 }
 
 void planificacion_RR(){
 	loguear("Planificando por Round Robbin");
+	//kernel chequea el quantum que le manda cpu luego de cada instrucción
 	if(pcb_exec->quantum==0)
 		{			
 			t_pcb* pcb = queue_pop(estado_ready);
@@ -541,8 +544,15 @@ void planificacion_RR(){
 			}
 		}
 	ejecutar_proceso();
-
 }
+
+// IDEA: en RR, CPU decrementa el quantum hasta llegar a 0 y una vez que llega
+// le avisa a kernel que el proceso terminó.
+// Para VRR, en caso de que el proceso no ejecute todo su quantum se realiza la
+// validacion correspondiente en kernel para saber a qué cola mandar el pcb
+// una manera de distinguir entre IO y fin de proceso es el codigo de op
+// que le manda cpu.
+
 void planificacion_VRR(){
 	loguear("Planificando por Virtual Round Robbin");
 }
