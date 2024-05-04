@@ -74,11 +74,17 @@ bool iniciar_registros_cpu()
 	registros_cpu->EDX = malloc(sizeof(uint32_t));
 	registros_cpu->SI = malloc(sizeof(uint32_t));
 	registros_cpu->DI = malloc(sizeof(uint32_t));
+	// Si implementamos la verison que hariamos en las commons, todo lo de arriba se iria reemplazado por
+	// inicializar_registros(registros_cpu);
+
+
+	// Esto quedaria dentro de la funcion iniciar_registros_cpu
 	IR = string_new();
 	INSTID = string_new();
 	PARAM1 = malloc(sizeof(uint32_t));
 	PARAM2 = malloc(sizeof(uint32_t));
 	PARAM3 = malloc(sizeof(uint32_t));
+
 
 	if (registros_cpu == NULL)
 	{
