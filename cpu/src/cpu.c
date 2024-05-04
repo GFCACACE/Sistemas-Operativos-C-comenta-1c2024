@@ -248,30 +248,27 @@ bool es_exit(char *comando)
 	return string_equals_ignore_case(comando, (char *)EXIT_PROGRAM);
 }
 
-void ciclo_de_instruccion(t_pcb *pcb)
-{
-	do
-	{
+ void ciclo_de_instruccion(t_pcb* pcb){
+	bool flag_interrupt = false;
+	do{		
 		fetch(pcb);
 		decode();
 		execute(pcb);
-		check_interrupt(pcb);
+		flag_interrupt=check_interrupt(pcb);
 
-	} while (es_exit(IR) == false);
-	enviar_texto("fin", FIN_PROGRAMA, conexion_memoria);
-	// if (IR != NULL)
-	// 	free(IR);
-}
+	}while (es_exit(IR)==false && flag_interrupt==false);
+	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
+	if(IR!=NULL) free(IR);	
+ }
 
-void *interpretar_valor_instruccion(char *valor)
-{
-	if (dictionary_has_key(diccionario_registros_cpu, valor) == true)
-	{
-		return dictionary_get(diccionario_registros_cpu, valor);
-	}
-	else
-	{
 
+
+
+void* interpretar_valor_instruccion(char* valor){
+	if(dictionary_has_key(diccionario_registros_cpu,valor)==true){
+	return dictionary_get(diccionario_registros_cpu,valor);
+	} else{
+		
 		void *puntero_numerico = malloc(sizeof(uint32_t));
 		*(uint32_t *)puntero_numerico = atoi(valor);
 
@@ -431,9 +428,16 @@ bool check_interrupt(t_pcb *pcb)
 	if (cod_op_kernel_interrupt == INTERRUMPIR_CPU)
 	{
 		// devolver_contexto(pcb);
+		return true;
 	}
+	return false;
+}
+<<<<<<< HEAD
 
 	return true;
+=======
+	return false;
+>>>>>>> 412b75d (Ejecutar proceso arreglado)
 }
 bool devolver_contexto(t_pcb *pcb)
 {
@@ -468,15 +472,13 @@ int ejecutar_proceso_cpu()
 		t_paquete *paquete = recibir_paquete(kernel_dispatch);
 		int cod_op = paquete->codigo_operacion;
 		loguear("Cod op: %d", cod_op);
-		switch (cod_op)
-		{
-		case EJECUTAR_PROCESO:
-			t_pcb *pcb = recibir_pcb(paquete);
-			ciclo_de_instruccion(pcb);
-			paquete_destroy(paquete);
-			break;
-			return EXIT_SUCCESS;
-		case -1:
+        switch (cod_op) {
+            case EJECUTAR_PROCESO:
+                t_pcb *pcb = recibir_pcb(paquete); 
+                ciclo_de_instruccion(pcb);
+				paquete_destroy(paquete);
+                break;				
+            case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");
 			paquete_destroy(paquete);
 			return EXIT_FAILURE;
