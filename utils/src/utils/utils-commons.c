@@ -7,12 +7,28 @@ t_pcb* pcb_create(char* path_programa){
 	pcb->PID = ultimo_pid++;
 	pcb->archivos_abiertos = list_create();
 	pcb->registros_cpu = malloc(sizeof(t_registros_cpu));
+	inicializar_registros(pcb->registros_cpu);
+	//Seteamos los valores a 0 
 	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX=0;
 	pcb->registros_cpu->EAX=pcb->registros_cpu->EBX=pcb->registros_cpu->ECX=pcb->registros_cpu->EDX=pcb->registros_cpu->SI=pcb->registros_cpu->DI=0;
 	pcb->program_counter = 0;    
 	pcb->quantum = 0; // En caso de necesitarlo, el planificador de corto plazo lo inicializará con el valor adecuado 
     pcb->path = string_duplicate(path_programa);
    	return pcb;
+}
+
+void inicializar_registros (t_registros_cpu* registros){
+	registros->AX = malloc(sizeof(uint8_t));
+	registros->BX = malloc(sizeof(uint8_t));
+	registros->CX = malloc(sizeof(uint8_t));
+	registros->DX = malloc(sizeof(uint8_t));
+	registros->EAX = malloc(sizeof(uint32_t));
+	registros->EBX = malloc(sizeof(uint32_t));
+	registros->ECX = malloc(sizeof(uint32_t));
+	registros->EDX = malloc(sizeof(uint32_t));
+	registros->SI = malloc(sizeof(uint32_t));
+	registros->DI = malloc(sizeof(uint32_t));
+
 }
 
 t_pcb* pcb_create_quantum(char* path_programa,int quantum){
