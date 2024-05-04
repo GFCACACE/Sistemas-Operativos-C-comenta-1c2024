@@ -64,6 +64,10 @@ t_dictionary *iniciar_diccionario_cpu()
 bool iniciar_registros_cpu()
 {
 	registros_cpu = malloc(sizeof(t_registros_cpu));
+	registros_cpu->AX=malloc(sizeof(uint8_t));
+	registros_cpu->BX=malloc(sizeof(uint8_t));
+	registros_cpu->CX=malloc(sizeof(uint8_t));
+	registros_cpu->DX=malloc(sizeof(uint8_t));
 	IR = string_new();
 	INSTID = string_new();
 	PARAM1 = malloc(sizeof(uint32_t));
@@ -154,50 +158,50 @@ void finalizar_estructuras_cpu()
 {
 	if (registros_cpu != NULL)
 	{
-		t_list *lista_de_registros = list_create();
-		void *agregar_registros(void *elem)
-		{
-			list_add(lista_de_registros, elem);
-		}
-		agregar_registros(registros_cpu->AX);
-		agregar_registros(registros_cpu->BX);
-		agregar_registros(registros_cpu->CX);
-		agregar_registros(registros_cpu->DX);
-		agregar_registros(registros_cpu->EAX);
-		agregar_registros(registros_cpu->EBX);
-		agregar_registros(registros_cpu->ECX);
-		agregar_registros(registros_cpu->EDX);
-		agregar_registros(registros_cpu->DI);
-		agregar_registros(registros_cpu->SI);
-		agregar_registros(IR);
-		agregar_registros(PARAM1);
-		agregar_registros(PARAM2);
-		agregar_registros(PARAM3);
-		agregar_registros(INSTID);
+	// 	t_list *lista_de_registros = list_create();
+	// 	void *agregar_registros(void *elem)
+	// 	{
+	// 		list_add(lista_de_registros, elem);
+	// 	}
+	// 	agregar_registros(registros_cpu->AX);
+	// 	agregar_registros(registros_cpu->BX);
+	// 	agregar_registros(registros_cpu->CX);
+	// 	agregar_registros(registros_cpu->DX);
+	// 	agregar_registros(registros_cpu->EAX);
+	// 	agregar_registros(registros_cpu->EBX);
+	// 	agregar_registros(registros_cpu->ECX);
+	// 	agregar_registros(registros_cpu->EDX);
+	// 	agregar_registros(registros_cpu->DI);
+	// 	agregar_registros(registros_cpu->SI);
+	// 	agregar_registros(IR);
+	// 	agregar_registros(PARAM1);
+	// 	agregar_registros(PARAM2);
+	// 	agregar_registros(PARAM3);
+	// 	agregar_registros(INSTID);
 
-		void liberar(void *elem)
-		{
-			if (elem != NULL)
-			{
-				free(elem);
-			}
-		}
-		list_destroy_and_destroy_elements(lista_de_registros, liberar);
-		// if(registros_cpu->AX !=NULL)free(registros_cpu->AX);
-		// // if(registros_cpu->BX !=NULL)free(registros_cpu->BX);
-		// if(registros_cpu->CX !=NULL)free(registros_cpu->CX);
-		// if(registros_cpu->DX !=NULL)free(registros_cpu->DX);
-		// if(registros_cpu->EAX !=NULL)free(registros_cpu->EAX);
-		// if(registros_cpu->EBX !=NULL)free(registros_cpu->EBX);
-		// if(registros_cpu->ECX !=NULL)free(registros_cpu->ECX);
-		// if(registros_cpu->EDX !=NULL)free(registros_cpu->EDX);
-		// if(registros_cpu->DI !=NULL)free(registros_cpu->DI);
-		// if(registros_cpu->SI !=NULL)free(registros_cpu->SI);
-		// // if(IR !=NULL)free(IR);
-		// if(INSTID !=NULL)free(INSTID);
-		// if(PARAM1 !=NULL)free(PARAM1);
-		// if(PARAM2 !=NULL)free(PARAM2);
-		// if(PARAM3 !=NULL)free(PARAM3);
+	// 	void liberar(void *elem)
+	// 	{
+	// 		if (elem != NULL)
+	// 		{
+	// 			free(elem);
+	// 		}
+	// 	}
+	// 	list_destroy_and_destroy_elements(lista_de_registros, liberar);
+		if(registros_cpu->AX !=NULL)free(registros_cpu->AX);
+		if(registros_cpu->BX !=NULL)free(registros_cpu->BX);
+		if(registros_cpu->CX !=NULL)free(registros_cpu->CX);
+		if(registros_cpu->DX !=NULL)free(registros_cpu->DX);
+		if(registros_cpu->EAX !=NULL)free(registros_cpu->EAX);
+		if(registros_cpu->EBX !=NULL)free(registros_cpu->EBX);
+		if(registros_cpu->ECX !=NULL)free(registros_cpu->ECX);
+		if(registros_cpu->EDX !=NULL)free(registros_cpu->EDX);
+		if(registros_cpu->DI !=NULL)free(registros_cpu->DI);
+		if(registros_cpu->SI !=NULL)free(registros_cpu->SI);
+		if(IR !=NULL)free(IR);
+		if(INSTID !=NULL)free(INSTID);
+		if(PARAM1 !=NULL)free(PARAM1);
+		if(PARAM2 !=NULL)free(PARAM2);
+		if(PARAM3 !=NULL)free(PARAM3);
 		free(registros_cpu);
 	}
 	if (diccionario_registros_cpu)
@@ -205,7 +209,7 @@ void finalizar_estructuras_cpu()
 		dictionary_clean(diccionario_registros_cpu);
 		dictionary_destroy(diccionario_registros_cpu);
 	}
-	// // if (mutex_interrupt != NULL)
+	// if (mutex_interrupt != NULL)
 	// {
 	// 	pthread_mutex_destroy(mutex_interrupt);
 	// }
@@ -271,7 +275,6 @@ void* interpretar_valor_instruccion(char* valor){
 		
 		void *puntero_numerico = malloc(sizeof(uint32_t));
 		*(uint32_t *)puntero_numerico = atoi(valor);
-
 		return puntero_numerico;
 	}
 }
@@ -366,7 +369,8 @@ bool execute(t_pcb *pcb)
 bool exe_set(void *registro, void *valor)
 {
 	int PC = (int)registros_cpu->PC;
-	*(uint32_t *)registro = *(uint32_t *)valor;
+	memcpy(registro,valor,sizeof(uint8_t));
+	// *(uint32_t *)registro = *(uint32_t *)valor;
 	PC++;
 	registros_cpu->PC = (uint32_t)PC;
 	return true;
@@ -431,13 +435,6 @@ bool check_interrupt(t_pcb *pcb)
 		return true;
 	}
 	return false;
-}
-<<<<<<< HEAD
-
-	return true;
-=======
-	return false;
->>>>>>> 412b75d (Ejecutar proceso arreglado)
 }
 bool devolver_contexto(t_pcb *pcb)
 {

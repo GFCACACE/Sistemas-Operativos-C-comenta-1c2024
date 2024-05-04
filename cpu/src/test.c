@@ -75,7 +75,7 @@ void test_proxima_instruccion(){
 
 void test_ciclo_de_instruccion(){
     t_pcb* pcb = pcb_create("programa5.txt");
-
+    iniciar_registros_cpu();
     ciclo_de_instruccion(pcb);
 
     pcb_destroy(pcb);
