@@ -21,6 +21,9 @@ int iniciar_servidor(int puerto)
 
 	// Creamos el socket de escucha del servidor
 	socket_servidor= socket(servinfo->ai_family,servinfo->ai_socktype,servinfo->ai_protocol);
+
+	int optval = 1;
+    setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
 	// Asociamos el socket a un puerto
 	bind(socket_servidor,servinfo->ai_addr,servinfo->ai_addrlen);
 	// Escuchamos las conexiones entrantes
