@@ -68,6 +68,12 @@ bool iniciar_registros_cpu()
 	registros_cpu->BX=malloc(sizeof(uint8_t));
 	registros_cpu->CX=malloc(sizeof(uint8_t));
 	registros_cpu->DX=malloc(sizeof(uint8_t));
+	registros_cpu->EAX = malloc(sizeof(uint32_t));
+	registros_cpu->EBX = malloc(sizeof(uint32_t));
+	registros_cpu->ECX = malloc(sizeof(uint32_t));
+	registros_cpu->EDX = malloc(sizeof(uint32_t));
+	registros_cpu->SI = malloc(sizeof(uint32_t));
+	registros_cpu->DI = malloc(sizeof(uint32_t));
 	IR = string_new();
 	INSTID = string_new();
 	PARAM1 = malloc(sizeof(uint32_t));
