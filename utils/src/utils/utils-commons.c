@@ -6,8 +6,28 @@ t_pcb* pcb_create(char* path_programa){
 	t_pcb* pcb = malloc(sizeof(t_pcb));
 	pcb->PID = ultimo_pid++;
 	pcb->archivos_abiertos = list_create();
+	// Se puede implementar la funcion que esta en cpu.c bool iniciar_registros_cpu()
+	// Habria que adaptarla, xq esta inicializa los registros de cpu, y aca necesita inicializar los de un PCB
+	/* seria algo asi:
+	bool inicializar_registros(pcb->registros_cpu);
+
+
+	continua implementacion posible abajo de esta funcion
+
+*/
 	pcb->registros_cpu = malloc(sizeof(t_registros_cpu));
-	inicializar_registros(pcb->registros_cpu);
+
+	pcb->registros_cpu->AX = malloc(sizeof(uint8_t));
+	pcb->registros_cpu->BX = malloc(sizeof(uint8_t));
+	pcb->registros_cpu->CX = malloc(sizeof(uint8_t));
+	pcb->registros_cpu->DX = malloc(sizeof(uint8_t));
+	pcb->registros_cpu->EAX = malloc(sizeof(uint32_t));
+	pcb->registros_cpu->EBX = malloc(sizeof(uint32_t));
+	pcb->registros_cpu->ECX = malloc(sizeof(uint32_t));
+	pcb->registros_cpu->EDX = malloc(sizeof(uint32_t));
+	pcb->registros_cpu->SI = malloc(sizeof(uint32_t));
+	pcb->registros_cpu->DI = malloc(sizeof(uint32_t));
+
 	//Seteamos los valores a 0 
 	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX=0;
 	pcb->registros_cpu->EAX=pcb->registros_cpu->EBX=pcb->registros_cpu->ECX=pcb->registros_cpu->EDX=pcb->registros_cpu->SI=pcb->registros_cpu->DI=0;
@@ -17,19 +37,34 @@ t_pcb* pcb_create(char* path_programa){
    	return pcb;
 }
 
-void inicializar_registros (t_registros_cpu* registros){
-	registros->AX = malloc(sizeof(uint8_t));
-	registros->BX = malloc(sizeof(uint8_t));
-	registros->CX = malloc(sizeof(uint8_t));
-	registros->DX = malloc(sizeof(uint8_t));
-	registros->EAX = malloc(sizeof(uint32_t));
-	registros->EBX = malloc(sizeof(uint32_t));
-	registros->ECX = malloc(sizeof(uint32_t));
-	registros->EDX = malloc(sizeof(uint32_t));
-	registros->SI = malloc(sizeof(uint32_t));
-	registros->DI = malloc(sizeof(uint32_t));
+// bool inicializar_registros (t_registros_cpu* registros_cpu){
+// 	registros_cpu = malloc(sizeof(t_registros_cpu));
 
-}
+// 	registros_cpu->AX = malloc(sizeof(uint8_t));
+// 	registros_cpu->BX = malloc(sizeof(uint8_t));
+// 	registros_cpu->CX = malloc(sizeof(uint8_t));
+// 	registros_cpu->DX = malloc(sizeof(uint8_t));
+// 	registros_cpu->EAX = malloc(sizeof(uint32_t));
+// 	registros_cpu->EBX = malloc(sizeof(uint32_t));
+// 	registros_cpu->ECX = malloc(sizeof(uint32_t));
+// 	registros_cpu->EDX = malloc(sizeof(uint32_t));
+// 	registros_cpu->SI = malloc(sizeof(uint32_t));
+// 	registros_cpu->DI = malloc(sizeof(uint32_t));
+
+//	if (registros_cpu == NULL)
+	// {
+	// 	loguear_error("No se pudieron iniciar los registros correctamente");
+	// 	return false;
+	// }
+	// FALTARIAN LOS DICCIONARIOS QUE ESO SI SE HACE EN LA FUNCION DE CPU
+	// HABRIA Q INICIALIZAR LOS DICCIONARIOS EN OTRA FUNCION EN CPU
+	// return true;
+
+
+// }
+
+
+
 
 t_pcb* pcb_create_quantum(char* path_programa,int quantum){
 	t_pcb* pcb = pcb_create(path_programa);
