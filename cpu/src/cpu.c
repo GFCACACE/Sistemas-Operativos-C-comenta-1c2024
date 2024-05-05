@@ -63,6 +63,7 @@ t_dictionary *iniciar_diccionario_cpu()
 
 bool iniciar_registros_cpu()
 {
+	/*
 	registros_cpu = malloc(sizeof(t_registros_cpu));
 	registros_cpu->AX=malloc(sizeof(uint8_t));
 	registros_cpu->BX=malloc(sizeof(uint8_t));
@@ -73,10 +74,12 @@ bool iniciar_registros_cpu()
 	registros_cpu->ECX = malloc(sizeof(uint32_t));
 	registros_cpu->EDX = malloc(sizeof(uint32_t));
 	registros_cpu->SI = malloc(sizeof(uint32_t));
-	registros_cpu->DI = malloc(sizeof(uint32_t));
+	registros_cpu->DI = malloc(sizeof(uint32_t));*/
 	// Si implementamos la verison que hariamos en las commons, todo lo de arriba se iria reemplazado por
-	// inicializar_registros(registros_cpu);
+	loguear("CPU inicializará registros");
+	registros_cpu = inicializar_registros(registros_cpu);
 
+	loguear("Registros CPU logueados");
 
 	// Esto quedaria dentro de la funcion iniciar_registros_cpu
 	IR = string_new();
