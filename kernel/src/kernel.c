@@ -8,7 +8,8 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
-t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus;
+t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus,
+		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
 t_pcb* pcb_exec; 
 
 
@@ -86,7 +87,7 @@ bool iniciar_logger_config(char* path_config){
 bool inicializar_comandos(){
 	comandos_consola  =  dictionary_create();
     agregar_comando(EJECUTAR_SCRIPT,"EJECUTAR_SCRIPT","[PATH]",&ejecutar_scripts_de_archivo);
-    agregar_comando(INICIAR_PROCESO,"INICIAR_PROCESO","[PATH] [SIZE] [PRIORIDAD]",&iniciar_proceso);
+    agregar_comando(INICIAR_PROCESO,"INICIAR_PROCESO","[PATH]",&iniciar_proceso);
 	agregar_comando(FINALIZAR_PROCESO,"FINALIZAR_PROCESO","[PID]",&finalizar_proceso);
     agregar_comando(DETENER_PLANIFICACION,"DETENER_PLANIFICACION","[]",&iniciar_planificacion);
 	agregar_comando(INICIAR_PLANIFICACION,"INICIAR_PLANIFICACION","[]",&multiprogramacion);
@@ -127,10 +128,10 @@ bool iniciar_interrupt(){
 }
 
 bool iniciar_colas_entrada_salida(){
-	t_queue* io_stdin = queue_create();
-	t_queue* io_stdout = queue_create();
-	t_queue* io_generica = queue_create();
-	t_queue* io_dialfs = queue_create();
+	io_stdin = queue_create();
+	io_stdout = queue_create();
+	io_generica = queue_create();
+	io_dialfs = queue_create();
 	return true;
 }
 
@@ -335,12 +336,10 @@ bool iniciar_proceso(char** parametros){
 	sem_post(&sem_new);
 	bool parametros_iniciar_proceso_validos(char** parametros){
 		bool validado = 
-		string_array_size(parametros)==4 &&
-		is_numeric(parametros[2]) &&
-		is_numeric(parametros[3]);
+		string_array_size(parametros)==2;
 		
 		if(!validado)
-			printf("\tINICIAR_PROCESO debe recibir 3 parámetros:\n\tPath (string)\n\tSize (int)\n\tPrioridad (int)\n");
+			printf("\tINICIAR_PROCESO debe recibir 1 parámetro:\n\tPath (string)\n");
 
 		return validado;
 	}
@@ -581,6 +580,10 @@ void liberar_colas(){
 	liberar_cola(estado_new);
 	liberar_cola(estado_ready);
 	liberar_cola(estado_ready_plus);
+	liberar_cola(io_stdin);
+	liberar_cola(io_stdout);
+	liberar_cola(io_generica);
+	liberar_cola(io_dialfs);
 	if(pcb_exec!=NULL)
 		pcb_destroy(pcb_exec);
 	
