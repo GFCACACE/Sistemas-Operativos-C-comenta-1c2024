@@ -71,6 +71,6 @@ char * uint_a_string(uint);
 t_list* get_instrucciones(char* path_inicial,char *nombre_archivo);
 char* get_linea_archivo(char* directorio,char* nombre_archivo,int posicion);
 
-void inicializar_registros (t_pcb*);
+t_registros_cpu* inicializar_registros (t_registros_cpu*);
 
 #endif /* utils_commons_h */

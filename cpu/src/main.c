@@ -15,6 +15,7 @@ int main_cpu(int argc, char** argv) {
         }
 
     t_pcb* pcb_prueba = pcb_create("programa5.txt");
+    loguear_pcb(pcb_prueba);
     //ejecutar_programa(pcb_prueba);
     //pcb_destroy(pcb_prueba);
     ciclo_de_instruccion(pcb_prueba);

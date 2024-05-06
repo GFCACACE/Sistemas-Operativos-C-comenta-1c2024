@@ -8,60 +8,33 @@ t_pcb* pcb_create(char* path_programa){
 	pcb->archivos_abiertos = list_create();
 	// Se puede implementar la funcion que esta en cpu.c bool iniciar_registros_cpu()
 	// Habria que adaptarla, xq esta inicializa los registros de cpu, y aca necesita inicializar los de un PCB
-	/* seria algo asi:
-	bool inicializar_registros(pcb->registros_cpu);
+	 
+	pcb->registros_cpu = inicializar_registros(pcb->registros_cpu);
 
-
-	continua implementacion posible abajo de esta funcion
-
-*/
-	pcb->registros_cpu = malloc(sizeof(t_registros_cpu));
-
-	pcb->registros_cpu->AX = malloc(sizeof(uint8_t));
-	pcb->registros_cpu->BX = malloc(sizeof(uint8_t));
-	pcb->registros_cpu->CX = malloc(sizeof(uint8_t));
-	pcb->registros_cpu->DX = malloc(sizeof(uint8_t));
-	pcb->registros_cpu->EAX = malloc(sizeof(uint32_t));
-	pcb->registros_cpu->EBX = malloc(sizeof(uint32_t));
-	pcb->registros_cpu->ECX = malloc(sizeof(uint32_t));
-	pcb->registros_cpu->EDX = malloc(sizeof(uint32_t));
-	pcb->registros_cpu->SI = malloc(sizeof(uint32_t));
-	pcb->registros_cpu->DI = malloc(sizeof(uint32_t));
-
-	//Seteamos los valores a 0 
-	pcb->registros_cpu->AX=pcb->registros_cpu->BX=pcb->registros_cpu->CX=pcb->registros_cpu->DX=0;
-	pcb->registros_cpu->EAX=pcb->registros_cpu->EBX=pcb->registros_cpu->ECX=pcb->registros_cpu->EDX=pcb->registros_cpu->SI=pcb->registros_cpu->DI=0;
+	// FALTA SETEAR A 0 VALORES 
+	
 	pcb->program_counter = 0;    
 	pcb->quantum = 0; // En caso de necesitarlo, el planificador de corto plazo lo inicializará con el valor adecuado 
     pcb->path = string_duplicate(path_programa);
    	return pcb;
 }
 
-// bool inicializar_registros (t_registros_cpu* registros_cpu){
-// 	registros_cpu = malloc(sizeof(t_registros_cpu));
+t_registros_cpu* inicializar_registros (t_registros_cpu* registros_cpu){
 
-// 	registros_cpu->AX = malloc(sizeof(uint8_t));
-// 	registros_cpu->BX = malloc(sizeof(uint8_t));
-// 	registros_cpu->CX = malloc(sizeof(uint8_t));
-// 	registros_cpu->DX = malloc(sizeof(uint8_t));
-// 	registros_cpu->EAX = malloc(sizeof(uint32_t));
-// 	registros_cpu->EBX = malloc(sizeof(uint32_t));
-// 	registros_cpu->ECX = malloc(sizeof(uint32_t));
-// 	registros_cpu->EDX = malloc(sizeof(uint32_t));
-// 	registros_cpu->SI = malloc(sizeof(uint32_t));
-// 	registros_cpu->DI = malloc(sizeof(uint32_t));
+	registros_cpu = malloc(sizeof(t_registros_cpu));
 
-//	if (registros_cpu == NULL)
-	// {
-	// 	loguear_error("No se pudieron iniciar los registros correctamente");
-	// 	return false;
-	// }
-	// FALTARIAN LOS DICCIONARIOS QUE ESO SI SE HACE EN LA FUNCION DE CPU
-	// HABRIA Q INICIALIZAR LOS DICCIONARIOS EN OTRA FUNCION EN CPU
-	// return true;
-
-
-// }
+	registros_cpu->AX = malloc(sizeof(uint8_t));
+	registros_cpu->BX = malloc(sizeof(uint8_t));
+	registros_cpu->CX = malloc(sizeof(uint8_t));
+	registros_cpu->DX = malloc(sizeof(uint8_t));
+	registros_cpu->EAX = malloc(sizeof(uint32_t));
+	registros_cpu->EBX = malloc(sizeof(uint32_t));
+	registros_cpu->ECX = malloc(sizeof(uint32_t));
+	registros_cpu->EDX = malloc(sizeof(uint32_t));
+	registros_cpu->SI = malloc(sizeof(uint32_t));
+	registros_cpu->DI = malloc(sizeof(uint32_t));
+	return registros_cpu;
+}
 
 
 
@@ -85,16 +58,16 @@ void loguear_pcb(t_pcb* pcb){
 	loguear("program_counter: %d",pcb->program_counter);
 	loguear("Prioridad: %d",pcb->prioridad);
 	loguear("Quantum: %d", pcb->quantum);
-	loguear("Reg AX: %d",pcb->registros_cpu->AX);
-	loguear("Reg BX: %d",pcb->registros_cpu->BX);
-	loguear("Reg CX: %d",pcb->registros_cpu->CX);
-	loguear("Reg DX: %d",pcb->registros_cpu->DX);
-	loguear("Reg EAX: %d",pcb->registros_cpu->EAX);
-	loguear("Reg EBX: %d",pcb->registros_cpu->EBX);
-	loguear("Reg ECX: %d",pcb->registros_cpu->ECX);
-	loguear("Reg EDX: %d",pcb->registros_cpu->EDX);
-	loguear("Reg SI: %d",pcb->registros_cpu->SI);
-	loguear("Reg DI: %d",pcb->registros_cpu->DI);
+	loguear("Reg AX: %d",*pcb->registros_cpu->AX);
+	loguear("Reg BX: %d",*pcb->registros_cpu->BX);
+	loguear("Reg CX: %d",*pcb->registros_cpu->CX);
+	loguear("Reg DX: %d",*pcb->registros_cpu->DX);
+	loguear("Reg EAX: %d",*pcb->registros_cpu->EAX);
+	loguear("Reg EBX: %d",*pcb->registros_cpu->EBX);
+	loguear("Reg ECX: %d",*pcb->registros_cpu->ECX);
+	loguear("Reg EDX: %d",*pcb->registros_cpu->EDX);
+	loguear("Reg SI: %d",*pcb->registros_cpu->SI);
+	loguear("Reg DI: %d",*pcb->registros_cpu->DI);
 	loguear("Cant. de archivos abiertos: %d",list_size( pcb->archivos_abiertos));
     loguear("PATH: %s",pcb->path);
 	printf("==========================----- \n");
