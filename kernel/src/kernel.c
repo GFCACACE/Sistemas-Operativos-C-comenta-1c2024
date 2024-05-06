@@ -11,8 +11,7 @@ t_dictionary * comandos_consola;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus,
 		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
 t_pcb* pcb_exec; 
-
-
+ // Crear el diccionario de algoritmo
 t_planificador get_algoritmo(char* nombre){
 
 
@@ -94,7 +93,6 @@ bool inicializar_comandos(){
     agregar_comando(MULTIPROGRAMACION,"MULTIPROGRAMACION","[VALOR]",&detener_planificacion);
 	agregar_comando(PROCESO_ESTADO,"PROCESO_ESTADO","[]",&proceso_estado);
     agregar_comando(EXIT,"EXIT","[]",&finalizar_consola);
-
 	return true;
 }
 
@@ -173,7 +171,7 @@ bool iniciar_planificadores(){
 
 	pthread_create(&thread_planificador_largo,NULL, (void*)planificador_largo,NULL);
 	pthread_create(&thread_planificador_corto,NULL,(void*)planificador_corto,NULL);
-
+	
 	pthread_detach(thread_planificador_largo);
 	if (thread_planificador_largo == -1){
 		loguear_error("No se pudo iniciar el planificador de largo plazo.");
@@ -187,11 +185,27 @@ bool iniciar_planificadores(){
 	return true;
 }
 
+// Falta pasar un pcb de un lugar a exit. Se debe validar si el pcb se encuentra en una lista o no
+void liberar_proceso(t_pcb* pcb){
+	// Pasar de una cola o exec a exit
+	t_queue* queue_origen =  get_cola_pcb(pcb);
+	if (queue_origen!=NULL){
+		//cambio_lista(queue_origen,*estado_exit,pcb)
+	}
+	
+}
+
 //Este método se llama cuando se inicia un proceso
 void planificador_largo(){
 	while(1){
 	//Este semáforo deja bloqueado al planificador de largo plazo
 	sem_wait(&sem_new); //Se enceuntra funcionando cuando se inicia un proceso
+	
+	// Comunicarse con memoria (mandar pcb)
+
+
+	sem_post(&sem_grado_multiprogamacion);
+
 	sem_wait(&sem_grado_multiprogamacion); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
 	// SUGERENCIA: la funcion cambio_de_estado verifica la transicion y además hace efectivo el cambio de colas
 	// bool mod = cambio_de_estado(estado_new, estado_ready);
@@ -333,7 +347,7 @@ int ejecutar_comando_consola(char*params){
 
 
 bool iniciar_proceso(char** parametros){
-	sem_post(&sem_new);
+	
 	bool parametros_iniciar_proceso_validos(char** parametros){
 		bool validado = 
 		string_array_size(parametros)==2;
@@ -355,7 +369,8 @@ bool iniciar_proceso(char** parametros){
 	t_pcb* pcb = pcb_create(path);   // Se crea el PCB y se agrega a New
 
 	queue_push(estado_new,pcb);
-	//sem_post(&sem_new);
+	
+	sem_post(&sem_new);
 
 	free(path);
 		
@@ -598,9 +613,13 @@ void finalizar_kernel(){
 	if(logger!=NULL) log_destroy(logger);
 	if(comandos_consola!=NULL) dictionary_destroy(comandos_consola);
 	liberar_colas();
-	sem_destroy(&sem_grado_multiprogamacion);
+	liberar_semaforos();	
 }
 
+void liberar_semaforos(){
+	sem_destroy(&sem_grado_multiprogamacion);
+	sem_destroy(&sem_new);
+}
 
 bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
 	if (estado_destino==estado_new){

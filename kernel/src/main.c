@@ -16,7 +16,8 @@ int main_kernel(int argc, char** argv) {
         return EXIT_FAILURE;
     } 
     iniciar_planificadores();
-	iniciar_consola();
+	
+    iniciar_consola();
 
     finalizar_kernel();
 
