@@ -203,7 +203,7 @@ void finalizar_estructuras_cpu()
 	// 	}
 	// 	list_destroy_and_destroy_elements(lista_de_registros, liberar);
 		if(registros_cpu->AX !=NULL)free(registros_cpu->AX);
-		if(registros_cpu->BX !=NULL)free(registros_cpu->BX);
+		// if(registros_cpu->BX !=NULL)free(registros_cpu->BX);
 		if(registros_cpu->CX !=NULL)free(registros_cpu->CX);
 		if(registros_cpu->DX !=NULL)free(registros_cpu->DX);
 		if(registros_cpu->EAX !=NULL)free(registros_cpu->EAX);
@@ -212,7 +212,7 @@ void finalizar_estructuras_cpu()
 		if(registros_cpu->EDX !=NULL)free(registros_cpu->EDX);
 		if(registros_cpu->DI !=NULL)free(registros_cpu->DI);
 		if(registros_cpu->SI !=NULL)free(registros_cpu->SI);
-		if(IR !=NULL)free(IR);
+		// if(IR !=NULL)free(IR);
 		if(INSTID !=NULL)free(INSTID);
 		if(PARAM1 !=NULL)free(PARAM1);
 		if(PARAM2 !=NULL)free(PARAM2);
@@ -384,7 +384,7 @@ bool execute(t_pcb *pcb)
 bool exe_set(void *registro, void *valor)
 {
 	int PC = (int)registros_cpu->PC;
-	memcpy(registro,valor,sizeof(uint8_t));
+	memcpy(registro,valor,sizeof(uint32_t));
 	// *(uint32_t *)registro = *(uint32_t *)valor;
 	PC++;
 	registros_cpu->PC = (uint32_t)PC;
