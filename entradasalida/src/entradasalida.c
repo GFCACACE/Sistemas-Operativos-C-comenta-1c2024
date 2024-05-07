@@ -25,38 +25,6 @@ t_config_io* iniciar_config_io(char* path_config){
 	return config_io;
 }
 
-bool iniciar_io(char* path_config){
-	decir_hola(MODULO);
-    logger = iniciar_logger(MODULO);
-	if(logger == NULL) printf("EL LOGGER NO PUDO SER INICIADO.\n");
-	config = iniciar_config_io(path_config);
-	if(config == NULL) {
-		loguear_error("No se encuentra el archivo de las config");
-		return false;
-	}
-	loguear_config();	    
-    conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
-	if(conexion_memoria ==-1){
-		
-		loguear_error("No se pudo conectar memoria");
-		return false;
-	} 
-    
-    conexion_kernel = crear_conexion(config->IP_KERNEL, config->PUERTO_KERNEL);
-	if(conexion_kernel ==-1){
-		
-		loguear_error("No se pudo conectar kernel");
-		return false;
-	} 
-	return true;
-}
-
-void config_io_destroy(t_config_io* config){
-
-	config_destroy(config->config);
-	free(config);
-}
-
 void loguear_config(){
 
 	loguear("TIPO_INTERFAZ: %s",config->TIPO_INTERFAZ);
@@ -70,7 +38,54 @@ void loguear_config(){
     loguear("BLOCK_COUNT: %d",config->BLOCK_COUNT);
 }
 
+bool iniciar_log_config(char* path_config){
+    logger = iniciar_logger(MODULO);
+
+	if(logger == NULL) printf("EL LOGGER NO PUDO SER INICIADO.\n");
+	
+    config = iniciar_config_io(path_config);
+	
+    if(config == NULL) {
+		loguear_error("No se encuentra el archivo de las config");
+		return false;
+	}
+	loguear_config();	    
+   
+	return true;
+}
+bool iniciar_conexion_kernel(){
+    conexion_kernel = crear_conexion(config->IP_KERNEL, config->PUERTO_KERNEL);
+	if(conexion_kernel ==-1){
+		
+		loguear_error("No se pudo conectar kernel");
+		return false;
+	}
+    return true;
+}
+bool iniciar_conexion_memoria(){
+    conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
+	if(conexion_memoria ==-1){
+		
+		loguear_error("No se pudo conectar memoria");
+		return false;
+	} 
+    return true;
+}
+
+bool iniciar_io(char* path_config){
+    return iniciar_log_config(path_config)
+    && iniciar_conexion_memoria()
+    && iniciar_conexion_kernel();
+}
+
+void config_io_destroy(t_config_io* config){
+
+	config_destroy(config->config);
+	free(config);
+}
+
 void finalizar_io(){
 	if(config != NULL) config_io_destroy(config);
 	if(logger != NULL) log_destroy(logger);
 }
+
