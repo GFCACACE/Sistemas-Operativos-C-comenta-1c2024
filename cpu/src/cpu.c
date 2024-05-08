@@ -424,15 +424,11 @@ bool exe_sub(t_param registro_destino,t_param incremento)
 
 bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 {
-	int PC = (int)registros_cpu->PC;
 
-	if (registro_destino.puntero !=0)
-		registros_cpu->PC = (uint32_t)(uintptr_t) nro_instruccion.puntero;
+	if (*(uint8_t*)registro_destino.puntero != 0)
+		 registros_cpu->PC = *(uint32_t*)nro_instruccion.puntero;
 	else
-	{
-		PC++;
-		registros_cpu->PC = (uint32_t)PC;
-	}
+		 registros_cpu->PC++;
 
 
 	return true;
