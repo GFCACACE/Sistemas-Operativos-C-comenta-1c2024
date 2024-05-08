@@ -23,16 +23,6 @@ t_registros_cpu* inicializar_registros (t_registros_cpu* registros_cpu){
 
 	registros_cpu = malloc(sizeof(t_registros_cpu));
 
-	registros_cpu->AX = malloc(sizeof(uint8_t));
-	registros_cpu->BX = malloc(sizeof(uint8_t));
-	registros_cpu->CX = malloc(sizeof(uint8_t));
-	registros_cpu->DX = malloc(sizeof(uint8_t));
-	registros_cpu->EAX = malloc(sizeof(uint32_t));
-	registros_cpu->EBX = malloc(sizeof(uint32_t));
-	registros_cpu->ECX = malloc(sizeof(uint32_t));
-	registros_cpu->EDX = malloc(sizeof(uint32_t));
-	registros_cpu->SI = malloc(sizeof(uint32_t));
-	registros_cpu->DI = malloc(sizeof(uint32_t));
 	return registros_cpu;
 }
 
@@ -58,16 +48,16 @@ void loguear_pcb(t_pcb* pcb){
 	loguear("program_counter: %d",pcb->program_counter);
 	loguear("Prioridad: %d",pcb->prioridad);
 	loguear("Quantum: %d", pcb->quantum);
-	loguear("Reg AX: %d",*pcb->registros_cpu->AX);
-	loguear("Reg BX: %d",*pcb->registros_cpu->BX);
-	loguear("Reg CX: %d",*pcb->registros_cpu->CX);
-	loguear("Reg DX: %d",*pcb->registros_cpu->DX);
-	loguear("Reg EAX: %d",*pcb->registros_cpu->EAX);
-	loguear("Reg EBX: %d",*pcb->registros_cpu->EBX);
-	loguear("Reg ECX: %d",*pcb->registros_cpu->ECX);
-	loguear("Reg EDX: %d",*pcb->registros_cpu->EDX);
-	loguear("Reg SI: %d",*pcb->registros_cpu->SI);
-	loguear("Reg DI: %d",*pcb->registros_cpu->DI);
+	loguear("Reg AX: %d",pcb->registros_cpu->AX);
+	loguear("Reg BX: %d",pcb->registros_cpu->BX);
+	loguear("Reg CX: %d",pcb->registros_cpu->CX);
+	loguear("Reg DX: %d",pcb->registros_cpu->DX);
+	loguear("Reg EAX: %d",pcb->registros_cpu->EAX);
+	loguear("Reg EBX: %d",pcb->registros_cpu->EBX);
+	loguear("Reg ECX: %d",pcb->registros_cpu->ECX);
+	loguear("Reg EDX: %d",pcb->registros_cpu->EDX);
+	loguear("Reg SI: %d",pcb->registros_cpu->SI);
+	loguear("Reg DI: %d",pcb->registros_cpu->DI);
 	loguear("Cant. de archivos abiertos: %d",list_size( pcb->archivos_abiertos));
     loguear("PATH: %s",pcb->path);
 	printf("==========================----- \n");

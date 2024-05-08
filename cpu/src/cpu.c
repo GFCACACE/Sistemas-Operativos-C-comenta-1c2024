@@ -4,7 +4,7 @@ int kernel_dispatch, dispatch, interrupt, kernel_interrupt, conexion_memoria;
 int cod_op_kernel_dispatch;
 int cod_op_kernel_interrupt;
 char *IR, *INSTID;
-void *PARAM1, *PARAM2, *PARAM3;
+t_param PARAM1, PARAM2, PARAM3;
 pthread_t *mutex_interrupt;
 t_config_cpu *config;
 t_registros_cpu *registros_cpu;
@@ -84,9 +84,9 @@ bool iniciar_registros_cpu()
 	// Esto quedaria dentro de la funcion iniciar_registros_cpu
 	IR = string_new();
 	INSTID = string_new();
-	PARAM1 = malloc(sizeof(uint32_t));
-	PARAM2 = malloc(sizeof(uint32_t));
-	PARAM3 = malloc(sizeof(uint32_t));
+	// PARAM1 = malloc(sizeof(t_param));
+	// PARAM2 = malloc(sizeof(t_param));
+	// PARAM3 = malloc(sizeof(t_param));
 
 
 	if (registros_cpu == NULL)
@@ -202,21 +202,21 @@ void finalizar_estructuras_cpu()
 	// 		}
 	// 	}
 	// 	list_destroy_and_destroy_elements(lista_de_registros, liberar);
-		if(registros_cpu->AX !=NULL)free(registros_cpu->AX);
-		// if(registros_cpu->BX !=NULL)free(registros_cpu->BX);
-		if(registros_cpu->CX !=NULL)free(registros_cpu->CX);
-		if(registros_cpu->DX !=NULL)free(registros_cpu->DX);
-		if(registros_cpu->EAX !=NULL)free(registros_cpu->EAX);
-		if(registros_cpu->EBX !=NULL)free(registros_cpu->EBX);
-		if(registros_cpu->ECX !=NULL)free(registros_cpu->ECX);
-		if(registros_cpu->EDX !=NULL)free(registros_cpu->EDX);
+		// if(registros_cpu->AX !=NULL)free(registros_cpu->AX);
+		// // if(registros_cpu->BX !=NULL)free(registros_cpu->BX);
+		// if(registros_cpu->CX !=NULL)free(registros_cpu->CX);
+		// if(registros_cpu->DX !=NULL)free(registros_cpu->DX);
+		// if(registros_cpu->EAX !=NULL)free(registros_cpu->EAX);
+		// if(registros_cpu->EBX !=NULL)free(registros_cpu->EBX);
+		// if(registros_cpu->ECX !=NULL)free(registros_cpu->ECX);
+		// if(registros_cpu->EDX !=NULL)free(registros_cpu->EDX);
 		if(registros_cpu->DI !=NULL)free(registros_cpu->DI);
 		if(registros_cpu->SI !=NULL)free(registros_cpu->SI);
 		// if(IR !=NULL)free(IR);
 		if(INSTID !=NULL)free(INSTID);
-		if(PARAM1 !=NULL)free(PARAM1);
-		if(PARAM2 !=NULL)free(PARAM2);
-		if(PARAM3 !=NULL)free(PARAM3);
+		// if(PARAM1 !=NULL)free(PARAM1);
+		// if(PARAM2 !=NULL)free(PARAM2);
+		// if(PARAM3 !=NULL)free(PARAM3);
 		free(registros_cpu);
 	}
 	if (diccionario_registros_cpu)
@@ -283,14 +283,21 @@ bool es_exit(char *comando)
 
 
 
-void* interpretar_valor_instruccion(char* valor){
+t_param interpretar_valor_instruccion(char* valor){
+	t_param parametro;
 	if(dictionary_has_key(diccionario_registros_cpu,valor)==true){
-	return dictionary_get(diccionario_registros_cpu,valor);
+	 parametro.puntero=dictionary_get(diccionario_registros_cpu,valor);
+	 if(!strcmp(valor,"AX")||!strcmp(valor,"BX")||!strcmp(valor,"CX")||!strcmp(valor,"DX"))
+	 parametro.size = sizeof(uint8_t);
+	 else parametro.size=sizeof(uint32_t);
+	 return parametro;
+
 	} else{
 		
-		void *puntero_numerico = malloc(sizeof(uint32_t));
-		*(uint32_t *)puntero_numerico = atoi(valor);
-		return puntero_numerico;
+		parametro.puntero=malloc(sizeof(uint32_t));
+		parametro.puntero = (uint32_t)atoi(valor);
+		parametro.size = sizeof(uint32_t);
+		return parametro;
 	}
 }
 
@@ -310,10 +317,7 @@ bool fetch(t_pcb *pcb)
 
 bool decode()
 {
-	INSTID = NULL;
-	PARAM1 = NULL;
-	PARAM2 = NULL;
-	PARAM3 = NULL;
+	
 	char **sep_instruction = string_array_new();
 	char *registros = string_new();
 	registros = string_duplicate(IR);
@@ -338,28 +342,28 @@ bool execute(t_pcb *pcb)
 {
 	if (!strcmp(INSTID, "SET"))
 	{
-		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, *(uint32_t *)PARAM1, *(uint32_t *)PARAM2);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, (uint32_t)PARAM1.puntero, (uint32_t)PARAM2.puntero);
 		exe_set(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if (!strcmp(INSTID, "SUM"))
 	{
-		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, *(uint32_t *)PARAM1, *(uint32_t *)PARAM2);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, (uint32_t)PARAM1.puntero, (uint32_t)PARAM2.puntero);
 		exe_sum(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if (!strcmp(INSTID, "SUB"))
 	{
-		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, *(uint32_t *)PARAM1, *(uint32_t *)PARAM2);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, (uint32_t)PARAM1.puntero, (uint32_t) PARAM2.puntero);
 		exe_sub(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if (!strcmp(INSTID, "JNZ"))
 	{
-		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, *(uint32_t *)PARAM1, *(uint32_t *)PARAM2);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, (uint32_t )PARAM1.puntero, (uint32_t )PARAM2.puntero);
 		exe_jnz(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
@@ -381,54 +385,53 @@ bool execute(t_pcb *pcb)
 
 	return false;
 }
-bool exe_set(void *registro, void *valor)
+bool exe_set(t_param registro, t_param valor)
 {
 	int PC = (int)registros_cpu->PC;
-	memcpy(registro,valor,sizeof(uint32_t));
-	// *(uint32_t *)registro = *(uint32_t *)valor;
+	registro.puntero = valor.puntero;
+	// memcpy(registro.puntero,valor.puntero,registro.size);
 	PC++;
 	registros_cpu->PC = (uint32_t)PC;
 	return true;
 }
-bool exe_sum(void *registro_destino, void *incremento)
+bool exe_sum(t_param registro_destino, t_param incremento)
 {
 	int PC = (int)registros_cpu->PC;
-	*(uint32_t *)registro_destino = *(uint32_t *)registro_destino + *(uint32_t *)incremento;
+	registro_destino.puntero = (uint32_t)registro_destino.puntero + (uint32_t)incremento.puntero;
 	PC++;
 	registros_cpu->PC = (uint32_t)PC;
 	return true;
 }
 
-bool exe_sub(void *registro_destino, void *decremento)
+bool exe_sub(t_param registro_destino,t_param decremento)
 {
 	int PC = (int)registros_cpu->PC;
 	
-	*(uint32_t *)registro_destino = *(uint32_t *)registro_destino - *(uint32_t *)decremento;
+	registro_destino.puntero = (uint32_t)registro_destino.puntero - (uint32_t)decremento.puntero;
 	PC++;
 	registros_cpu->PC = (uint32_t)PC;
 	return true;
 }
 
-bool exe_jnz(void *registro_destino, void *nro_instruccion)
+bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 {
 	int PC = (int)registros_cpu->PC;
-	if (registro_destino != NULL && nro_instruccion != NULL)
+
+	if (registro_destino.puntero !=0)
+		registros_cpu->PC = (uint32_t) nro_instruccion.puntero;
+	else
 	{
-		if (*(uint32_t *)registro_destino != (uint32_t)0)
-			registros_cpu->PC = *(uint32_t *)nro_instruccion;
-		else
-		{
-			PC++;
-			registros_cpu->PC = (uint32_t)PC;
-		}
+		PC++;
+		registros_cpu->PC = (uint32_t)PC;
 	}
+
 
 	return true;
 }
 
-bool exe_io_gen_sleep(void *interfaz, void *unidades_de_trabajo)
+bool exe_io_gen_sleep(t_param interfaz, t_param unidades_de_trabajo)
 {
-	*(uint32_t *)registros_cpu->PC++;
+	(uint32_t)registros_cpu->PC++;
 	return true;
 }
 

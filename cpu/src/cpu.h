@@ -26,6 +26,11 @@ typedef struct {
 	int memoria;
 } t_connections_cpu;
 
+typedef struct
+{
+	void* puntero;
+	int size;
+}t_param;
 
 
 
@@ -51,7 +56,7 @@ char* pedir_proxima_instruccion(t_pcb* pcb);
 
 //Ciclo de Instrucción//////////////////////
 void ciclo_de_instruccion(t_pcb* pcb);
-void* interpretar_valor_instruccion(char*);
+t_param interpretar_valor_instruccion(char*);
 bool fetch(t_pcb*);
 bool decode();
 bool execute(t_pcb*);
@@ -59,18 +64,18 @@ bool check_interrupt(t_pcb*);
 bool devolver_contexto(t_pcb*);
 bool actualizar_contexto(t_pcb*);
 bool actualizar_registros(t_pcb*);
-bool exe_set(void*,void*);
-bool exe_mov_in(void*,void*);
-bool exe_mov_out(void*,void*);
-bool exe_sum(void*,void*);
-bool exe_sub(void*,void*);
-bool exe_jnz(void*,void*);
+bool exe_set(t_param,t_param);
+bool exe_mov_in(t_param,t_param);
+bool exe_mov_out(t_param,t_param);
+bool exe_sum(t_param,t_param);
+bool exe_sub(t_param,t_param);
+bool exe_jnz(t_param,t_param);
 bool exe_resize(void*);
 bool exe_copy_string(void*);
 bool exe_wait(/*recurso*/);
 bool exe_signal(/*recurso*/);
 bool exe_exit(t_pcb*);
-bool exe_io_gen_sleep(void*,void*);
+bool exe_io_gen_sleep(t_param,t_param);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 
@@ -84,8 +89,8 @@ extern t_dictionary* diccionario_registros_cpu;
 extern pthread_t* mutex_interrupt;
 extern char* IR;
 extern char* INSTID;
-extern void* PARAM1;
-extern void* PARAM2;
-extern void* PARAM3;
+extern t_param PARAM1;
+extern t_param PARAM2;
+extern t_param PARAM3;
 extern int cod_op_interrupt;
 #endif //cpu_h
