@@ -9,6 +9,7 @@
 #include "utils/utils-client.h"
 #include "utils/utils-config.h"
 #include "utils/utils-commons.h"
+#include <stdint.h>
 #define MODULO "cpu"
 #define EXIT_PROGRAM "EXIT"
 typedef struct

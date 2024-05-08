@@ -210,8 +210,8 @@ void finalizar_estructuras_cpu()
 		// if(registros_cpu->EBX !=NULL)free(registros_cpu->EBX);
 		// if(registros_cpu->ECX !=NULL)free(registros_cpu->ECX);
 		// if(registros_cpu->EDX !=NULL)free(registros_cpu->EDX);
-		if(registros_cpu->DI !=NULL)free(registros_cpu->DI);
-		if(registros_cpu->SI !=NULL)free(registros_cpu->SI);
+	//	if(registros_cpu->DI !=NULL)free(registros_cpu->DI);
+	//	if(registros_cpu->SI !=NULL)free(registros_cpu->SI);
 		// if(IR !=NULL)free(IR);
 		if(INSTID !=NULL)free(INSTID);
 		// if(PARAM1 !=NULL)free(PARAM1);
@@ -295,7 +295,8 @@ t_param interpretar_valor_instruccion(char* valor){
 	} else{
 		
 		parametro.puntero=malloc(sizeof(uint32_t));
-		parametro.puntero = (uint32_t)atoi(valor);
+		uint32_t valor_uint32 = atoi(valor);
+		memcpy(parametro.puntero,&valor_uint32,sizeof(valor_uint32));
 		parametro.size = sizeof(uint32_t);
 		return parametro;
 	}
@@ -338,32 +339,36 @@ bool decode()
 	free(registros);
 	return true;
 }
+void loguear_parametros(t_pcb *pcb){
+	loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, *(int*)PARAM1.puntero, *(int*)PARAM2.puntero);
+}
+
 bool execute(t_pcb *pcb)
 {
 	if (!strcmp(INSTID, "SET"))
 	{
-		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, (uint32_t)PARAM1.puntero, (uint32_t)PARAM2.puntero);
+		loguear_parametros(pcb);
 		exe_set(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if (!strcmp(INSTID, "SUM"))
 	{
-		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, (uint32_t)PARAM1.puntero, (uint32_t)PARAM2.puntero);
+		loguear_parametros(pcb);
 		exe_sum(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if (!strcmp(INSTID, "SUB"))
 	{
-		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, (uint32_t)PARAM1.puntero, (uint32_t) PARAM2.puntero);
+		loguear_parametros(pcb);
 		exe_sub(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if (!strcmp(INSTID, "JNZ"))
 	{
-		loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, (uint32_t )PARAM1.puntero, (uint32_t )PARAM2.puntero);
+		loguear_parametros(pcb);
 		exe_jnz(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
@@ -387,29 +392,31 @@ bool execute(t_pcb *pcb)
 }
 bool exe_set(t_param registro, t_param valor)
 {
-	int PC = (int)registros_cpu->PC;
-	registro.puntero = valor.puntero;
-	// memcpy(registro.puntero,valor.puntero,registro.size);
-	PC++;
-	registros_cpu->PC = (uint32_t)PC;
-	return true;
+	
+	printf("Tamaño de registro: %d, Tamaño de valor: %d\n", registro.size, valor.size);
+    printf("Dirección de memoria de registro: %p, Dirección de memoria de valor: %p\n", registro.puntero, valor.puntero);
+
+    // Copia el valor de 'valor.puntero' al puntero 'registro.puntero'
+    memcpy(registro.puntero, valor.puntero, registro.size < valor.size ? registro.size : valor.size);
+
+    return true;
 }
 bool exe_sum(t_param registro_destino, t_param incremento)
 {
-	int PC = (int)registros_cpu->PC;
-	registro_destino.puntero = (uint32_t)registro_destino.puntero + (uint32_t)incremento.puntero;
-	PC++;
-	registros_cpu->PC = (uint32_t)PC;
+
+	int *registro_destino_valor = (int *)(registro_destino.puntero);
+    int *incremento_valor = (int *)(incremento.puntero);
+    *registro_destino_valor += *incremento_valor;
 	return true;
 }
 
-bool exe_sub(t_param registro_destino,t_param decremento)
+bool exe_sub(t_param registro_destino,t_param incremento)
 {
-	int PC = (int)registros_cpu->PC;
+	int *registro_destino_valor = (int *)(registro_destino.puntero);
+    int *incremento_valor = (int *)(incremento.puntero);
+	if( *registro_destino_valor> *incremento_valor)
+    *registro_destino_valor -= *incremento_valor;
 	
-	registro_destino.puntero = (uint32_t)registro_destino.puntero - (uint32_t)decremento.puntero;
-	PC++;
-	registros_cpu->PC = (uint32_t)PC;
 	return true;
 }
 
@@ -418,7 +425,7 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 	int PC = (int)registros_cpu->PC;
 
 	if (registro_destino.puntero !=0)
-		registros_cpu->PC = (uint32_t) nro_instruccion.puntero;
+		registros_cpu->PC = (uint32_t)(uintptr_t) nro_instruccion.puntero;
 	else
 	{
 		PC++;
