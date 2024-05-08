@@ -415,7 +415,9 @@ bool exe_sub(t_param registro_destino,t_param incremento)
 	int *registro_destino_valor = (int *)(registro_destino.puntero);
     int *incremento_valor = (int *)(incremento.puntero);
 	if( *registro_destino_valor> *incremento_valor)
-    *registro_destino_valor -= *incremento_valor;
+    	*registro_destino_valor -= *incremento_valor;
+	else 
+		 *registro_destino_valor-= *registro_destino_valor;
 	
 	return true;
 }
