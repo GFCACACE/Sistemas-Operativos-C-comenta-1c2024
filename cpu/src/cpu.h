@@ -31,6 +31,7 @@ typedef struct
 {
 	void* puntero;
 	int size;
+	char* string_valor;
 }t_param;
 
 

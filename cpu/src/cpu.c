@@ -287,9 +287,15 @@ t_param interpretar_valor_instruccion(char* valor){
 	t_param parametro;
 	if(dictionary_has_key(diccionario_registros_cpu,valor)==true){
 	 parametro.puntero=dictionary_get(diccionario_registros_cpu,valor);
-	 if(!strcmp(valor,"AX")||!strcmp(valor,"BX")||!strcmp(valor,"CX")||!strcmp(valor,"DX"))
+	 if(!strcmp(valor,"AX")||!strcmp(valor,"BX")||!strcmp(valor,"CX")||!strcmp(valor,"DX")){
 	 parametro.size = sizeof(uint8_t);
-	 else parametro.size=sizeof(uint32_t);
+	 sprintf(parametro.string_valor,"%d",*(uint8_t*)parametro.puntero);
+	 }
+	 else {
+	 parametro.size=sizeof(uint32_t);
+	 parametro.string_valor = string_new();
+	 sprintf(parametro.string_valor,"%d",*(uint32_t*)parametro.puntero);
+	 }
 	 return parametro;
 
 	} else{
@@ -298,6 +304,7 @@ t_param interpretar_valor_instruccion(char* valor){
 		uint32_t valor_uint32 = atoi(valor);
 		memcpy(parametro.puntero,&valor_uint32,sizeof(valor_uint32));
 		parametro.size = sizeof(uint32_t);
+		parametro.string_valor = valor;
 		return parametro;
 	}
 }
@@ -339,36 +346,34 @@ bool decode()
 	free(registros);
 	return true;
 }
-void loguear_parametros(t_pcb *pcb){
-	loguear("PID: <%d> - Ejecutando: <%s> - <%d> <%d>", pcb->PID, INSTID, *(int*)PARAM1.puntero, *(int*)PARAM2.puntero);
-}
+
 
 bool execute(t_pcb *pcb)
 {
 	if (!strcmp(INSTID, "SET"))
 	{
-		loguear_parametros(pcb);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_set(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if (!strcmp(INSTID, "SUM"))
-	{
-		loguear_parametros(pcb);
+	{	
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_sum(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if (!strcmp(INSTID, "SUB"))
 	{
-		loguear_parametros(pcb);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_sub(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
 	}
 	if (!strcmp(INSTID, "JNZ"))
 	{
-		loguear_parametros(pcb);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_jnz(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
 		return true;
@@ -398,7 +403,7 @@ bool exe_set(t_param registro, t_param valor)
 
     // Copia el valor de 'valor.puntero' al puntero 'registro.puntero'
     memcpy(registro.puntero, valor.puntero, registro.size < valor.size ? registro.size : valor.size);
-
+	registros_cpu->PC++;
     return true;
 }
 bool exe_sum(t_param registro_destino, t_param incremento)
@@ -407,6 +412,7 @@ bool exe_sum(t_param registro_destino, t_param incremento)
 	int *registro_destino_valor = (int *)(registro_destino.puntero);
     int *incremento_valor = (int *)(incremento.puntero);
     *registro_destino_valor += *incremento_valor;
+	registros_cpu->PC++;
 	return true;
 }
 
@@ -418,7 +424,7 @@ bool exe_sub(t_param registro_destino,t_param incremento)
     	*registro_destino_valor -= *incremento_valor;
 	else 
 		 *registro_destino_valor-= *registro_destino_valor;
-	
+	registros_cpu->PC++;
 	return true;
 }
 
