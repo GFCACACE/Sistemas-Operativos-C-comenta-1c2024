@@ -289,6 +289,7 @@ t_param interpretar_valor_instruccion(char* valor){
 	 parametro.puntero=dictionary_get(diccionario_registros_cpu,valor);
 	 if(!strcmp(valor,"AX")||!strcmp(valor,"BX")||!strcmp(valor,"CX")||!strcmp(valor,"DX")){
 	 parametro.size = sizeof(uint8_t);
+	 parametro.string_valor=string_new();
 	 sprintf(parametro.string_valor,"%d",*(uint8_t*)parametro.puntero);
 	 }
 	 else {
@@ -304,7 +305,7 @@ t_param interpretar_valor_instruccion(char* valor){
 		uint32_t valor_uint32 = atoi(valor);
 		memcpy(parametro.puntero,&valor_uint32,sizeof(valor_uint32));
 		parametro.size = sizeof(uint32_t);
-		parametro.string_valor = valor;
+		parametro.string_valor = string_duplicate(valor);
 		return parametro;
 	}
 }
