@@ -173,46 +173,6 @@ void finalizar_estructuras_cpu()
 {
 	if (registros_cpu != NULL)
 	{
-	// 	t_list *lista_de_registros = list_create();
-	// 	void *agregar_registros(void *elem)
-	// 	{
-	// 		list_add(lista_de_registros, elem);
-	// 	}
-	// 	agregar_registros(registros_cpu->AX);
-	// 	agregar_registros(registros_cpu->BX);
-	// 	agregar_registros(registros_cpu->CX);
-	// 	agregar_registros(registros_cpu->DX);
-	// 	agregar_registros(registros_cpu->EAX);
-	// 	agregar_registros(registros_cpu->EBX);
-	// 	agregar_registros(registros_cpu->ECX);
-	// 	agregar_registros(registros_cpu->EDX);
-	// 	agregar_registros(registros_cpu->DI);
-	// 	agregar_registros(registros_cpu->SI);
-	// 	agregar_registros(IR);
-	// 	agregar_registros(PARAM1);
-	// 	agregar_registros(PARAM2);
-	// 	agregar_registros(PARAM3);
-	// 	agregar_registros(INSTID);
-
-	// 	void liberar(void *elem)
-	// 	{
-	// 		if (elem != NULL)
-	// 		{
-	// 			free(elem);
-	// 		}
-	// 	}
-	// 	list_destroy_and_destroy_elements(lista_de_registros, liberar);
-		// if(registros_cpu->AX !=NULL)free(registros_cpu->AX);
-		// // if(registros_cpu->BX !=NULL)free(registros_cpu->BX);
-		// if(registros_cpu->CX !=NULL)free(registros_cpu->CX);
-		// if(registros_cpu->DX !=NULL)free(registros_cpu->DX);
-		// if(registros_cpu->EAX !=NULL)free(registros_cpu->EAX);
-		// if(registros_cpu->EBX !=NULL)free(registros_cpu->EBX);
-		// if(registros_cpu->ECX !=NULL)free(registros_cpu->ECX);
-		// if(registros_cpu->EDX !=NULL)free(registros_cpu->EDX);
-	//	if(registros_cpu->DI !=NULL)free(registros_cpu->DI);
-	//	if(registros_cpu->SI !=NULL)free(registros_cpu->SI);
-		// if(IR !=NULL)free(IR);
 		if(INSTID !=NULL)free(INSTID);
 		// if(PARAM1 !=NULL)free(PARAM1);
 		// if(PARAM2 !=NULL)free(PARAM2);
@@ -356,6 +316,8 @@ bool execute(t_pcb *pcb)
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_set(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
 		return true;
 	}
 	if (!strcmp(INSTID, "SUM"))
@@ -363,6 +325,8 @@ bool execute(t_pcb *pcb)
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_sum(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
 		return true;
 	}
 	if (!strcmp(INSTID, "SUB"))
@@ -370,6 +334,8 @@ bool execute(t_pcb *pcb)
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_sub(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
 		return true;
 	}
 	if (!strcmp(INSTID, "JNZ"))
@@ -377,6 +343,8 @@ bool execute(t_pcb *pcb)
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_jnz(PARAM1, PARAM2);
 		actualizar_contexto(pcb);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
 		return true;
 	}
 	if (!strcmp(INSTID, "IO_GEN_SLEEP"))
@@ -384,6 +352,8 @@ bool execute(t_pcb *pcb)
 		exe_io_gen_sleep(PARAM1, PARAM2);
 
 		actualizar_contexto(pcb);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
 		return true;
 	}
 	if (!strcmp(INSTID, "EXIT"))
@@ -396,6 +366,12 @@ bool execute(t_pcb *pcb)
 
 	return false;
 }
+
+
+void liberar_param(t_param parametro){ // Para agregar declaratividad
+	free(parametro.string_valor);
+}
+
 bool exe_set(t_param registro, t_param valor)
 {
 	

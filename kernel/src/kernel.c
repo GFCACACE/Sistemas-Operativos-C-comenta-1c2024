@@ -203,9 +203,6 @@ void planificador_largo(){
 	
 	// Comunicarse con memoria (mandar pcb)
 
-
-	sem_post(&sem_grado_multiprogamacion);
-
 	sem_wait(&sem_grado_multiprogamacion); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
 	// SUGERENCIA: la funcion cambio_de_estado verifica la transicion y además hace efectivo el cambio de colas
 	// bool mod = cambio_de_estado(estado_new, estado_ready);
@@ -213,6 +210,7 @@ void planificador_largo(){
 	if(mod){
 		loguear("El proceso ingresó correctamente a la lista de ready");
 	}
+	// Faltaria parte exit, ¿hacemos otro hilo o como? Discutir en DS.
 	}
 }
 
@@ -226,6 +224,7 @@ void planificador_largo(){
 
 void planificador_corto(){
 	loguear("Se inicio el planificador corto.");
+
 }
 
 void config_kernel_destroy(t_config_kernel* config){
