@@ -48,6 +48,10 @@ extern int cod_op_kernel,cod_op_memoria;
 bool iniciar_io(char*,char*);
 void config_io_destroy(t_config_io*);
 void loguear_config();
+void loguear_config_generica();
+void loguear_config_stdin();
+void loguear_config_stdout();
+void loguear_config_dialfs();
 void finalizar_io();
 
 

@@ -51,18 +51,37 @@ t_config_io* iniciar_config_io(char* path_config,char* nombre){
 void loguear_config(){
 
 	loguear("NOMBRE INTERFAZ: %s", config->NOMBRE);
-
 	loguear("TIPO_INTERFAZ: %s",config->TIPO_INTERFAZ);
-	loguear("TIEMPO_UNIDAD_TRABAJO: %d",config->TIEMPO_UNIDAD_TRABAJO);
 	loguear("IP_KERNEL: %s",config->IP_KERNEL);
     loguear("PUERTO_KERNEL: %d",config->PUERTO_KERNEL);
+	if (!strcmp("GENERICA",config->TIPO_INTERFAZ)) loguear_config_generica();
+	if (!strcmp("STDIN",config->TIPO_INTERFAZ)) loguear_config_stdin();
+	if (!strcmp("STDOUT",config->TIPO_INTERFAZ)) loguear_config_stdout();
+	if (!strcmp("DIALFS",config->TIPO_INTERFAZ)) loguear_config_dialfs();
+
+}
+
+void loguear_config_generica(){
+	loguear("TIEMPO_UNIDAD_TRABAJO: %d",config->TIEMPO_UNIDAD_TRABAJO);
+}
+void loguear_config_stdin(){
+	loguear("IP_MEMORIA: %s",config->IP_MEMORIA);
+	loguear("PUERTO_MEMORIA: %d",config->PUERTO_MEMORIA);
+}
+
+void loguear_config_stdout(){
+	loguear("TIEMPO_UNIDAD_TRABAJO: %d",config->TIEMPO_UNIDAD_TRABAJO);
+	loguear("IP_MEMORIA: %s",config->IP_MEMORIA);
+	loguear("PUERTO_MEMORIA: %d",config->PUERTO_MEMORIA);
+}
+void loguear_config_dialfs(){
+	loguear("TIEMPO_UNIDAD_TRABAJO: %d",config->TIEMPO_UNIDAD_TRABAJO);
 	loguear("IP_MEMORIA: %s",config->IP_MEMORIA);
 	loguear("PUERTO_MEMORIA: %d",config->PUERTO_MEMORIA);
 	loguear("PATH_BASE_DIALFS: %s",config->PATH_BASE_DIALFS);
 	loguear("BLOCK_SIZE: %d",config->BLOCK_SIZE);
     loguear("BLOCK_COUNT: %d",config->BLOCK_COUNT);
 }
-
 
 bool iniciar_log_config(char* path_config, char* nombre){
     logger = iniciar_logger(MODULO);
