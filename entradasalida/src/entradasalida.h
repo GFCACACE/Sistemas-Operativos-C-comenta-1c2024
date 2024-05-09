@@ -23,20 +23,29 @@ typedef struct
     char* PATH_BASE_DIALFS;
     int BLOCK_SIZE;
     int BLOCK_COUNT;
+    char* NOMBRE;
 	
 	t_config* config;
 } t_config_io;
 
+typedef enum
+{
+    GENERICA,
+    STDIN,
+    STDOUT,
+    DIALFS
+} t_interfaz;
 
-t_config_io* iniciar_config_io(char*);
+t_config_io* iniciar_config_io(char*, char*);
 void config_io_destroy(t_config_io*);
+bool iniciar_log_config(char*, char*);
 extern t_log* logger;
 extern t_config_io* config;
 extern int conexion_memoria, conexion_kernel;
 extern int cod_op_kernel,cod_op_memoria;
 
 
-bool iniciar_io(char*);
+bool iniciar_io(char*,char*);
 void config_io_destroy(t_config_io*);
 void loguear_config();
 void finalizar_io();

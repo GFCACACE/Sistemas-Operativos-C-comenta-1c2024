@@ -5,21 +5,43 @@ int conexion_memoria, conexion_kernel;
 int cod_op_kernel,cod_op_memoria;
 t_config_io* config;
 
-t_config_io* iniciar_config_io(char* path_config){
+t_config_io* iniciar_config_io(char* path_config,char* nombre){
 	t_config* _config = config_create(path_config);
 	if(_config ==NULL)
 		return NULL;
 	t_config_io* config_io = malloc(sizeof(t_config_io));	
-
+	// Los siguientes valores le son comunes a todos los tipos de interfaces, por lo cual los inicializamos siempre
 	config_io->TIPO_INTERFAZ = config_get_string_value(_config,"TIPO_INTERFAZ");
-	config_io->TIEMPO_UNIDAD_TRABAJO = config_get_int_value(_config,"TIEMPO_UNIDAD_TRABAJO");
 	config_io->IP_KERNEL = config_get_string_value(_config,"IP_KERNEL");
 	config_io->PUERTO_KERNEL = config_get_int_value(_config,"PUERTO_KERNEL");
-	config_io->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
-	config_io->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
-	config_io->PATH_BASE_DIALFS = config_get_string_value(_config,"PATH_BASE_DIALFS");
-	config_io->BLOCK_SIZE = config_get_int_value(_config,"BLOCK_SIZE");
-	config_io->BLOCK_COUNT = config_get_int_value(_config,"BLOCK_COUNT");
+
+	// Los siguientes casos se pueden modularizar en funciones. No lo hice asi xq no sabia bien como :/
+	// CASO GENERICA
+	if (!strcmp("GENERICA",config_io->TIPO_INTERFAZ)){
+		config_io->TIEMPO_UNIDAD_TRABAJO = config_get_int_value(_config,"TIEMPO_UNIDAD_TRABAJO");
+	}
+	//CASO STDIN
+	if (!strcmp("STDIN",config_io->TIPO_INTERFAZ)){
+		config_io->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
+		config_io->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
+	}
+	//CASO STDOUT
+	if (!strcmp("STDOUT",config_io->TIPO_INTERFAZ)){
+		config_io->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
+		config_io->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
+		config_io->TIEMPO_UNIDAD_TRABAJO = config_get_int_value(_config,"TIEMPO_UNIDAD_TRABAJO");
+	}
+	//CASO DIALFS
+	if (!strcmp("DIALFS",config_io->TIPO_INTERFAZ)){
+		config_io->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
+		config_io->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
+		config_io->TIEMPO_UNIDAD_TRABAJO = config_get_int_value(_config,"TIEMPO_UNIDAD_TRABAJO");
+		config_io->PATH_BASE_DIALFS = config_get_string_value(_config,"PATH_BASE_DIALFS");
+		config_io->BLOCK_SIZE = config_get_int_value(_config,"BLOCK_SIZE");
+		config_io->BLOCK_COUNT = config_get_int_value(_config,"BLOCK_COUNT");
+	}
+	config_io->NOMBRE = string_new();
+	config_io->NOMBRE = string_duplicate(nombre);
 	config_io->config = _config;
 
 	return config_io;
@@ -27,6 +49,8 @@ t_config_io* iniciar_config_io(char* path_config){
 
 
 void loguear_config(){
+
+	loguear("NOMBRE INTERFAZ: %s", config->NOMBRE);
 
 	loguear("TIPO_INTERFAZ: %s",config->TIPO_INTERFAZ);
 	loguear("TIEMPO_UNIDAD_TRABAJO: %d",config->TIEMPO_UNIDAD_TRABAJO);
@@ -40,12 +64,12 @@ void loguear_config(){
 }
 
 
-bool iniciar_log_config(char* path_config){
+bool iniciar_log_config(char* path_config, char* nombre){
     logger = iniciar_logger(MODULO);
 
 	if(logger == NULL) printf("EL LOGGER NO PUDO SER INICIADO.\n");
 	
-    config = iniciar_config_io(path_config);
+    config = iniciar_config_io(path_config, nombre);
 	
     if(config == NULL) {
 		loguear_error("No se encuentra el archivo de las config");
@@ -79,8 +103,8 @@ bool iniciar_conexion_memoria(){
 }
 
 
-bool iniciar_io(char* path_config){
-    return iniciar_log_config(path_config)
+bool iniciar_io(char* path_config, char* nombre){
+    return iniciar_log_config(path_config, nombre)
     && iniciar_conexion_memoria()
     && iniciar_conexion_kernel();
 }

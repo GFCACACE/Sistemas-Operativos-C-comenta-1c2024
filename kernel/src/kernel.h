@@ -65,7 +65,7 @@ void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
 extern t_config_kernel* config;
 extern int grado_multiprogamacion_actual;
-extern int conexion_memoria, cpu_dispatch,cpu_interrupt;
+extern int conexion_memoria, cpu_dispatch,cpu_interrupt,kernel_escucha, conexion_io;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 extern t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus,*estado_exec;
 extern t_pcb* pcb_exec;
@@ -112,6 +112,7 @@ void ejecutar_planificacion();
 void ejecutar_proceso();
 bool iniciar_conexion_io();
 void io_handler();
+bool iniciar_servidor_kernel()
 #endif /* kernel.h*/
 
 

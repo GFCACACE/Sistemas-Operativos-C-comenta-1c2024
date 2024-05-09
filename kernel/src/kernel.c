@@ -695,12 +695,12 @@ void de_ready_a_exec(){
 
 
 
-/*
+
 
 bool iniciar_servidor_kernel(){
 
 		//Iniciamos el servidor con el puerto indicado en la config
-		kernel_escucha= iniciar_servidor(config_kernel->PUERTO_ESCUCHA);
+		kernel_escucha = iniciar_servidor(config_kernel->PUERTO_ESCUCHA);
 		if(kernel_escucha == -1){
 			loguear_error("El servidor no pudo ser iniciado");
 			return false;
@@ -709,7 +709,7 @@ bool iniciar_servidor_kernel(){
 		return true;
 }
 
-bool iniciar_conexion_io(){
+bool iniciar_conexion_io(){ // ¿Debemos hacer un hilo por cliente(I/O)?
 
 		//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
 		conexion_io = esperar_cliente(kernel_escucha);
@@ -724,6 +724,7 @@ void io_handler(){
 	if (!iniciar_servidor_kernel()){
 		return;
 	}
+	// ¿Crea un Hilo por cada conexion I/O?
+
 
 }
-*/
