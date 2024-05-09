@@ -110,6 +110,8 @@ void planificacion_RR();
 void planificacion_VRR();
 void ejecutar_planificacion();
 void ejecutar_proceso();
+bool iniciar_conexion_io();
+void io_handler();
 #endif /* kernel.h*/
 
 
