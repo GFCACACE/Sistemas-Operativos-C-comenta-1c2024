@@ -110,9 +110,9 @@ void planificacion_RR();
 void planificacion_VRR();
 void ejecutar_planificacion();
 void ejecutar_proceso();
-bool iniciar_conexion_io();
-void io_handler();
-bool iniciar_servidor_kernel()
+// bool iniciar_conexion_io();
+// void io_handler();
+// bool iniciar_servidor_kernel();
 #endif /* kernel.h*/
 
 

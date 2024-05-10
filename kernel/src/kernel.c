@@ -157,8 +157,8 @@ bool iniciar_kernel(char* path_config){
 	iniciar_interrupt()&&
 	iniciar_estados_planificacion()&&
 	iniciar_colas_entrada_salida()&&
-	iniciar_semaforos()&&
-	iniciar_conexion_io();
+	iniciar_semaforos();
+	//&&iniciar_conexion_io();
 }
 bool iniciar_semaforos(){
 	sem_init(&sem_grado_multiprogamacion,0,config->GRADO_MULTIPROGRAMACION);
@@ -166,18 +166,18 @@ bool iniciar_semaforos(){
 	return true;
 }
 
-bool iniciar_conexion_io(){
-	pthread_t thread_io;
+// bool iniciar_conexion_io(){
+// 	pthread_t thread_io;
 
-	pthread_create(&thread_io,NULL, (void*)io_handler,NULL);
+// 	pthread_create(&thread_io,NULL, (void*)io_handler,NULL);
 
-	pthread_detach(thread_io);
-	if(thread_io == -1){
-		loguear_error("No se pudo iniciar la I/O.");
-		return false;
-	}
-	return true;
-}
+// 	pthread_detach(thread_io);
+// 	if(thread_io == -1){
+// 		loguear_error("No se pudo iniciar la I/O.");
+// 		return false;
+// 	}
+// 	return true;
+// }
 
 bool iniciar_planificadores(){
 	pthread_t thread_planificador_largo;
@@ -697,34 +697,34 @@ void de_ready_a_exec(){
 
 
 
-bool iniciar_servidor_kernel(){
+// bool iniciar_servidor_kernel(){
 
-		//Iniciamos el servidor con el puerto indicado en la config
-		kernel_escucha = iniciar_servidor(config_kernel->PUERTO_ESCUCHA);
-		if(kernel_escucha == -1){
-			loguear_error("El servidor no pudo ser iniciado");
-			return false;
-		}
-		loguear("El Servidor iniciado correctamente");
-		return true;
-}
+// 		//Iniciamos el servidor con el puerto indicado en la config
+// 		kernel_escucha = iniciar_servidor(config_kernel->PUERTO_ESCUCHA);
+// 		if(kernel_escucha == -1){
+// 			loguear_error("El servidor no pudo ser iniciado");
+// 			return false;
+// 		}
+// 		loguear("El Servidor iniciado correctamente");
+// 		return true;
+// }
 
-bool iniciar_conexion_io(){ // ¿Debemos hacer un hilo por cliente(I/O)?
+// bool iniciar_conexion_io(){ // ¿Debemos hacer un hilo por cliente(I/O)?
 
-		//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
-		conexion_io = esperar_cliente(kernel_escucha);
-		if(conexion_io == -1){
-			loguear_error("Falló la conexión con la I/O");
-			return false;
-		}
+// 		//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
+// 		conexion_io = esperar_cliente(kernel_escucha);
+// 		if(conexion_io == -1){
+// 			loguear_error("Falló la conexión con la I/O");
+// 			return false;
+// 		}
 
-		return true;
-}
-void io_handler(){
-	if (!iniciar_servidor_kernel()){
-		return;
-	}
-	// ¿Crea un Hilo por cada conexion I/O?
+// 		return true;
+// }
+// void io_handler(){
+// 	if (!iniciar_servidor_kernel()){
+// 		return;
+// 	}
+// 	// ¿Crea un Hilo por cada conexion I/O?
 
 
-}
+// }
