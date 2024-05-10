@@ -23,7 +23,7 @@ void test_instrucciones(){
     *(uint32_t*)registros_cpu->PARAM1,
     *(uint32_t*)registros_cpu->PARAM2);
     bool flag_exe = execute();
-    if(flag_exe==false){loguear_error("No se pudo ejecutar"); return EXIT_FAILURE;}
+    if(!flag_exe){loguear_error("No se pudo ejecutar"); return EXIT_FAILURE;}
     loguear("AX: %d", registros_cpu->AX);*/
 }
 

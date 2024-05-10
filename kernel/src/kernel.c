@@ -199,6 +199,10 @@ bool iniciar_planificadores(){
 	return true;
 }
 
+t_queue* get_cola_pcb(t_pcb* pcb){
+	return NULL;
+}
+
 // Falta pasar un pcb de un lugar a exit. Se debe validar si el pcb se encuentra en una lista o no
 void liberar_proceso(t_pcb* pcb){
 	// Pasar de una cola o exec a exit
@@ -617,6 +621,11 @@ void liberar_colas(){
 	
 }
 
+void liberar_semaforos(){
+	sem_destroy(&sem_grado_multiprogamacion);
+	sem_destroy(&sem_new);
+}
+
 void finalizar_kernel(){
 	
 	if (conexion_memoria != -1) liberar_conexion(conexion_memoria);
@@ -627,11 +636,6 @@ void finalizar_kernel(){
 	if(comandos_consola!=NULL) dictionary_destroy(comandos_consola);
 	liberar_colas();
 	liberar_semaforos();	
-}
-
-void liberar_semaforos(){
-	sem_destroy(&sem_grado_multiprogamacion);
-	sem_destroy(&sem_new);
 }
 
 bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){

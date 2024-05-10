@@ -7,8 +7,8 @@ int main(int argc, char** argv) {
 
     //Iniciamos mediante una funcion las config, el logger y las conexiones
     //Asignamos un flag que nos devolverá si se pudo iniciar correctamente el módulo o no.
-    bool flag_iniciar_memoria = iniciar_memoria(argv[1]);
-    if(flag_iniciar_memoria == false){
+    bool memmoria_iniciada = iniciar_memoria(argv[1]);
+    if(!memmoria_iniciada){
         //En caso de que no se haya inicializado correctamente, finalizamos memoria y salimos del programa
         finalizar_memoria();
         return EXIT_FAILURE;

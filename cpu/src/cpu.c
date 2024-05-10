@@ -140,9 +140,9 @@ bool iniciar_cpu(char *path_config)
 {
 	return iniciar_log_config(path_config) &&
 		   iniciar_registros_cpu() &&
-		   // iniciar_dispatch() &&
+		   iniciar_dispatch() &&
 		   iniciar_conexion_memoria() &&
-		   // iniciar_conexion_kernel() &&
+		   iniciar_conexion_kernel() &&
 		   iniciar_variables();
 }
 bool iniciar_variables()
@@ -157,6 +157,11 @@ void config_destroy_cpu(t_config_cpu *config)
 	config_destroy(config->config);
 	free(config);
 }
+
+void liberar_param(t_param parametro){ // Para agregar declaratividad
+	free(parametro.string_valor);
+}
+
 
 void finalizar_cpu()
 {
@@ -228,14 +233,14 @@ bool es_exit(char *comando)
 }
 
  void ciclo_de_instruccion(t_pcb* pcb){
-	bool flag_interrupt = false;
+	bool hay_interrupcion = false;
 	do{		
 		fetch(pcb);
 		decode();
 		execute(pcb);
-		flag_interrupt=check_interrupt(pcb);
+		hay_interrupcion=check_interrupt(pcb);
 
-	}while (es_exit(IR)==false && flag_interrupt==false);
+	}while ((!es_exit(IR)) && !hay_interrupcion);
 	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
 	if(IR!=NULL) free(IR);	
  }
@@ -245,7 +250,7 @@ bool es_exit(char *comando)
 
 t_param interpretar_valor_instruccion(char* valor){
 	t_param parametro;
-	if(dictionary_has_key(diccionario_registros_cpu,valor)==true){
+	if(dictionary_has_key(diccionario_registros_cpu,valor)){
 	 parametro.puntero=dictionary_get(diccionario_registros_cpu,valor);
 	 if(!strcmp(valor,"AX")||!strcmp(valor,"BX")||!strcmp(valor,"CX")||!strcmp(valor,"DX")){
 	 parametro.size = sizeof(uint8_t);
@@ -367,10 +372,6 @@ bool execute(t_pcb *pcb)
 	return false;
 }
 
-
-void liberar_param(t_param parametro){ // Para agregar declaratividad
-	free(parametro.string_valor);
-}
 
 bool exe_set(t_param registro, t_param valor)
 {
