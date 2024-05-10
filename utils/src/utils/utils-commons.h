@@ -29,8 +29,9 @@ typedef enum
 	EJECUTAR_CPU,
 	//CPU - Kernel
 	CPU_INTERRUPT,
-	CPU_EXIT
-
+	CPU_EXIT,
+	//Kernel - Memoria
+	CREACION_PROCESO
 }op_code;
 
 typedef struct 

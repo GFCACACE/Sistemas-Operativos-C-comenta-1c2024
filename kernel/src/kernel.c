@@ -3,6 +3,7 @@
 
 sem_t sem_grado_multiprogamacion;
 sem_t sem_new;
+sem_t sem_ready;
 
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
@@ -11,6 +12,8 @@ t_dictionary * comandos_consola;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus,
 		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
 t_pcb* pcb_exec; 
+
+
  // Crear el diccionario de algoritmo
 t_planificador get_algoritmo(char* nombre){
 
@@ -163,6 +166,7 @@ bool iniciar_kernel(char* path_config){
 bool iniciar_semaforos(){
 	sem_init(&sem_grado_multiprogamacion,0,config->GRADO_MULTIPROGRAMACION);
 	sem_init(&sem_new,0,0);
+	sem_init(&sem_ready,0,0);
 	return true;
 }
 
@@ -216,16 +220,11 @@ void liberar_proceso(t_pcb* pcb){
 //Este método se llama cuando se inicia un proceso
 void planificador_largo(){
 	while(1){
-	//Este semáforo deja bloqueado al planificador de largo plazo
-	sem_wait(&sem_new); //Se enceuntra funcionando cuando se inicia un proceso
-	
-	// Comunicarse con memoria (mandar pcb)
-
+	sem_wait(&sem_new); //Bloquea plp hasta que aparezca un proceso
 	sem_wait(&sem_grado_multiprogamacion); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
-	// SUGERENCIA: la funcion cambio_de_estado verifica la transicion y además hace efectivo el cambio de colas
-	// bool mod = cambio_de_estado(estado_new, estado_ready);
-    bool mod = modificacion_estado(estado_new, estado_ready);
+    bool mod = cambio_de_estado(estado_new, estado_ready);
 	if(mod){
+		sem_post(&sem_ready);
 		loguear("El proceso ingresó correctamente a la lista de ready");
 	}
 	// Faltaria parte exit, ¿hacemos otro hilo o como? Discutir en DS.
@@ -241,7 +240,12 @@ void planificador_largo(){
 }*/
 
 void planificador_corto(){
-	loguear("Se inicio el planificador corto.");
+	while(1){
+		sem_wait(&sem_ready);
+		loguear("El proceso se encuentra en pcp");
+		ejecutar_planificacion();
+
+	}
 
 }
 
@@ -386,7 +390,7 @@ bool iniciar_proceso(char** parametros){
 	t_pcb* pcb = pcb_create(path);   // Se crea el PCB y se agrega a New
 
 	queue_push(estado_new,pcb);
-	
+	enviar_pcb(pcb,CREACION_PROCESO,conexion_memoria); // Enviar proceso a memoria para que inicialice 
 	sem_post(&sem_new);
 
 	free(path);
@@ -624,6 +628,7 @@ void liberar_colas(){
 void liberar_semaforos(){
 	sem_destroy(&sem_grado_multiprogamacion);
 	sem_destroy(&sem_new);
+	sem_destroy(&sem_ready);
 }
 
 void finalizar_kernel(){
@@ -656,11 +661,17 @@ bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
 	return true;
 }
 
-/*SUGERENCIA: 
-funcion que verifique que la transicion pedida sea posible
-luego, con cambio_de_estado efectivizar el paso del pcb de una cola a la otra
+bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino){
+	t_pcb* pcb;
+	bool transicion = transicion_valida(estado_origen, estado_destino);
+	if(transicion){
+		queue_push(estado_destino, queue_pop(estado_origen));
+		
+	}
+	return transicion;
+}
 
-bool transicion_invalida(t_queue* estado_origen,t_queue* estado_destino){
+bool transicion_valida(t_queue* estado_origen,t_queue* estado_destino){
 	if (estado_destino==estado_new || estado_origen==estado_exit){
 		return false;
 	}
@@ -673,17 +684,6 @@ bool transicion_invalida(t_queue* estado_origen,t_queue* estado_destino){
 	
 	return true;
 }
-
-bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino){
-	t_pcb* pcb;
-	bool transicion = transicion_invalida(estado_origen, estado_destino);
-	if(!transicion){
-		pcb = (t_pcb*)queue_pop(estado_origen);
-		queue_push(estado_destino, pcb);
-	}
-	return true;
-}
-
 void de_ready_a_exec(){
 	t_pcb* pcb = (t_pcb*)queue_pop(estado_ready);
 	if(pcb != NULL){
@@ -691,7 +691,6 @@ void de_ready_a_exec(){
 		ejecutar_proceso();
 	}
 }
-*/
 
 
 
