@@ -151,6 +151,7 @@ void proceso_destroy(void* elemento){
 	t_proceso* proceso = (t_proceso*)elemento;
 	if(proceso!=NULL){
 		list_destroy(proceso->instrucciones);
+		pcb_destroy(proceso->pcb);
 		free(proceso);
 	}
 
