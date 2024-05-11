@@ -82,19 +82,14 @@ t_paquete* recibir_paquete(int socket_cliente)
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 	paquete->buffer = malloc(sizeof(t_buffer));
 
-	//printf("Recibiendo de socket: %d\n",socket_cliente);
-
 	// Primero recibimos el codigo de operacion
 	recv(socket_cliente, &(paquete->codigo_operacion), sizeof(op_code), 0);
-	//loguear("tam opcode:%ld",sizeof(op_code));
-	//loguear("pqCodes:%d",paquete->codigo_operacion);	
 
 	if(paquete->codigo_operacion==-1)
 		return paquete;
 
 	// Después ya podemos recibir el buffer. Primero su tamaño seguido del contenido
 	recv(socket_cliente, &(paquete->buffer->size), sizeof(uint32_t), 0);
-	//loguear("bfSize:%d",paquete->buffer->size);
 	paquete->buffer->stream = malloc(paquete->buffer->size);
 	recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, 0);
 
@@ -130,9 +125,6 @@ void recibir_de_buffer(void* lugar_destino,t_buffer* buffer,size_t tam){
 
 t_pcb* recibir_pcb(t_paquete* paquete)
 {
-	// loguear("                  ");
-	// loguear("    RECIBO PCB        ");
-	// loguear("                  ");
 	t_pcb* pcb = pcb_create("");
 	t_buffer* buffer = paquete->buffer;
 	buffer->desplazamiento = sizeof(uint32_t);
@@ -156,10 +148,6 @@ t_pcb* recibir_pcb(t_paquete* paquete)
 
 	pcb->path = realloc(pcb->path,path_size);
 	recibir_de_buffer(pcb->path, buffer, path_size);
-
-	// loguear("                  ");
-	// loguear("  FIN  RECIBO PCB        ");
-	// loguear("                  ");
 
 	return pcb;
 }

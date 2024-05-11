@@ -2,6 +2,7 @@
 
 int memoria_escucha, conexion_cpu, conexion_kernel;
 t_config_memoria *config_memoria;
+t_dictionary *procesos;
 
 t_config_memoria *iniciar_config_memoria(char *config_path)
 {
@@ -97,15 +98,63 @@ bool iniciar_conexion_cpu(){
 		return true;
 }
 
+bool iniciar_conexion_kernel(){
+
+		//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
+		conexion_kernel = esperar_cliente(memoria_escucha);
+		if(conexion_kernel == -1){
+			loguear_error("Falló la conexión con Kernel");
+			return false;
+		}
+
+		return true;
+}
+
+bool iniciar_memoria_instrucciones(){
+	pthread_t thread_memoria_procesos;
+	pthread_t thread_memoria_instrucciones;//Inicializo el thread
+
+	pthread_create(&thread_memoria_procesos,NULL, (void*)recibir_procesos,NULL);
+	pthread_create(&thread_memoria_instrucciones,NULL,(void*)buscar_instrucciones,NULL);
+	
+	pthread_detach(thread_memoria_procesos);
+	if (thread_memoria_procesos == -1){
+		loguear_error("No se pudo iniciar la memoria de procesos.");
+		return false;
+	}
+	pthread_join(thread_memoria_instrucciones,NULL);
+	if (thread_memoria_instrucciones == -1){
+		loguear_error("No se pudo iniciar la memoria de instrucciones.");
+		return false;
+	}
+	return true;
+}
+
+bool inicializar_memoria(){
+	procesos = dictionary_create();
+	return true;
+}
+
 bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las configs*/)
 {
 	return
 		iniciar_logger_config(path_config)&&
 		iniciar_servidor_memoria() &&
-		iniciar_conexion_cpu();
-	
+		inicializar_memoria()&&
+		iniciar_conexion_cpu()&&
+		iniciar_conexion_kernel()&&
+		iniciar_memoria_instrucciones();
 }
 
+void proceso_destroy(void* elemento){
+
+	t_proceso* proceso = (t_proceso*)elemento;
+	if(proceso!=NULL){
+		list_destroy(proceso->instrucciones);
+		free(proceso);
+	}
+
+}
 
 void finalizar_memoria()
 {
@@ -113,6 +162,8 @@ void finalizar_memoria()
 		config_memoria_destroy();
 	if (logger != NULL)
 		log_destroy(logger);
+	if(procesos!=NULL)
+		dictionary_destroy_and_destroy_elements(procesos,proceso_destroy);
 }
 
 
@@ -125,31 +176,18 @@ t_list* get_instrucciones_memoria(char* archivo){
 	return get_instrucciones(config_memoria->PATH_INSTRUCCIONES,archivo);
 }
 
-char *proxima_instruccion_de(t_pcb *pcb)
-{	
-	//char* pid = uint_a_string(pcb->PID);
-	
-	//t_list *programa = get_instrucciones_memoria(pcb->path);
-	char* proxima_instruccion = get_linea_archivo(config_memoria->PATH_INSTRUCCIONES,pcb->path, pcb->program_counter);
+char *proxima_instruccion_de(t_pcb *pcb){
+	t_proceso* proceso = dictionary_get(procesos,string_itoa(pcb->PID));
+	return list_get(proceso->instrucciones,pcb->program_counter);
 
-	loguear("Próxima instruccción: %s.", proxima_instruccion);
-	printf("Próxima instruccción: %s.", proxima_instruccion);
-	
-	//free(proxima_instruccion);
-
-	//free(pid);
-	//list_iterate(programa,free);
-	//list_destroy(programa);
-	return proxima_instruccion;
 }
 
 
 void enviar_proxima_instruccion (t_pcb* pcb){
 	char* instruccion = proxima_instruccion_de(pcb); 
 	enviar_mensaje(instruccion,conexion_cpu);
-	pcb_destroy(pcb);
-	
-	free(instruccion);
+	pcb_destroy(pcb);	
+	usleep(config_memoria->RETARDO_RESPUESTA);
 }
 
 int buscar_instrucciones(){
@@ -168,16 +206,73 @@ int buscar_instrucciones(){
             case FIN_PROGRAMA:
 			    loguear("Fin programa");
 				paquete_destroy(paquete);				
-			return EXIT_SUCCESS;
+			break;
             case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");
 			paquete_destroy(paquete);
 			return EXIT_FAILURE;
 		    default:
-			log_warning(logger,"Operacion desconocida. No quieras meter la pata");
+			log_warning(logger,"Operación desconocida. No quieras meter la pata");
 			paquete_destroy(paquete);
 			return EXIT_FAILURE;
         }
 
     }
+}
+
+bool tiene_exit(t_list* instrucciones){
+	return list_any_satisfy(instrucciones,es_exit);
+}
+
+bool crear_proceso( t_pcb *pcb ){
+	t_proceso* proceso = malloc(sizeof(t_proceso));
+	proceso->pcb=pcb;
+	proceso->instrucciones = get_instrucciones_memoria(pcb->path);
+
+	if(proceso->instrucciones==NULL){
+		loguear_error("El programa asociado no existe.");
+		return false;
+	}
+
+	if(tiene_exit(proceso->instrucciones))
+		dictionary_put(procesos,string_itoa(pcb->PID),proceso);
+	else{
+		loguear_error("El programa asociado no tiene %s",EXIT_PROGRAM);
+		return false;
+	}
+	return true;
+}
+
+int recibir_procesos(){
+	 while (1) {
+		  t_paquete *paquete = recibir_paquete(conexion_kernel);
+		 int cod_op =paquete->codigo_operacion;
+		loguear("Cod op: %d", cod_op);
+        switch (cod_op) {
+			case CREACION_PROCESO:
+			  t_pcb *pcb = recibir_pcb(paquete); 
+			  bool proceso_creado = crear_proceso(pcb);
+			  if(proceso_creado)	
+			  	enviar_texto("Proceso creado",CREACION_PROCESO,conexion_kernel);
+				else	
+			{	
+				enviar_texto("No se pudo crear el proceso",CREACION_PROCESO_FALLIDO,conexion_kernel);
+				pcb_destroy(pcb);
+				paquete_destroy(paquete);
+			}	  
+			 
+			break;
+			case ELIMINACION_PROCESO:
+			break;
+			case -1:
+			loguear_error("el cliente se desconectó. Terminando servidor");
+			paquete_destroy(paquete);
+			return EXIT_FAILURE;
+		    default:
+			log_warning(logger,"Operación desconocida. No quieras meter la pata");
+			paquete_destroy(paquete);
+			return EXIT_FAILURE;
+
+		}
+	 }
 }

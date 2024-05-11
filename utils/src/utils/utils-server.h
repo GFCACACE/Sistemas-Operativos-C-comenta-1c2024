@@ -15,10 +15,6 @@
 #include<utils/utils-serializacion.h>
 #include<utils/utils-commons.h>
 
-//#define PUERTO "4444"
-
-
-
 extern t_log* logger;
 
 void* recibir_buffer(int*, int);

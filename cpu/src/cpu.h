@@ -11,7 +11,6 @@
 #include "utils/utils-commons.h"
 #include <stdint.h>
 #define MODULO "cpu"
-#define EXIT_PROGRAM "EXIT"
 typedef struct
 {
 	char* IP_MEMORIA;

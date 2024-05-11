@@ -12,11 +12,8 @@ int main(int argc, char** argv) {
         //En caso de que no se haya inicializado correctamente, finalizamos memoria y salimos del programa
         finalizar_memoria();
         return EXIT_FAILURE;
-    }
-    enviar_mensaje("Hola desde memoria",conexion_kernel);
+    } 
 
-    buscar_instrucciones();
-    
     //Si llega hasta acá es porque ya se ejecutó todo lo necesario
     //Finalizamos memoria y salimos del programa
     finalizar_memoria();

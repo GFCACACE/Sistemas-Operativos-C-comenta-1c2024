@@ -62,33 +62,14 @@ t_dictionary *iniciar_diccionario_cpu()
 }
 
 bool iniciar_registros_cpu()
-{
-	/*
-	registros_cpu = malloc(sizeof(t_registros_cpu));
-	registros_cpu->AX=malloc(sizeof(uint8_t));
-	registros_cpu->BX=malloc(sizeof(uint8_t));
-	registros_cpu->CX=malloc(sizeof(uint8_t));
-	registros_cpu->DX=malloc(sizeof(uint8_t));
-	registros_cpu->EAX = malloc(sizeof(uint32_t));
-	registros_cpu->EBX = malloc(sizeof(uint32_t));
-	registros_cpu->ECX = malloc(sizeof(uint32_t));
-	registros_cpu->EDX = malloc(sizeof(uint32_t));
-	registros_cpu->SI = malloc(sizeof(uint32_t));
-	registros_cpu->DI = malloc(sizeof(uint32_t));*/
-	// Si implementamos la verison que hariamos en las commons, todo lo de arriba se iria reemplazado por
+{	
 	loguear("CPU inicializará registros");
 	registros_cpu = inicializar_registros(registros_cpu);
 
 	loguear("Registros CPU logueados");
 
-	// Esto quedaria dentro de la funcion iniciar_registros_cpu
 	IR = string_new();
 	INSTID = string_new();
-	// PARAM1 = malloc(sizeof(t_param));
-	// PARAM2 = malloc(sizeof(t_param));
-	// PARAM3 = malloc(sizeof(t_param));
-
-
 	if (registros_cpu == NULL)
 	{
 		loguear_error("No se pudieron iniciar los registros correctamente");
@@ -219,19 +200,6 @@ char *pedir_proxima_instruccion(t_pcb *pcb)
 	return recibir_instruccion();
 }
 
-void ejecutar_instruccion(t_pcb *pcb, char *instruccion)
-{
-
-	loguear("Ejecutando instrucción: %s ...", instruccion);
-	// HACER INSTRUCCION
-	pcb->program_counter++;
-}
-
-bool es_exit(char *comando)
-{
-	return string_equals_ignore_case(comando, (char *)EXIT_PROGRAM);
-}
-
  void ciclo_de_instruccion(t_pcb* pcb){
 	bool hay_interrupcion = false;
 	do{		
@@ -283,7 +251,6 @@ bool fetch(t_pcb *pcb)
 	loguear("PID: <%i> - FETCH - Program Counter: <%i>",
 			pcb->PID,
 			pcb->program_counter);
-	// TODO;	actualizar_pcb(pcb); //sincronizar registros cpu con pcb
 	if (IR == NULL)
 		return false;
 	return true;

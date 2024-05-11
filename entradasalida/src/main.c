@@ -3,8 +3,7 @@
 #include <utils/hello.h>
 #include "entradasalida.h"
 
-int main(int argc, char* argv[]) {
-    //decir_hola("una Interfaz de Entrada/Salida");
+int main(int argc, char* argv[]) {   
     //Iniciamos mediante una funcion las config, el logger y las conexiones
     //Asignamos un flag que nos devolverá si se pudo iniciar correctamente el módulo o no.
     // bool flag_iniciar_io = iniciar_io(argv[1],argv[2]);

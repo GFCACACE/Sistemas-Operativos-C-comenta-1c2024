@@ -26,8 +26,7 @@ t_planificador get_algoritmo(char* nombre){
     void _agregar(char* _nombre, t_alg_planificador tipo,void(*funcion)(void)){
 		t_planificador* planif = malloc(sizeof(t_planificador));
 		planif->id = tipo;
-		planif->planificar = funcion; 		
-		//t_planificador* planif_ptr=*planif;
+		planif->planificar = funcion; 	
         dictionary_put(algoritmos, _nombre, planif);
     };
 
@@ -366,6 +365,28 @@ int ejecutar_comando_consola(char*params){
 	return numero_comando;
 }
 
+bool crear_proceso_en_memoria(t_pcb* pcb){
+	enviar_pcb(pcb,CREACION_PROCESO,conexion_memoria); // Enviar proceso a memoria para que inicialice 
+	op_code operacion = recibir_operacion(conexion_memoria);
+	switch (operacion)
+	{
+	case CREACION_PROCESO:
+		char* mensaje = recibir_mensaje(conexion_memoria);
+		loguear("OK: %s",mensaje);
+		free(mensaje);
+		break;
+	case CREACION_PROCESO_FALLIDO:
+		char* mensaje_falla = recibir_mensaje(conexion_memoria);
+		loguear_error("No se pudo crear el proceso: %s",mensaje_falla);
+		free(mensaje_falla);
+		return false;
+		break;
+	default:
+		break;
+	}
+	
+	return true;
+}
 
 bool iniciar_proceso(char** parametros){
 	
@@ -388,10 +409,13 @@ bool iniciar_proceso(char** parametros){
 	char *path = string_duplicate(parametros[1]);
 	loguear("PATH: %s",path);
 	t_pcb* pcb = pcb_create(path);   // Se crea el PCB y se agrega a New
-
-	queue_push(estado_new,pcb);
-	enviar_pcb(pcb,CREACION_PROCESO,conexion_memoria); // Enviar proceso a memoria para que inicialice 
-	sem_post(&sem_new);
+	
+	bool proceso_creado = crear_proceso_en_memoria(pcb);
+	if(proceso_creado){
+		queue_push(estado_new,pcb);
+		sem_post(&sem_new);
+	}
+	else pcb_destroy(pcb);
 
 	free(path);
 		
@@ -661,8 +685,7 @@ bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
 	return true;
 }
 
-bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino){
-	t_pcb* pcb;
+bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino){	
 	bool transicion = transicion_valida(estado_origen, estado_destino);
 	if(transicion){
 		queue_push(estado_destino, queue_pop(estado_origen));

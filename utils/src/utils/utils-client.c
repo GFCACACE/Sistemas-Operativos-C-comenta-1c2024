@@ -48,43 +48,44 @@ int crear_conexion(char *ip, int puerto)
 
 
 void enviar_stream(void*stream,int size,int socket,op_code codigo_operacion){
-	//loguear("enviar_mensaje");
 	t_paquete* paquete = crear_paquete(codigo_operacion);	
 	agregar_a_paquete(paquete,stream,size);	
 	enviar_paquete(paquete,socket);
 	paquete_destroy(paquete);
 }
 
-void enviar_mensaje(char* mensaje, int socket_cliente)
-{
-	// loguear("Se va a enviar el mensaje %s.", mensaje);
-	// loguear("Length:%ld",strlen(mensaje));
-	// loguear("Length:%ld",strlen("hola"));
+void _enviar_texto(char* texto,op_code operacion,int socket){
+	int size = strlen(texto) + 1;
+	enviar_stream(texto,size,socket,operacion);
+
+}
+void enviar_texto(char* texto,op_code operacion,int socket){
+
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 
-	paquete->codigo_operacion = MENSAJE;
+	paquete->codigo_operacion = operacion;
 	paquete->buffer = malloc(sizeof(t_buffer));
-	paquete->buffer->size = strlen(mensaje) + 1;
+	paquete->buffer->size = strlen(texto) + 1;
 	paquete->buffer->stream = malloc(paquete->buffer->size);
-	memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
+	memcpy(paquete->buffer->stream, texto, paquete->buffer->size);
 
 	int bytes = paquete->buffer->size + 2*sizeof(int);
 
 	void* a_enviar = serializar_paquete(paquete, bytes);
 
-	send(socket_cliente, a_enviar, bytes, 0);
+	send(socket, a_enviar, bytes, 0);
 
 	free(a_enviar);
 	paquete_destroy(paquete);
+
 }
 
+void enviar_mensaje(char* mensaje, int socket)
+{
+	enviar_texto(mensaje,MENSAJE,socket);
+	
+}
 
-// void crear_buffer(t_paquete* paquete)
-// {
-// 	paquete->buffer = malloc(sizeof(t_buffer));
-// 	paquete->buffer->size = 0;
-// 	paquete->buffer->stream = NULL;
-// }
 t_buffer* crear_buffer(size_t size)
 {
 	t_buffer* buffer = malloc(sizeof(t_buffer));
@@ -111,7 +112,7 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 	memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
 	memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), valor, tamanio);
 
-	paquete->buffer->size += tamanio + sizeof(int);
+	paquete->buffer->size += tamanio + 2*sizeof(int);
 }
 
 void enviar_paquete(t_paquete* paquete, int socket_cliente)
@@ -149,8 +150,6 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 	*size = sizeof(uint32_t) *10 +  + sizeof(uint8_t) *5 + path_size ;
 	t_buffer* buffer = crear_buffer(*size);
 
-	//loguear("Size PCB:%d",*size);
-
 	agregar_a_buffer(buffer, &pcb->PID, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &pcb->prioridad, sizeof(uint8_t));
 	agregar_a_buffer(buffer, &pcb->program_counter, sizeof(uint32_t));
@@ -168,9 +167,6 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 	agregar_a_buffer(buffer, &path_size, sizeof(uint32_t));
 	agregar_a_buffer(buffer, pcb->path, path_size);
 
-	
-//	loguear("Path: %s",pcb->path);
-//	loguear("desplazamiento:%d",buffer->desplazamiento);	
 	void * stream = buffer->stream;
 	free(buffer);
 
@@ -180,14 +176,6 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 void enviar_pcb(t_pcb* pcb,op_code operacion,int socket){
 	int size;
 	void* stream = serializar_pcb(pcb,&size);
-	//	loguear_stream_pcb(stream,size);
-	// loguear_pcb(pcb);
 	enviar_stream(stream,size,socket,operacion);
 	free(stream);
-}
-
-void enviar_texto(char* texto,op_code operacion,int socket){
-	int size = strlen(texto) + 1;
-	enviar_stream(texto,size,socket,operacion);
-
 }

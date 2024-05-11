@@ -24,6 +24,14 @@ typedef struct
 } t_config_memoria;
 
 
+typedef struct
+{
+	t_list* instrucciones;
+	t_pcb* pcb;
+
+} t_proceso;
+
+
 typedef enum
 {
 	INICIAR_PROCESO,
@@ -46,5 +54,6 @@ char* proxima_instruccion_de(t_pcb*);
 void cargar_programa_de(t_pcb*,char*);
 void enviar_proxima_instruccion (t_pcb* pcb);
 int buscar_instrucciones();
+int recibir_procesos();
 
 #endif /* kernel.h*/

@@ -15,18 +15,6 @@ t_pcb* pcb_create(char* path_programa){
 
 t_registros_cpu*  inicializar_registros (t_registros_cpu* registros){
 	registros = malloc(sizeof(t_registros_cpu));
-
-	// registros->AX = malloc(sizeof(uint8_t));
-	// registros->BX = malloc(sizeof(uint8_t));
-	// registros->CX = malloc(sizeof(uint8_t));
-	// registros->DX = malloc(sizeof(uint8_t));
-	// registros->EAX = malloc(sizeof(uint32_t));
-	// registros->EBX = malloc(sizeof(uint32_t));
-	// registros->ECX = malloc(sizeof(uint32_t));
-	// registros->EDX = malloc(sizeof(uint32_t));
-	// registros->SI = malloc(sizeof(uint32_t));
-	// registros->DI = malloc(sizeof(uint32_t));
-
 	registros->AX=registros->BX=registros->CX=registros->DX=registros->EAX=registros->EBX=registros->ECX =registros->EDX =
 	registros->SI = registros->DI = registros->PC = 0;
 
@@ -56,22 +44,26 @@ void pcb_destroy(t_pcb* pcb){
 	free(pcb);
 }
 
+void loguear_registros(t_registros_cpu* registros){
+	loguear("Reg AX: %d",registros->AX);
+	loguear("Reg BX: %d",registros->BX);
+	loguear("Reg CX: %d",registros->CX);
+	loguear("Reg DX: %d",registros->DX);
+	loguear("Reg EAX: %d",registros->EAX);
+	loguear("Reg EBX: %d",registros->EBX);
+	loguear("Reg ECX: %d",registros->ECX);
+	loguear("Reg EDX: %d",registros->EDX);
+	loguear("Reg SI: %d",registros->SI);
+	loguear("Reg DI: %d",registros->DI);
+}
+
 void loguear_pcb(t_pcb* pcb){
 	printf("LOGUEO PCB\n");
 	loguear("PID: %d",pcb->PID);
 	loguear("program_counter: %d",pcb->program_counter);
 	loguear("Prioridad: %d",pcb->prioridad);
 	loguear("Quantum: %d", pcb->quantum);
-	loguear("Reg AX: %d",pcb->registros_cpu->AX);
-	loguear("Reg BX: %d",pcb->registros_cpu->BX);
-	loguear("Reg CX: %d",pcb->registros_cpu->CX);
-	loguear("Reg DX: %d",pcb->registros_cpu->DX);
-	loguear("Reg EAX: %d",pcb->registros_cpu->EAX);
-	loguear("Reg EBX: %d",pcb->registros_cpu->EBX);
-	loguear("Reg ECX: %d",pcb->registros_cpu->ECX);
-	loguear("Reg EDX: %d",pcb->registros_cpu->EDX);
-	loguear("Reg SI: %d",pcb->registros_cpu->SI);
-	loguear("Reg DI: %d",pcb->registros_cpu->DI);
+	loguear_registros(pcb->registros_cpu);
 	loguear("Cant. de archivos abiertos: %d",list_size( pcb->archivos_abiertos));
     loguear("PATH: %s",pcb->path);
 	printf("==========================----- \n");
@@ -198,4 +190,10 @@ char* get_linea_archivo(char* directorio,char* nombre_archivo,int posicion){
 
 	return linea;
 
+}
+
+bool es_exit(void *comando)
+{
+	char *instruccion = (char*)comando;
+	return string_equals_ignore_case(instruccion, (char *)EXIT_PROGRAM);
 }

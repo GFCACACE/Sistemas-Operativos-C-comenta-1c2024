@@ -15,6 +15,7 @@
 #include<string.h>
 #include <ctype.h>
 #include <utils/hello.h>
+#define EXIT_PROGRAM "EXIT"
 typedef enum
 {
 	//Genérico
@@ -31,7 +32,9 @@ typedef enum
 	CPU_INTERRUPT,
 	CPU_EXIT,
 	//Kernel - Memoria
-	CREACION_PROCESO
+	CREACION_PROCESO,
+	ELIMINACION_PROCESO,
+	CREACION_PROCESO_FALLIDO
 }op_code;
 
 typedef struct 
@@ -66,12 +69,13 @@ t_pcb* pcb_create(char*);
 t_pcb* pcb_create_quantum(char* path_programa,int quantum);
 void pcb_destroy(t_pcb*);
 bool is_numeric(const char*);
+void loguear_registros(t_registros_cpu* registros);
 void loguear_pcb(t_pcb*);
 char* path_resolve(char*, char*);
 char * uint_a_string(uint);
 t_list* get_instrucciones(char* path_inicial,char *nombre_archivo);
 char* get_linea_archivo(char* directorio,char* nombre_archivo,int posicion);
-
+bool es_exit(void *comando);
 t_registros_cpu* inicializar_registros (t_registros_cpu*);
 
 #endif /* utils_commons_h */
