@@ -154,7 +154,7 @@ int ejecutar_op_io()
 			//BRAND NEW
             case IO_GEN_SLEEP:
                 io_gen_sleep(/*unidad_de_trabajo*/);
-				avisar_a_kernel(); // no está hecha
+				//avisar_a_kernel(); // no está hecha
                 break;			
 			//BRAND NEW	
             case -1:

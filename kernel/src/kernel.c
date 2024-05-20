@@ -719,7 +719,7 @@ void de_ready_a_exec(){
 
 bool iniciar_servidor_kernel(){
     //Iniciamos el servidor con el puerto indicado en la config
-	kernel_escucha = iniciar_servidor(config_kernel->PUERTO_ESCUCHA);
+	kernel_escucha = iniciar_servidor(config->PUERTO_ESCUCHA);
 	if(kernel_escucha == -1){
 		loguear_error("El servidor no pudo ser iniciado");
 		return false;
@@ -729,33 +729,36 @@ bool iniciar_servidor_kernel(){
 }
 
 // BRAND NEW
-bool iniciar_conexion_io(){
-	while (1){
-		pthread_t thread;
-    	int *fd_conexion_ptr = malloc(sizeof(int));
-    	*fd_conexion_ptr = accept(kernel_escucha, NULL, NULL);
-		//revisar
-		char* nombre_interfaz = recibir_mensaje(kernel_escucha);
-    	pthread_create(&thread,NULL, (void*) io_handler(nombre_interfaz),fd_conexion_ptr);
-    	//
-		pthread_detach(thread);
+//cambiar el tipo y ver como engancharlo.
+// bool iniciar_conexion_io(){
+// 	while (1){
+// 		pthread_t thread;
+//     	int *fd_conexion_ptr = malloc(sizeof(int));
+//     	*fd_conexion_ptr = accept(kernel_escucha, NULL, NULL);
+// 		//revisar
+// 		char* nombre_interfaz = recibir_mensaje(kernel_escucha);
+//     	pthread_create(&thread,NULL, (void*) io_handler(nombre_interfaz),fd_conexion_ptr);
+//     	//
+// 		pthread_detach(thread);
 		
-	}
-}
+// 	}
+// }
 // BRAND NEW
 
-// BRAND NEW
-void io_handler(char* nombre){
-	// envia a la interfaz correspodiente la operación que debe ejecutar
-}
-// BRAND NEW
+// // BRAND NEW
+// void io_handler(char* nombre){
+// 	// envia a la interfaz correspodiente la operación que debe ejecutar
+// }
+// // BRAND NEW
 
-// BRAND NEW
-void recibir_peticion_io_de_cpu(){
-	// recibe una petición de la CPU
-	// verifica que exista la interfaz 
-	// verifica que esté conectada
-	// verifica que la interfaz admita dicha operación
-	// envia el proceso a BLOCKED
-}
-// BRAND NEW
+// // BRAND NEW
+// void recibir_peticion_io_de_cpu(){
+// 	// while(1)?
+// 	// recibe una petición de la CPU
+// 	// verifica que exista la interfaz 
+// 	// verifica que esté conectada
+// 	// verifica que la interfaz admita dicha operación
+// 	// envia el proceso a BLOCKED
+// 	//
+// }
+// // BRAND NEW
