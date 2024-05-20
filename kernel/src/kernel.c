@@ -717,40 +717,36 @@ void de_ready_a_exec(){
 
 
 
+bool iniciar_servidor_kernel(){
+    //Iniciamos el servidor con el puerto indicado en la config
+	kernel_escucha = iniciar_servidor(config_kernel->PUERTO_ESCUCHA);
+	if(kernel_escucha == -1){
+		loguear_error("El servidor no pudo ser iniciado");
+		return false;
+	}
+	loguear("El Servidor iniciado correctamente");
+	return true;
+}
+
+bool iniciar_conexion_io(){
+	while (1) {
+		pthread_t thread;
+    	int *fd_conexion_ptr = malloc(sizeof(int));
+    	*fd_conexion_ptr = accept(kernel_escucha, NULL, NULL);
+		//verificar
+		char* nombre_interfaz = recibir_mensaje(kernel_escucha);
+    	pthread_create(&thread,NULL, (void*) io_handler(nombre_interfaz),fd_conexion_ptr);
+    	//
+		pthread_detach(thread);
+		
+	}
+}
 
 
+void io_handler(char* nombre){
+	//TODO
+}
 
-
-
-
-// bool iniciar_servidor_kernel(){
-
-// 		//Iniciamos el servidor con el puerto indicado en la config
-// 		kernel_escucha = iniciar_servidor(config_kernel->PUERTO_ESCUCHA);
-// 		if(kernel_escucha == -1){
-// 			loguear_error("El servidor no pudo ser iniciado");
-// 			return false;
-// 		}
-// 		loguear("El Servidor iniciado correctamente");
-// 		return true;
-// }
-
-// bool iniciar_conexion_io(){ // ¿Debemos hacer un hilo por cliente(I/O)?
-
-// 		//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
-// 		conexion_io = esperar_cliente(kernel_escucha);
-// 		if(conexion_io == -1){
-// 			loguear_error("Falló la conexión con la I/O");
-// 			return false;
-// 		}
-
-// 		return true;
-// }
-// void io_handler(){
-// 	if (!iniciar_servidor_kernel()){
-// 		return;
-// 	}
-// 	// ¿Crea un Hilo por cada conexion I/O?
-
-
+// void recibir_peticion_io_de_cpu(){
+// 	recibir_paquete(cpu_dispatch);
 // }

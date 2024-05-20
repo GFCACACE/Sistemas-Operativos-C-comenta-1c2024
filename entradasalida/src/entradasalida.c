@@ -107,6 +107,7 @@ bool iniciar_conexion_kernel(){
 		loguear_error("No se pudo conectar kernel");
 		return false;
 	}
+	enviar_mensaje(config->NOMBRE,conexion_kernel);
     return true;
 }
 
@@ -141,3 +142,27 @@ void finalizar_io(){
 	if(logger != NULL) log_destroy(logger);
 }
 
+int ejecutar_op_io()
+{
+	loguear("Arranco la ejecucion del proceso");
+	while (1)
+	{
+		t_paquete *paquete = recibir_paquete(conexion_kernel);
+		int cod_op = paquete->codigo_operacion;
+		loguear("Cod op: %d", cod_op);
+        switch (cod_op) {
+            case IO_GEN_SLEEP:
+                
+                break;				
+            case -1:
+			loguear_error("el cliente se desconectó. Terminando servidor");
+			paquete_destroy(paquete);
+			return EXIT_FAILURE;
+		default:
+			log_warning(logger, "Operacion desconocida. No quieras meter la pata");
+			paquete_destroy(paquete);
+			return EXIT_FAILURE;
+		}
+		// Si no se agrega otro caso, convertir switch en IF
+	}
+}
