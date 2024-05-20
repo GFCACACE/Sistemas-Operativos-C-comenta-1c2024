@@ -1,9 +1,14 @@
 #include "kernel.h"
 #include "semaphore.h"
 
-sem_t sem_grado_multiprogamacion;
-sem_t sem_new;
-sem_t sem_ready;
+sem_t sem_cont_grado_mp;
+sem_t sem_bin_new; //Sincroniza que plp (hilo new) no actúe hasta que haya un nuevo elemento en new
+sem_t sem_bin_ready; //Sincroniza que pcp no actúe hasta que haya un nuevo elemento en ready
+sem_t sem_bin_exit; //Sincroniza que plp (hilo exit) no actúe hasta que haya un nuevo elemento en exit
+
+sem_t mx_new; // Garantiza mutua exclusion en estado_new. Podrían querer acceder consola y plp al mismo tiempo
+sem_t mx_ready; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
+sem_t mx_exit; // Garantiza mutua exclusion en estado_exit. Podrían querer acceder consola, plp y pcp al mismo tiempo
 
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
@@ -163,9 +168,14 @@ bool iniciar_kernel(char* path_config){
 	//&&iniciar_conexion_io();
 }
 bool iniciar_semaforos(){
-	sem_init(&sem_grado_multiprogamacion,0,config->GRADO_MULTIPROGRAMACION);
-	sem_init(&sem_new,0,0);
-	sem_init(&sem_ready,0,0);
+	sem_init(&sem_cont_grado_mp,0,config->GRADO_MULTIPROGRAMACION);
+	sem_init(&sem_bin_new,0,0);
+	sem_init(&sem_bin_ready,0,0);
+	sem_init(&sem_bin_exit,0,0);
+
+	sem_init(&mx_new,0,1);
+	sem_init(&mx_ready,0,1);
+	sem_init(&mx_exit,0,1);
 	return true;
 }
 
@@ -183,19 +193,26 @@ bool iniciar_semaforos(){
 // }
 
 bool iniciar_planificadores(){
-	pthread_t thread_planificador_largo;
-	pthread_t thread_planificador_corto;//Inicializo el thread
+	pthread_t thread_plp_new;
+	pthread_t thread_plp_exit;
+	pthread_t thread_pcp;
 
-	pthread_create(&thread_planificador_largo,NULL, (void*)planificador_largo,NULL);
-	pthread_create(&thread_planificador_corto,NULL,(void*)planificador_corto,NULL);
+	pthread_create(&thread_plp_new,NULL, (void*)plp_procesos_nuevos,NULL);
+	pthread_create(&thread_plp_exit,NULL, (void*)plp_procesos_finalizados,NULL);
+	pthread_create(&thread_pcp,NULL,(void*)planificador_corto,NULL);
 	
-	pthread_detach(thread_planificador_largo);
-	if (thread_planificador_largo == -1){
+	pthread_detach(thread_plp_new);
+	if (thread_plp_new == -1){
 		loguear_error("No se pudo iniciar el planificador de largo plazo.");
 		return false;
 	}
-	pthread_detach(thread_planificador_corto);
-	if (thread_planificador_corto == -1){
+	pthread_detach(thread_plp_exit);
+	if (thread_plp_exit == -1){
+		loguear_error("No se pudo iniciar el planificador de largo plazo.");
+		return false;
+	}
+	pthread_detach(thread_pcp);
+	if (thread_pcp == -1){
 		loguear_error("No se pudo iniciar el planificador de corto plazo.");
 		return false;
 	}
@@ -216,32 +233,37 @@ void liberar_proceso(t_pcb* pcb){
 	
 }
 
+
+
+
 //Este método se llama cuando se inicia un proceso
-void planificador_largo(){
+void plp_procesos_nuevos(){
 	while(1){
-	sem_wait(&sem_new); //Bloquea plp hasta que aparezca un proceso
-	sem_wait(&sem_grado_multiprogamacion); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
-    bool mod = cambio_de_estado(estado_new, estado_ready);
-	if(mod){
-		sem_post(&sem_ready);
+	sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
+	sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
+    bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
+	if(proceso_new_a_ready){
+		sem_post(&sem_bin_ready);
 		loguear("El proceso ingresó correctamente a la lista de ready");
 	}
 	// Faltaria parte exit, ¿hacemos otro hilo o como? Discutir en DS.
 	}
 }
 
-/*uint32_t grado_multiprogamacion_actual(){
-	uint32_t grado;
-	grado = list_size(estado_ready->elements) + list_size(estado_blocked->elements);
-	if (pcb_exec != NULL){
-		grado++;
-	}
-}*/
+
+void plp_procesos_finalizados(){
+	while(1){
+		sem_wait(&sem_bin_exit);
+		t_pcb* pcb = pop_estado_get_pcb(estado_exit,&mx_exit);
+		eliminar_proceso_en_memoria(pcb);
+		sem_post(&sem_cont_grado_mp);
+		}
+}
+
 
 void planificador_corto(){
 	while(1){
-		sem_wait(&sem_ready);
-		loguear("El proceso se encuentra en pcp");
+		sem_wait(&sem_bin_ready); //Hay que ver si tiene que estar acá. En este caso se considera que cada replanificación pasa por aca
 		ejecutar_planificacion();
 
 	}
@@ -388,6 +410,32 @@ bool crear_proceso_en_memoria(t_pcb* pcb){
 	return true;
 }
 
+// Se pueden unificar estas dos funciones en un solo Switch??????
+
+bool eliminar_proceso_en_memoria(t_pcb* pcb){
+	enviar_pcb(pcb,ELIMINACION_PROCESO,conexion_memoria); // Enviar proceso a memoria para que inicialice 
+	op_code operacion = recibir_operacion(conexion_memoria);
+	switch (operacion)
+	{
+	case ELIMINACION_PROCESO:
+		char* mensaje = recibir_mensaje(conexion_memoria);
+		loguear("OK: %s",mensaje);
+		free(mensaje);
+		break;
+	case ELIMINACION_PROCESO_FALLIDO:
+		char* mensaje_falla = recibir_mensaje(conexion_memoria);
+		loguear_error("No se pudo eliminar el proceso: %s",mensaje_falla);
+		free(mensaje_falla);
+		return false;
+		break;
+	default:
+		break;
+	}
+
+	return true;
+}
+
+
 bool iniciar_proceso(char** parametros){
 	
 	bool parametros_iniciar_proceso_validos(char** parametros){
@@ -408,12 +456,12 @@ bool iniciar_proceso(char** parametros){
 	
 	char *path = string_duplicate(parametros[1]);
 	loguear("PATH: %s",path);
-	t_pcb* pcb = pcb_create(path);   // Se crea el PCB y se agrega a New
+	t_pcb* pcb = pcb_create(path);   // Se crea el PCB
 	
 	bool proceso_creado = crear_proceso_en_memoria(pcb);
 	if(proceso_creado){
-		queue_push(estado_new,pcb);
-		sem_post(&sem_new);
+		push_proceso_a_estado(pcb,estado_new,&mx_new); //Pasa el PCB a New
+		sem_post(&sem_bin_new);
 	}
 	else pcb_destroy(pcb);
 
@@ -423,12 +471,15 @@ bool iniciar_proceso(char** parametros){
 }
 
 
+void proceso_a_estado(t_pcb* pcb, t_queue* estado,sem_t* mx_estado){
+	sem_wait(mx_estado);
+	queue_push(estado,pcb);
+	sem_post(mx_estado);
+}
 
 
 bool finalizar_proceso(char** substrings){	
 		imprimir_valores_leidos(substrings);
-		
-		
 		
 		loguear("Finaliza el proceso <PID> - Motivo: Finalizado por consola");
 
@@ -549,14 +600,17 @@ void planificacion_FIFO(){
 
 	// Antes de hacer el pop en ready, hay que validar que ya salio el proceso que estaba en running
 	// por ej: if (pcb_exec == NULL)
-	*/
+
 	t_pcb* pcb = (t_pcb*)queue_pop(estado_ready);
 	if(pcb!=NULL)
 	{	pcb_exec = pcb;		
 		ejecutar_proceso();
 	}
+	SE UTILIZÓ de_ready_a_exec (que tiene hecho el mutex de ready)*/
+
+	ready_a_exec();
+	
 	/*SUGERENCIA
-	de_ready_a_exec();
 	*/
 	// de exec a blocked
 	// y de blocked a ready
@@ -585,7 +639,12 @@ void interrumpir_por_fin_quantum(){
 
 	t_pcb* pcb = pcb_exec;
 	pcb_exec = NULL;
-	queue_push(estado_ready,pcb);
+	push_proceso_a_estado(pcb,estado_ready,&mx_ready); // Thread safe
+	// Se reemplaza esta función por la función push_proceso_a_estado, que tiene mutex
+	//queue_push(estado_ready,pcb);
+	
+	sem_post(&sem_bin_ready); //Se le avisa a pcp que un nuevo proceso ingresó a esa lista
+
 	loguear_pcb(pcb);
 
 }
@@ -595,7 +654,7 @@ void planificacion_RR(){
 	//kernel chequea el quantum que le manda cpu luego de cada instrucción
 	if(pcb_exec->quantum==0)
 		{			
-			t_pcb* pcb = queue_pop(estado_ready);
+			t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
 			if(pcb!=NULL)
 			{
 				interrumpir_por_fin_quantum();
@@ -616,6 +675,81 @@ void planificacion_VRR(){
 	loguear("Planificando por Virtual Round Robbin");
 }
 
+
+
+
+////// MODIFICACIONES DE ESTADO
+
+bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
+	if (estado_destino==estado_new){
+		return false;
+	}
+	if(estado_origen==estado_exit){
+		return false;
+	}
+	if(estado_destino==estado_ready && estado_origen==estado_exit){
+		return false;
+	}
+
+	if(estado_destino==estado_blocked && estado_origen!=estado_new){
+		return false;
+	}	
+
+	return true;
+}
+
+bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino,sem_t* sem_origen,sem_t* sem_destino){	
+	bool transicion = transicion_valida(estado_origen, estado_destino);
+	if(transicion){
+		sem_wait(sem_origen);
+
+ 		t_pcb* pcb = queue_pop(estado_origen);
+		push_proceso_a_estado(pcb,estado_destino,sem_destino);
+
+		sem_post(sem_origen);
+	}
+	return transicion;
+}
+// Convertir en matriz (Como en sintaxis con Roxy :) 
+bool transicion_valida(t_queue* estado_origen,t_queue* estado_destino){
+	if (estado_destino==estado_new || estado_origen==estado_exit){
+		return false;
+	}
+	if(estado_destino==estado_ready && estado_origen==estado_exit){
+		return false;
+	}
+	if(estado_destino==estado_blocked && estado_origen==estado_new){
+		return false;
+	}	
+
+	return true;
+}
+
+void push_proceso_a_estado(t_pcb* pcb, t_queue* estado,sem_t* mx_estado){
+	sem_wait(mx_estado);
+	queue_push(estado,pcb);
+	sem_post(mx_estado);
+}
+
+t_pcb* pop_estado_get_pcb(t_queue* estado,sem_t* mx_estado){
+	sem_wait(mx_estado);
+	t_pcb* pcb = queue_pop(estado);
+	sem_post(mx_estado);
+	return pcb;
+}
+
+
+void ready_a_exec(){
+	t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
+	if(pcb != NULL){
+		pcb_exec = pcb;
+		ejecutar_proceso();
+	}
+}
+
+
+
+// LIBERAR Y/O DESTRUIR ELEMENTOS Y PROCESOS
 
 void config_destroy_kernel(t_config_kernel * config){
 	config_destroy(config->config);
@@ -650,9 +784,14 @@ void liberar_colas(){
 }
 
 void liberar_semaforos(){
-	sem_destroy(&sem_grado_multiprogamacion);
-	sem_destroy(&sem_new);
-	sem_destroy(&sem_ready);
+	sem_destroy(&sem_cont_grado_mp);
+	sem_destroy(&sem_bin_new);
+	sem_destroy(&sem_bin_ready);
+	sem_destroy(&sem_bin_exit);
+
+	sem_destroy(&mx_new);
+	sem_destroy(&mx_ready);
+	sem_destroy(&mx_exit);
 }
 
 void finalizar_kernel(){
@@ -667,53 +806,7 @@ void finalizar_kernel(){
 	liberar_semaforos();	
 }
 
-bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
-	if (estado_destino==estado_new){
-		return false;
-	}
-	if(estado_origen==estado_exit){
-		return false;
-	}
-	if(estado_destino==estado_ready && estado_origen==estado_exit){
-		return false;
-	}
-	
-	if(estado_destino==estado_blocked && estado_origen!=estado_new){
-		return false;
-	}	
-	
-	return true;
-}
 
-bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino){	
-	bool transicion = transicion_valida(estado_origen, estado_destino);
-	if(transicion){
-		queue_push(estado_destino, queue_pop(estado_origen));
-		
-	}
-	return transicion;
-}
-
-bool transicion_valida(t_queue* estado_origen,t_queue* estado_destino){
-	if (estado_destino==estado_new || estado_origen==estado_exit){
-		return false;
-	}
-	if(estado_destino==estado_ready && estado_origen==estado_exit){
-		return false;
-	}
-	if(estado_destino==estado_blocked && estado_origen!=estado_new){
-		return false;
-	}	
-	
-	return true;
-}
-void de_ready_a_exec(){
-	t_pcb* pcb = (t_pcb*)queue_pop(estado_ready);
-	if(pcb != NULL){
-		pcb_exec = pcb;
-		ejecutar_proceso();
-	}
-}
 
 
 
