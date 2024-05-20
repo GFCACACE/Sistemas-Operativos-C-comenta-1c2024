@@ -5,6 +5,7 @@ sem_t sem_cont_grado_mp;
 sem_t sem_bin_new; //Sincroniza que plp (hilo new) no actúe hasta que haya un nuevo elemento en new
 sem_t sem_bin_ready; //Sincroniza que pcp no actúe hasta que haya un nuevo elemento en ready
 sem_t sem_bin_exit; //Sincroniza que plp (hilo exit) no actúe hasta que haya un nuevo elemento en exit
+sem_t sem_bin_cpu_libre; // Sincroniza que no haya ningun PCB ejecutando en CPU
 
 sem_t mx_new; // Garantiza mutua exclusion en estado_new. Podrían querer acceder consola y plp al mismo tiempo
 sem_t mx_ready; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
@@ -172,6 +173,7 @@ bool iniciar_semaforos(){
 	sem_init(&sem_bin_new,0,0);
 	sem_init(&sem_bin_ready,0,0);
 	sem_init(&sem_bin_exit,0,0);
+	sem_init(&sem_bin_cpu_libre,0,0);
 
 	sem_init(&mx_new,0,1);
 	sem_init(&mx_ready,0,1);
@@ -239,14 +241,16 @@ void liberar_proceso(t_pcb* pcb){
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
 	while(1){
-	sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
-	sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
-    bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
-	if(proceso_new_a_ready){
-		sem_post(&sem_bin_ready);
-		loguear("El proceso ingresó correctamente a la lista de ready");
-	}
-	// Faltaria parte exit, ¿hacemos otro hilo o como? Discutir en DS.
+		sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
+		sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
+		bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
+		if(proceso_new_a_ready){
+			sem_post(&sem_bin_ready);
+			loguear("El proceso ingresó correctamente a la lista de ready");
+		}
+		else {
+			loguear("Se fue todo al carajo en plp_procesos_nuevos");
+		}
 	}
 }
 
@@ -265,7 +269,10 @@ void planificador_corto(){
 	while(1){
 		sem_wait(&sem_bin_ready); //Hay que ver si tiene que estar acá. En este caso se considera que cada replanificación pasa por aca
 		ejecutar_planificacion();
-
+		// Esperar la vuelta del PCB
+		// verificar a que lista debe ir
+		// enviar a ready/blocked/exit (signal a esa cola)
+		/* Cuando recibe un pcb con centexto finalizado, lo agrega a la cola de exit y hace un sem_post(&sem_bin_exit) */
 	}
 
 }
@@ -631,7 +638,7 @@ void ejecutar_proceso(){
 	loguear("Se debe enviar el pcb en exec a la cpu");
 	loguear_pcb(pcb_exec);
 	enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
-
+	// Caso RR/VRR: Crear hilo con quantum
 }
 
 void interrumpir_por_fin_quantum(){
@@ -642,7 +649,7 @@ void interrumpir_por_fin_quantum(){
 	push_proceso_a_estado(pcb,estado_ready,&mx_ready); // Thread safe
 	// Se reemplaza esta función por la función push_proceso_a_estado, que tiene mutex
 	//queue_push(estado_ready,pcb);
-	
+
 	sem_post(&sem_bin_ready); //Se le avisa a pcp que un nuevo proceso ingresó a esa lista
 
 	loguear_pcb(pcb);
@@ -740,6 +747,8 @@ t_pcb* pop_estado_get_pcb(t_queue* estado,sem_t* mx_estado){
 
 
 void ready_a_exec(){
+	sem_wait(sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
+	//////// IMPORTANTE HACER EL SEM_POST CUANDO CUELVA UN PCB DE CPU
 	t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
 	if(pcb != NULL){
 		pcb_exec = pcb;
@@ -788,6 +797,7 @@ void liberar_semaforos(){
 	sem_destroy(&sem_bin_new);
 	sem_destroy(&sem_bin_ready);
 	sem_destroy(&sem_bin_exit);
+	sem_destroy(&sem_bin_cpu_libre);
 
 	sem_destroy(&mx_new);
 	sem_destroy(&mx_ready);
