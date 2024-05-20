@@ -118,6 +118,8 @@ void ejecutar_planificacion();
 void ejecutar_proceso();
 bool crear_proceso_en_memoria(t_pcb*);
 bool eliminar_proceso_en_memoria(t_pcb*);
+
+void recibir_pcb_de_cpu();
 // bool iniciar_conexion_io();
 // void io_handler();
 // bool iniciar_servidor_kernel();

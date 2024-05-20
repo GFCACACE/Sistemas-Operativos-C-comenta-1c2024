@@ -270,12 +270,37 @@ void planificador_corto(){
 		sem_wait(&sem_bin_ready); //Hay que ver si tiene que estar acá. En este caso se considera que cada replanificación pasa por aca
 		ejecutar_planificacion();
 		// Esperar la vuelta del PCB
+		recibir_pcb_de_cpu();
 		// verificar a que lista debe ir
 		// enviar a ready/blocked/exit (signal a esa cola)
 		/* Cuando recibe un pcb con centexto finalizado, lo agrega a la cola de exit y hace un sem_post(&sem_bin_exit) */
 	}
 
 }
+
+void recibir_pcb_de_cpu(){
+	t_paquete *paquete = recibir_paquete(cpu_dispatch);
+	int cod_op = paquete->codigo_operacion;
+	loguear("Cod op: %d", cod_op);
+	t_pcb* pcb_recibido = recibir_pcb(paquete);  
+	switch (operacion)
+	{
+		case CPU_EXIT:
+			proceso_a_estado(pcb_recibido,estado_exit,&mx_exit);
+			sem_post(&sem_bin_exit);
+			break;
+		case CPU_INTERRUPT:
+			// QUE HACEMOS???
+			/* Puede pasar a ready( sem_post(&sem_bin_ready); ) , blocked (o en VRR a Ready+) */
+			return false;
+			break;
+		default:
+			break;
+	}
+
+	return true;
+}
+
 
 void config_kernel_destroy(t_config_kernel* config){
 
