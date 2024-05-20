@@ -387,7 +387,11 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 
 bool exe_io_gen_sleep(t_param interfaz, t_param unidades_de_trabajo)
 {
+	char* texto = string_new();
+	sprintf(texto,"%s %s",interfaz.string_valor,unidades_de_trabajo.string_valor);
+	enviar_texto(texto,IO_GEN_SLEEP,kernel_dispatch);
 	(uint32_t)registros_cpu->PC++;
+	free(texto);
 	return true;
 }
 
