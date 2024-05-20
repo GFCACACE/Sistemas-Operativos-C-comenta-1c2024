@@ -728,12 +728,13 @@ bool iniciar_servidor_kernel(){
 	return true;
 }
 
+// BRAND NEW
 bool iniciar_conexion_io(){
-	while (1) {
+	while (1){
 		pthread_t thread;
     	int *fd_conexion_ptr = malloc(sizeof(int));
     	*fd_conexion_ptr = accept(kernel_escucha, NULL, NULL);
-		//verificar
+		//revisar
 		char* nombre_interfaz = recibir_mensaje(kernel_escucha);
     	pthread_create(&thread,NULL, (void*) io_handler(nombre_interfaz),fd_conexion_ptr);
     	//
@@ -741,12 +742,20 @@ bool iniciar_conexion_io(){
 		
 	}
 }
+// BRAND NEW
 
-
+// BRAND NEW
 void io_handler(char* nombre){
-	//TODO
+	// envia a la interfaz correspodiente la operación que debe ejecutar
 }
+// BRAND NEW
 
-// void recibir_peticion_io_de_cpu(){
-// 	recibir_paquete(cpu_dispatch);
-// }
+// BRAND NEW
+void recibir_peticion_io_de_cpu(){
+	// recibe una petición de la CPU
+	// verifica que exista la interfaz 
+	// verifica que esté conectada
+	// verifica que la interfaz admita dicha operación
+	// envia el proceso a BLOCKED
+}
+// BRAND NEW

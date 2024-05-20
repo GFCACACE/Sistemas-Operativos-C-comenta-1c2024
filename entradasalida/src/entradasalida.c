@@ -151,11 +151,14 @@ int ejecutar_op_io()
 		int cod_op = paquete->codigo_operacion;
 		loguear("Cod op: %d", cod_op);
         switch (cod_op) {
+			//BRAND NEW
             case IO_GEN_SLEEP:
-                
-                break;				
+                io_gen_sleep(/*unidad_de_trabajo*/);
+				avisar_a_kernel(); // no está hecha
+                break;			
+			//BRAND NEW	
             case -1:
-			loguear_error("el cliente se desconectó. Terminando servidor");
+			loguear_error("Problemas en la comunicacion con el servidor. Cerrando conexion...");
 			paquete_destroy(paquete);
 			return EXIT_FAILURE;
 		default:

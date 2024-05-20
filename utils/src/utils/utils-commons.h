@@ -34,8 +34,27 @@ typedef enum
 	//Kernel - Memoria
 	CREACION_PROCESO,
 	ELIMINACION_PROCESO,
-	CREACION_PROCESO_FALLIDO
+	CREACION_PROCESO_FALLIDO,
+	// BRAND NEW
+	// IO - Kernel
+	IO_GEN_SLEEP
+	// BRAND NEW
 }op_code;
+
+// BRAND NEW
+// IDEA: la CPU le envia a kernel un struct con la info que necesita 
+// para gestionar las instancias de IO generica.
+//
+typedef struct{
+	int process_id;
+	op_code operacion;
+	char* tipo_interfaz;
+	char* nombre_interfaz;
+	int unidades_de_trabajo;
+}t_peticion_generica;
+// BRAND NEW
+
+
 
 typedef struct 
 {
