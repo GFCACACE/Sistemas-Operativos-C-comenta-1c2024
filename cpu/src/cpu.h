@@ -51,6 +51,7 @@ void config_destroy_cpu(t_config_cpu*);
 void finalizar_cpu();
 void finalizar_estructuras_cpu();
 void loguear_config();
+void* gestionar_interrupcion();
 int ejecutar_proceso_cpu();
 int intentar_conexion(char*,int,char*);
 char* pedir_proxima_instruccion(t_pcb* pcb);
@@ -87,11 +88,11 @@ extern int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 extern int cod_op_kernel_dispatch;
 extern t_dictionary* diccionario_registros_cpu;
 // Cambiar funciones en base a esto!!!!
-extern pthread_t* mutex_interrupt;
+extern pthread_mutex_t* mutex_interrupt;
 extern char* IR;
 extern char* INSTID;
 extern t_param PARAM1;
 extern t_param PARAM2;
 extern t_param PARAM3;
-extern int cod_op_interrupt;
+extern int cod_op_kernel_interrupt;
 #endif //cpu_h

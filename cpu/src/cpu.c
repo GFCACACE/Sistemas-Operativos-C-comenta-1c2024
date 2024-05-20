@@ -5,7 +5,7 @@ int cod_op_kernel_dispatch;
 int cod_op_kernel_interrupt;
 char *IR, *INSTID;
 t_param PARAM1, PARAM2, PARAM3;
-pthread_t *mutex_interrupt;
+pthread_mutex_t *mutex_interrupt;
 t_config_cpu *config;
 t_registros_cpu *registros_cpu;
 t_dictionary *diccionario_registros_cpu;
@@ -129,7 +129,7 @@ bool iniciar_cpu(char *path_config)
 bool iniciar_variables()
 {
 	cod_op_kernel_interrupt = EJECUTAR_CPU;
-	// pthread_mutex_init(mutex_interrupt, NULL);
+	pthread_mutex_init(&mutex_interrupt, NULL);
 	return true;
 }
 void config_destroy_cpu(t_config_cpu *config)
@@ -387,7 +387,11 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 
 bool exe_io_gen_sleep(t_param interfaz, t_param unidades_de_trabajo)
 {
+	char* texto = string_new();
+	sprintf(texto,"%s %s",interfaz.string_valor,unidades_de_trabajo.string_valor);
+	enviar_texto(texto,IO_GEN_SLEEP,kernel_dispatch);
 	(uint32_t)registros_cpu->PC++;
+	free(texto);
 	return true;
 }
 
@@ -398,12 +402,16 @@ bool exe_exit(t_pcb *pcb)
 }
 
 bool check_interrupt(t_pcb *pcb)
-{
+{	
+	int estado_interrupt;
 	/*cod_op_interrupt debería ser modificada por un thread
 	 dedicado a recibir de kernel si desea interrumpir*/
 
 	// enviar a mensaje a kernel para que decremente el quantum
-	if (cod_op_kernel_interrupt == INTERRUMPIR_CPU)
+	pthread_mutex_lock(&mutex_interrupt);
+	estado_interrupt= cod_op_kernel_interrupt;
+	pthread_mutex_unlock(&mutex_interrupt);
+	if (estado_interrupt != EJECUTAR_CPU)
 	{
 		// devolver_contexto(pcb);
 		return true;
