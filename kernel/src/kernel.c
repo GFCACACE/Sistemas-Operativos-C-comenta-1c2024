@@ -283,7 +283,7 @@ void recibir_pcb_de_cpu(){
 	int cod_op = paquete->codigo_operacion;
 	loguear("Cod op: %d", cod_op);
 	t_pcb* pcb_recibido = recibir_pcb(paquete);  
-	switch (operacion)
+	switch (cod_op)
 	{
 		case CPU_EXIT:
 			proceso_a_estado(pcb_recibido,estado_exit,&mx_exit);
@@ -772,7 +772,7 @@ t_pcb* pop_estado_get_pcb(t_queue* estado,sem_t* mx_estado){
 
 
 void ready_a_exec(){
-	sem_wait(sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
+	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
 	//////// IMPORTANTE HACER EL SEM_POST CUANDO CUELVA UN PCB DE CPU
 	t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
 	if(pcb != NULL){
