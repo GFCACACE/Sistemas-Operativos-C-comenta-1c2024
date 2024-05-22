@@ -41,7 +41,7 @@ bool iniciar_dispatch();
 bool iniciar_conexion_memoria();
 bool iniciar_conexion_kernel();
 bool iniciar_variables();//semáforos y variables globales
-
+bool iniciar_gestion_interrupcion();
 
 bool iniciar_cpu(char*);
 
@@ -88,7 +88,7 @@ extern int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
 extern int cod_op_kernel_dispatch;
 extern t_dictionary* diccionario_registros_cpu;
 // Cambiar funciones en base a esto!!!!
-extern pthread_mutex_t* mutex_interrupt;
+extern pthread_mutex_t mutex_interrupt;
 extern char* IR;
 extern char* INSTID;
 extern t_param PARAM1;

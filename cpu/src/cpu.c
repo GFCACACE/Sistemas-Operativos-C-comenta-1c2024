@@ -5,7 +5,7 @@ int cod_op_kernel_dispatch;
 int cod_op_kernel_interrupt;
 char *IR, *INSTID;
 t_param PARAM1, PARAM2, PARAM3;
-pthread_mutex_t *mutex_interrupt;
+pthread_mutex_t mutex_interrupt= PTHREAD_MUTEX_INITIALIZER;
 t_config_cpu *config;
 t_registros_cpu *registros_cpu;
 t_dictionary *diccionario_registros_cpu;
@@ -124,14 +124,24 @@ bool iniciar_cpu(char *path_config)
 		   iniciar_dispatch() &&
 		   iniciar_conexion_memoria() &&
 		   iniciar_conexion_kernel() &&
-		   iniciar_variables();
+		   iniciar_variables()	&&
+		   iniciar_gestion_interrupcion();
 }
 bool iniciar_variables()
 {
 	cod_op_kernel_interrupt = EJECUTAR_CPU;
-	pthread_mutex_init(&mutex_interrupt, NULL);
+	//pthread_mutex_init(&mutex_interrupt, NULL);
 	return true;
 }
+
+bool iniciar_gestion_interrupcion(){
+	pthread_t thread_interrupt;
+	int err;
+	err = pthread_create(&thread_interrupt, NULL, gestionar_interrupcion, NULL);
+	pthread_detach(thread_interrupt);
+	return true;
+}
+
 void config_destroy_cpu(t_config_cpu *config)
 {
 
@@ -153,6 +163,7 @@ void finalizar_cpu()
 	finalizar_estructuras_cpu();
 	if (conexion_memoria != -1)
 		liberar_conexion(conexion_memoria);
+	//if (mutex_interrupt) pthread_mutex_destroy(&mutex_interrupt);
 }
 
 void finalizar_estructuras_cpu()
@@ -408,12 +419,12 @@ bool check_interrupt(t_pcb *pcb)
 	 dedicado a recibir de kernel si desea interrumpir*/
 
 	// enviar a mensaje a kernel para que decremente el quantum
-	pthread_mutex_lock(&mutex_interrupt);
+	// pthread_mutex_lock(&mutex_interrupt);
 	estado_interrupt= cod_op_kernel_interrupt;
-	pthread_mutex_unlock(&mutex_interrupt);
+	// pthread_mutex_unlock(&mutex_interrupt);
 	if (estado_interrupt != EJECUTAR_CPU)
 	{
-		// devolver_contexto(pcb);
+		devolver_contexto(pcb);
 		return true;
 	}
 	return false;
@@ -439,7 +450,7 @@ bool actualizar_contexto(t_pcb *pcb)
 }
 bool actualizar_registros(t_pcb *pcb)
 {
-	*registros_cpu = *pcb->registros_cpu;
+	memcpy(registros_cpu,pcb->registros_cpu,sizeof(t_registros_cpu));
 	registros_cpu->PC = pcb->program_counter;
 	return true;
 }

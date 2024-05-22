@@ -173,7 +173,7 @@ bool iniciar_semaforos(){
 	sem_init(&sem_bin_new,0,0);
 	sem_init(&sem_bin_ready,0,0);
 	sem_init(&sem_bin_exit,0,0);
-	sem_init(&sem_bin_cpu_libre,0,0);
+	sem_init(&sem_bin_cpu_libre,0,1);
 
 	sem_init(&mx_new,0,1);
 	sem_init(&mx_ready,0,1);
@@ -685,8 +685,7 @@ void ejecutar_proceso(){
 	loguear_pcb(pcb_exec);
 	enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
 	// Caso RR/VRR: Crear hilo con quantum
-	if(es_vrr()||es_rr())
-	 crear_hilo_quantum(pcb_exec);
+	
 }
 
 void interrumpir_por_fin_quantum(){
@@ -707,16 +706,15 @@ void interrumpir_por_fin_quantum(){
 void planificacion_RR(){
 	loguear("Planificando por Round Robbin");
 	//kernel chequea el quantum que le manda cpu luego de cada instrucción
-	if(pcb_exec->quantum==0)
-		{			
-			t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
-			if(pcb!=NULL)
-			{
-				interrumpir_por_fin_quantum();
-				pcb_exec = pcb;				
-			}
-		}
-	ejecutar_proceso();
+	t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
+	if(pcb!=NULL)
+	{
+		// interrumpir_por_fin_quantum();
+		pcb_exec = pcb;		
+		ejecutar_proceso();
+		crear_hilo_quantum(pcb_exec);		
+	}
+	
 }
 
 // IDEA: en RR, CPU decrementa el quantum hasta llegar a 0 y una vez que llega
