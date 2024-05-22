@@ -292,13 +292,12 @@ void recibir_pcb_de_cpu(){
 		case CPU_INTERRUPT:
 			// QUE HACEMOS???
 			/* Puede pasar a ready( sem_post(&sem_bin_ready); ) , blocked (o en VRR a Ready+) */
-			return false;
+			//return false;
 			break;
 		default:
 			break;
 	}
 
-	return true;
 }
 
 
@@ -579,6 +578,9 @@ void imprimir_cola(t_queue *cola, const char *estado) {
     printf("|------------|----------------------|-----------------|\n");
 }
 
+bool es_rr(){
+	return config->ALGORITMO_PLANIFICACION.id == RR;
+}
 bool es_vrr(){
 	return config->ALGORITMO_PLANIFICACION.id == VRR;
 }
@@ -658,12 +660,33 @@ void planificacion_FIFO(){
 	
 };
 
+void controlar_quantum (t_pcb* pcb){
+	if(config->QUANTUM)
+	{	usleep(config->QUANTUM);
+		enviar_pcb(pcb,FIN_QUANTUM,cpu_interrupt);
+		loguear("PID: <%d> - Desalojado por fin de Quantum",pcb->PID);
+	}
+}
+
+void crear_hilo_quantum(t_pcb* pcb){
+	pthread_t thread_quantum;
+
+	pthread_create(&thread_quantum,NULL, (void*)controlar_quantum,pcb);
+	
+	pthread_detach(thread_quantum);
+	if (thread_quantum == -1)
+		loguear_error("No se pudo iniciar el hilo de quantum para el PID: %d",pcb->PID);	
+	
+}
+
 void ejecutar_proceso(){
 
 	loguear("Se debe enviar el pcb en exec a la cpu");
 	loguear_pcb(pcb_exec);
 	enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
 	// Caso RR/VRR: Crear hilo con quantum
+	if(es_vrr()||es_rr())
+	 crear_hilo_quantum(pcb_exec);
 }
 
 void interrumpir_por_fin_quantum(){

@@ -118,6 +118,7 @@ void ejecutar_planificacion();
 void ejecutar_proceso();
 bool crear_proceso_en_memoria(t_pcb*);
 bool eliminar_proceso_en_memoria(t_pcb*);
+void proceso_a_estado(t_pcb* pcb, t_queue* estado,sem_t* mx_estado);
 
 void recibir_pcb_de_cpu();
 // bool iniciar_conexion_io();
