@@ -7,17 +7,7 @@
 
 
 
-void* gestionar_interrupcion(){
-    int estado_guardado;
-    while(1){
-        estado_guardado=recibir_operacion(kernel_interrupt);
-        recibir_paquete(kernel_interrupt);
-        pthread_mutex_lock(&mutex_interrupt);
-        cod_op_kernel_interrupt=estado_guardado;
-        pthread_mutex_unlock(&mutex_interrupt);
-    }
 
-}
 int main_cpu(int argc, char** argv) {
     
     bool cpu_iniciada = iniciar_cpu(argv[1]);

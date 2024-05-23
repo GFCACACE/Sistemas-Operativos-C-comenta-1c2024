@@ -136,9 +136,10 @@ bool iniciar_variables()
 
 bool iniciar_gestion_interrupcion(){
 	pthread_t thread_interrupt;
-	int err;
-	err = pthread_create(&thread_interrupt, NULL, gestionar_interrupcion, NULL);
+	pthread_create(&thread_interrupt, NULL, gestionar_interrupcion, NULL);
 	pthread_detach(thread_interrupt);
+	if (thread_interrupt == -1)
+		loguear_error("No se pudo iniciar el hilo de interrupciones.");
 	return true;
 }
 
@@ -414,17 +415,18 @@ bool exe_exit(t_pcb *pcb)
 
 bool check_interrupt(t_pcb *pcb)
 {	
-	int estado_interrupt;
+	//int estado_interrupt;
 	/*cod_op_interrupt debería ser modificada por un thread
 	 dedicado a recibir de kernel si desea interrumpir*/
 
 	// enviar a mensaje a kernel para que decremente el quantum
 	// pthread_mutex_lock(&mutex_interrupt);
-	estado_interrupt= cod_op_kernel_interrupt;
+	//estado_interrupt = cod_op_kernel_interrupt;
 	// pthread_mutex_unlock(&mutex_interrupt);
-	if (estado_interrupt != EJECUTAR_CPU)
+	if (cod_op_kernel_interrupt != EJECUTAR_CPU)
 	{
 		devolver_contexto(pcb);
+		cod_op_kernel_interrupt = EJECUTAR_CPU;
 		return true;
 	}
 	return false;
@@ -432,10 +434,10 @@ bool check_interrupt(t_pcb *pcb)
 bool devolver_contexto(t_pcb *pcb)
 {
 	// el pcb Siempre debe devolverse por dispatch
-	if (strcmp(INSTID, "EXIT"))
+	if (!strcmp(INSTID, "EXIT"))
 		enviar_pcb(pcb, CPU_EXIT, dispatch);
 	else
-		enviar_pcb(pcb, CPU_INTERRUPT, dispatch);
+		enviar_pcb(pcb, cod_op_kernel_interrupt, dispatch);
 
 	return true;
 }
@@ -479,4 +481,16 @@ int ejecutar_proceso_cpu()
 		}
 		// Si no se agrega otro caso, convertir switch en IF
 	}
+}
+
+void* gestionar_interrupcion(){
+	int estado_guardado;
+    while(1){
+        estado_guardado=recibir_operacion(kernel_interrupt);
+        recibir_paquete(kernel_interrupt);
+        pthread_mutex_lock(&mutex_interrupt);
+        cod_op_kernel_interrupt=estado_guardado;
+        pthread_mutex_unlock(&mutex_interrupt);
+    }
+
 }
