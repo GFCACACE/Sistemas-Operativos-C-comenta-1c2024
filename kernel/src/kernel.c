@@ -11,6 +11,8 @@ sem_t mx_new; // Garantiza mutua exclusion en estado_new. Podrían querer accede
 sem_t mx_ready; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
 sem_t mx_exit; // Garantiza mutua exclusion en estado_exit. Podrían querer acceder consola, plp y pcp al mismo tiempo
 
+pthread_mutex_t mx_pcb_exec = PTHREAD_MUTEX_INITIALIZER;
+
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
@@ -660,11 +662,18 @@ void planificacion_FIFO(){
 	
 };
 
-void controlar_quantum (t_pcb* pcb){
+void controlar_quantum (t_pcb* pcb_enviado){
+	t_pcb pcb;
+	memcpy(&pcb,pcb_enviado,sizeof(t_pcb));
 	if(config->QUANTUM)
-	{	usleep(config->QUANTUM);
-		enviar_pcb(pcb,FIN_QUANTUM,cpu_interrupt);
-		loguear("PID: <%d> - Desalojado por fin de Quantum",pcb->PID);
+	{	usleep(config->QUANTUM);		
+		pthread_mutex_lock(&mx_pcb_exec);
+		if(pcb_exec->PID==pcb.PID){
+			enviar_pcb(&pcb,FIN_QUANTUM,cpu_interrupt);
+			loguear("PID: <%d> - Desalojado por fin de Quantum",pcb.PID);
+			
+		}
+		pthread_mutex_unlock(&mx_pcb_exec);
 	}
 }
 
