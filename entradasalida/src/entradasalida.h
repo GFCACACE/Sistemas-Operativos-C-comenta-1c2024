@@ -28,6 +28,8 @@ typedef struct
 	t_config* config;
 } t_config_io;
 
+
+
 typedef enum
 {
     GENERICA,

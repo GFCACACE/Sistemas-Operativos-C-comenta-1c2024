@@ -153,6 +153,7 @@ int ejecutar_op_io()
         switch (cod_op) {
 			//BRAND NEW
             case IO_GEN_SLEEP:
+				loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP>",/*t_peticion_generica->process_id*/);
                 io_gen_sleep(/*unidad_de_trabajo*/);
 				//avisar_a_kernel(); // no está hecha
                 break;			
