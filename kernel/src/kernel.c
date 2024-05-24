@@ -672,8 +672,6 @@ void planificacion_FIFO(){
 	// ready_a_exit???? Esto no es largo plazo??
 
 	// RR podría usar lo mismo, solamente habria que agregar el validador del quantum
-
-	
 }
 
 void controlar_quantum (t_pcb* pcb_enviado){
