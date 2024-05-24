@@ -294,6 +294,7 @@ void recibir_pcb_de_cpu(){
 			break;
 		case FIN_QUANTUM:
 			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
+			sem_post(&sem_bin_ready);
 			break;
 		case CPU_INTERRUPT:
 			// QUE HACEMOS???
