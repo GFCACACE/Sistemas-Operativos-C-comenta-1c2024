@@ -288,7 +288,7 @@ bool decode()
 	INSTID = string_duplicate(sep_instruction[0]);
 	if (sep_instruction == NULL || registros_cpu == NULL)
 		return false;
-	if (!strcmp(INSTID, "EXIT"))
+	if (es_exit(INSTID))
 		return true;
 	// Acá están las funciones
 	if (sep_instruction[1])
