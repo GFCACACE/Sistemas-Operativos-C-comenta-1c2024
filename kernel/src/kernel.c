@@ -302,7 +302,8 @@ void recibir_pcb_de_cpu(){
 		case CPU_EXIT:
 			proceso_a_estado(pcb_recibido, estado_exit,&mx_exit); 
 			proceso_estado();
-			sem_post(&sem_bin_exit);
+			sem_post(&sem_cont_grado_mp);
+			//sem_post(&sem_bin_exit);
 			break;
 		case FIN_QUANTUM:
 			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 

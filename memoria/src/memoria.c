@@ -197,7 +197,7 @@ int buscar_instrucciones(){
          int cod_op =paquete->codigo_operacion;
 
 
-		loguear("Cod op: %d", cod_op);
+		loguear("Cod op CPU: %d", cod_op);
         switch (cod_op) {
             case PROXIMA_INSTRUCCION:
                 t_pcb *pcb = recibir_pcb(paquete); 
@@ -311,7 +311,7 @@ int recibir_procesos(){
 	 while (1) {
 		  t_paquete *paquete = recibir_paquete(conexion_kernel);
 		 int cod_op =paquete->codigo_operacion;
-		loguear("Cod op: %d", cod_op);
+		loguear("Cod op KERNEL: %d", cod_op);
         switch (cod_op) {
 			case CREACION_PROCESO:
 			 	recibir_pcb_y_aplicar(paquete,crear_proceso,notificar_proceso_creado); 
