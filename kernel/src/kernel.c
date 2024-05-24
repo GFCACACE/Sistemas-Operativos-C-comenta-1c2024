@@ -12,6 +12,7 @@ pthread_mutex_t mx_ready = PTHREAD_MUTEX_INITIALIZER; //Garantiza mutua exclusio
 pthread_mutex_t mx_exit = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion en estado_exit. Podrían querer acceder consola, plp y pcp al mismo tiempo
 pthread_mutex_t mx_pcb_exec = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mx_deleted = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mx_blocked = PTHREAD_MUTEX_INITIALIZER;
 
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
@@ -312,6 +313,11 @@ void recibir_pcb_de_cpu(){
 			// QUE HACEMOS???
 			/* Puede pasar a ready( sem_post(&sem_bin_ready); ) , blocked (o en VRR a Ready+) */
 			//return false;
+			break;
+		case IO_GEN_SLEEP:
+            t_peticion_generica* peticion_generica = crear_peticion_generica(pcb_recibido,paquete->buffer);//CREAR FUNCION!!!
+            proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);//Crear semáforo blocked
+            enviar_peticion(peticion_generica); //Acá tiene la interfaz, se puede averiguar a qué conexión se envía mediante el diccionario. CREAR FUNCION!!!
 			break;
 		default:
 			break;

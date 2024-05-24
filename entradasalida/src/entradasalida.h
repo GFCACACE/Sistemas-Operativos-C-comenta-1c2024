@@ -1,15 +1,16 @@
 #ifndef entradasalida_h
 #define entradasalida_h
-#include <utils/hello.h>
 #include<commons/config.h>
 #include<commons/string.h>
 #include<commons/log.h>
 #include<commons/collections/queue.h>
 #include <utils/utils-client.h>
 #include <utils/utils-server.h>
+#include <utils/utils-serializacion.h>
 #include <utils/utils-commons.h>
 #include <utils/utils-config.h>
 #include <readline/readline.h>
+#include "generica.h"
 #define MODULO "entradasalida"
 
 typedef struct
@@ -55,7 +56,4 @@ void loguear_config_stdin();
 void loguear_config_stdout();
 void loguear_config_dialfs();
 void finalizar_io();
-
-
-
 #endif

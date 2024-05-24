@@ -149,13 +149,16 @@ int ejecutar_op_io()
 	{
 		t_paquete *paquete = recibir_paquete(conexion_kernel);
 		int cod_op = paquete->codigo_operacion;
+		t_peticion_generica *peticion = recibir_peticion_generica(paquete);
 		loguear("Cod op: %d", cod_op);
         switch (cod_op) {
 			//BRAND NEW
             case IO_GEN_SLEEP:
-				loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP>",/*t_peticion_generica->process_id*/);
-                io_gen_sleep(/*unidad_de_trabajo*/);
-				//avisar_a_kernel(); // no está hecha
+				char*mensaje = string_new();
+				sprintf(mensaje,"PID: <%d> - Operacion: <IO_GEN_SLEEP>",peticion->process_id);
+				loguear(mensaje);
+				io_gen_sleep(peticion->unidades_de_trabajo);
+				enviar_mensaje(mensaje,conexion_kernel); // no está hecha
                 break;			
 			//BRAND NEW	
             case -1:
