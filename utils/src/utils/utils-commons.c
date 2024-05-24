@@ -197,3 +197,10 @@ bool es_exit(void *comando)
 	char *instruccion = (char*)comando;
 	return string_equals_ignore_case(instruccion, (char *)EXIT_PROGRAM);
 }
+
+t_validacion* validacion_new(){
+	t_validacion* validacion = malloc(sizeof(t_validacion));
+	validacion->resultado= false;
+	return validacion;
+	
+}

@@ -149,7 +149,7 @@ bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las
 void proceso_destroy(void* elemento){
 
 	t_proceso* proceso = (t_proceso*)elemento;
-	if(proceso!=NULL){
+	if(proceso){
 		list_destroy(proceso->instrucciones);
 		pcb_destroy(proceso->pcb);
 		free(proceso);
@@ -159,11 +159,11 @@ void proceso_destroy(void* elemento){
 
 void finalizar_memoria()
 {
-	if (config_memoria != NULL)
+	if (config_memoria)
 		config_memoria_destroy();
-	if (logger != NULL)
+	if (logger)
 		log_destroy(logger);
-	if(procesos!=NULL)
+	if(procesos)
 		dictionary_destroy_and_destroy_elements(procesos,proceso_destroy);
 }
 
@@ -225,24 +225,87 @@ bool tiene_exit(t_list* instrucciones){
 	return list_any_satisfy(instrucciones,es_exit);
 }
 
-bool crear_proceso( t_pcb *pcb ){
+t_validacion* crear_proceso( t_pcb *pcb ){
 	t_proceso* proceso = malloc(sizeof(t_proceso));
 	proceso->pcb=pcb;
 	proceso->instrucciones = get_instrucciones_memoria(pcb->path);
 
+	t_validacion* validacion = validacion_new();
+	
 	if(proceso->instrucciones==NULL){
-		loguear_error("El programa asociado no existe.");
-		return false;
+		validacion->descripcion = "El programa asociado no existe: %s";
+		loguear_error(validacion->descripcion,pcb->path);
+		return validacion;
 	}
 
 	if(tiene_exit(proceso->instrucciones))
-		dictionary_put(procesos,string_itoa(pcb->PID),proceso);
-	else{
-		loguear_error("El programa asociado no tiene %s",EXIT_PROGRAM);
-		return false;
+	{	dictionary_put(procesos,string_itoa(pcb->PID),proceso);
+		validacion->descripcion = "Programa cargado en memoria";
+		validacion->resultado = true;
 	}
-	return true;
+	else{
+		validacion->descripcion = "El programa asociado no tiene %s";
+		loguear_error(validacion->descripcion,EXIT_PROGRAM);
+	}
+	
+	return validacion;
 }
+
+t_validacion* eliminar_proceso( t_pcb *pcb ){
+	t_proceso* proceso = (t_proceso*)dictionary_get(procesos, string_itoa(pcb->PID));
+	t_validacion* validacion = validacion_new();
+	if(proceso){
+		dictionary_remove_and_destroy(procesos,string_itoa(pcb->PID),proceso_destroy);
+		validacion->descripcion = "Programa removido de memoria";
+		validacion->resultado = true;
+	}
+	else
+	{	
+		validacion->descripcion = "El proceso %d no existe en memoria";
+		loguear_error(validacion->descripcion,pcb->PID,EXIT_PROGRAM);
+	}
+
+	return validacion;
+}
+
+void avisar_a_kernel(op_code codigo_operacion,char*texto){
+	enviar_texto(texto,codigo_operacion,conexion_kernel);
+}
+
+void notificar_proceso_am(t_validacion* validacion,t_paquete* paquete,t_pcb* pcb,op_code codigo_ok,op_code codigo_error){
+	void avisar(op_code codigo_operacion){
+		avisar_a_kernel(codigo_operacion,validacion->descripcion);
+	}
+
+	if(validacion->resultado)	
+		avisar(codigo_ok);
+	else	
+	{	
+		avisar(codigo_error);
+		pcb_destroy(pcb);
+		paquete_destroy(paquete);
+	}	
+
+	free(validacion);
+}
+
+void notificar_proceso_creado(t_validacion* validacion,t_paquete* paquete,t_pcb* pcb){
+
+	notificar_proceso_am(validacion,paquete,pcb,CREACION_PROCESO,CREACION_PROCESO_FALLIDO);
+}
+
+
+void notificar_proceso_eliminado(t_validacion* validacion,t_paquete* paquete,t_pcb* pcb){
+
+	notificar_proceso_am(validacion,paquete,pcb,ELIMINACION_PROCESO,ELIMINACION_PROCESO_FALLIDO);
+}
+
+void recibir_pcb_y_aplicar(t_paquete *paquete,t_validacion* (*accion)(t_pcb*),void (*notificador)(t_validacion*,t_paquete*,t_pcb*) ){
+	 t_pcb *pcb = recibir_pcb(paquete); 
+	t_validacion* validacion = accion(pcb);
+	notificador(validacion,paquete,pcb);	
+}
+
 
 int recibir_procesos(){
 	 while (1) {
@@ -251,19 +314,10 @@ int recibir_procesos(){
 		loguear("Cod op: %d", cod_op);
         switch (cod_op) {
 			case CREACION_PROCESO:
-			  t_pcb *pcb = recibir_pcb(paquete); 
-			  bool proceso_creado = crear_proceso(pcb);
-			  if(proceso_creado)	
-			  	enviar_texto("Proceso creado",CREACION_PROCESO,conexion_kernel);
-				else	
-			{	
-				enviar_texto("No se pudo crear el proceso",CREACION_PROCESO_FALLIDO,conexion_kernel);
-				pcb_destroy(pcb);
-				paquete_destroy(paquete);
-			}	  
-			 
+			 	recibir_pcb_y_aplicar(paquete,crear_proceso,notificar_proceso_creado); 
 			break;
 			case ELIMINACION_PROCESO:
+				recibir_pcb_y_aplicar(paquete,eliminar_proceso,notificar_proceso_eliminado); 
 			break;
 			case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");

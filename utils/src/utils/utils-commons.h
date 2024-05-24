@@ -84,6 +84,13 @@ typedef struct
 	char* path;
 } t_pcb;
 
+typedef struct t_validacion
+{
+	bool resultado;
+	char* descripcion;
+}t_validacion;
+
+t_validacion* validacion_new();
 t_pcb* pcb_create(char*);
 t_pcb* pcb_create_quantum(char* path_programa,int quantum);
 void pcb_destroy(t_pcb*);

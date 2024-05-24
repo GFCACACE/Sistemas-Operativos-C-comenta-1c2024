@@ -289,7 +289,7 @@ void recibir_pcb_de_cpu(){
 	switch (cod_op)
 	{
 		case CPU_EXIT:
-			proceso_a_estado(pcb_recibido,estado_exit,&mx_exit);
+			proceso_a_estado(pcb_recibido, estado_exit,&mx_exit); 
 			sem_post(&sem_bin_exit);
 			break;
 		case FIN_QUANTUM:
@@ -705,9 +705,11 @@ void ejecutar_proceso(){
 
 void interrumpir_por_fin_quantum(){
 	loguear("FIN DE QUANTUM: Se debe pasar el pcb a ready y notificar a la cpu");
-
-	t_pcb* pcb = pcb_exec;
+	t_pcb* pcb;
+	pthread_mutex_lock(&mx_pcb_exec);
+	pcb = pcb_exec;
 	pcb_exec = NULL;
+	pthread_mutex_unlock(&mx_pcb_exec);
 	push_proceso_a_estado(pcb,estado_ready,&mx_ready); // Thread safe
 	// Se reemplaza esta función por la función push_proceso_a_estado, que tiene mutex
 	//queue_push(estado_ready,pcb);
