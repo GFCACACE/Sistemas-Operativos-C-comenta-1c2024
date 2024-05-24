@@ -67,7 +67,7 @@ extern t_config_kernel* config;
 extern int grado_multiprogamacion_actual;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt,kernel_escucha, conexion_io;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
-extern t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus,*estado_exec;
+extern t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus,*estado_exec, *estado_deleted;
 extern t_pcb* pcb_exec;
 /*
 extern t_queue* io_stdin;
@@ -121,6 +121,8 @@ bool eliminar_proceso_en_memoria(t_pcb*);
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
 
 void recibir_pcb_de_cpu();
+
+void liberar_pcb_exec();
 // bool iniciar_conexion_io();
 // void io_handler();
 // bool iniciar_servidor_kernel();

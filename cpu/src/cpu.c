@@ -229,7 +229,10 @@ bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !hay_interrupcion();
 			devolver_contexto(pcb,cod_op_kernel_interrupt);
 
 	}while (continuar_ciclo_instruccion());
-	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
+
+	if(es_exit(IR))
+		enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
+
 	resetear_ciclo();
 
 	if(IR!=NULL) free(IR);	
@@ -425,9 +428,10 @@ bool exe_exit(t_pcb *pcb)
 
 bool devolver_contexto(t_pcb *pcb,op_code codigo_operacion)
 {
+	loguear_warning("Código de operación a enviar: %d para el PID %d:",codigo_operacion,pcb->PID);
 	enviar_pcb(pcb,codigo_operacion,kernel_dispatch);
 	// el pcb Siempre debe devolverse por dispatch
-
+	loguear_warning("Código de operación enviado!!"); 
 	return true;
 }
 

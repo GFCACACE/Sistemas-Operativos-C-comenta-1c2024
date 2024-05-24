@@ -11,13 +11,13 @@ pthread_mutex_t mx_new = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion
 pthread_mutex_t mx_ready = PTHREAD_MUTEX_INITIALIZER; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
 pthread_mutex_t mx_exit = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion en estado_exit. Podrían querer acceder consola, plp y pcp al mismo tiempo
 pthread_mutex_t mx_pcb_exec = PTHREAD_MUTEX_INITIALIZER;
-
+pthread_mutex_t mx_deleted = PTHREAD_MUTEX_INITIALIZER;
 
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
-t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus,
+t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_deleted,
 		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
 t_pcb* pcb_exec; 
 
@@ -149,6 +149,7 @@ bool iniciar_estados_planificacion(){
 	estado_ready = queue_create();
 	estado_blocked = queue_create();
 	estado_exit = queue_create();	
+	estado_deleted = queue_create();	
 	if(es_vrr())
 		estado_ready_plus = queue_create();
 	
@@ -261,8 +262,12 @@ void plp_procesos_nuevos(){
 void plp_procesos_finalizados(){
 	while(1){
 		sem_wait(&sem_bin_exit);
+		loguear_warning("Se va a sacar un PCB de exit");
 		t_pcb* pcb = pop_estado_get_pcb(estado_exit,&mx_exit);
+		loguear_warning("Se sacó el PCB: %d de cola Exit para eliminar.", pcb->PID );
 		eliminar_proceso_en_memoria(pcb);
+		loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
+		push_proceso_a_estado(pcb,estado_deleted,&mx_deleted);
 		sem_post(&sem_cont_grado_mp);
 		}
 }
@@ -280,16 +285,23 @@ void planificador_corto(){
 	}
 
 }
-
+void liberar_pcb_exec(){
+	pthread_mutex_lock(&mx_pcb_exec);
+	pcb_exec = NULL;
+	pthread_mutex_unlock(&mx_pcb_exec);
+}
 void recibir_pcb_de_cpu(){
 	t_paquete *paquete = recibir_paquete(cpu_dispatch);
 	int cod_op = paquete->codigo_operacion;
 	loguear("Cod op: %d", cod_op);
 	t_pcb* pcb_recibido = recibir_pcb(paquete);  
+	liberar_pcb_exec();
+
 	switch (cod_op)
 	{
 		case CPU_EXIT:
 			proceso_a_estado(pcb_recibido, estado_exit,&mx_exit); 
+			proceso_estado();
 			sem_post(&sem_bin_exit);
 			break;
 		case FIN_QUANTUM:
@@ -452,7 +464,9 @@ bool crear_proceso_en_memoria(t_pcb* pcb){
 // Se pueden unificar estas dos funciones en un solo Switch??????
 
 bool eliminar_proceso_en_memoria(t_pcb* pcb){
+	loguear_warning("eliminar_proceso_en_memoria");
 	enviar_pcb(pcb,ELIMINACION_PROCESO,conexion_memoria); // Enviar proceso a memoria para que inicialice 
+	
 	op_code operacion = recibir_operacion(conexion_memoria);
 	switch (operacion)
 	{
@@ -603,6 +617,7 @@ bool proceso_estado(){
     imprimir_cola(estado_blocked, "Suspendido");
 	imprimir_cola(estado_exec, "Ejecutando");	
 	imprimir_cola(estado_exit, "Finalizado");
+	imprimir_cola(estado_deleted, "Eliminado");
 	if( es_vrr())
 	imprimir_cola(estado_ready_plus,"Listo VRR");
 
@@ -640,14 +655,6 @@ void planificacion_FIFO(){
 	/* ¿Esto convendria dividirlo en funciones, que cada una se encargue de un estado?
 	por ej, todo lo de abajo estaria en la funcion ready_a_running
 
-	// Antes de hacer el pop en ready, hay que validar que ya salio el proceso que estaba en running
-	// por ej: if (pcb_exec == NULL)
-
-	t_pcb* pcb = (t_pcb*)queue_pop(estado_ready);
-	if(pcb!=NULL)
-	{	pcb_exec = pcb;		
-		ejecutar_proceso();
-	}
 	SE UTILIZÓ de_ready_a_exec (que tiene hecho el mutex de ready)*/
 
 	ready_a_exec();
@@ -841,6 +848,7 @@ void liberar_colas(){
 	liberar_cola(estado_new);
 	liberar_cola(estado_ready);
 	liberar_cola(estado_ready_plus);
+	liberar_cola(estado_deleted);
 	liberar_cola(io_stdin);
 	liberar_cola(io_stdout);
 	liberar_cola(io_generica);
@@ -861,6 +869,7 @@ void liberar_semaforos(){
 	pthread_mutex_destroy(&mx_ready);
 	pthread_mutex_destroy(&mx_exit);
 	pthread_mutex_destroy(&mx_pcb_exec);
+	pthread_mutex_destroy(&mx_deleted);
 }
 
 void finalizar_kernel(){

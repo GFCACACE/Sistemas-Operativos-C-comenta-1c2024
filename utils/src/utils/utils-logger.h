@@ -19,6 +19,7 @@ extern t_log* logger;
 char* construir_path(char*,char*);
 t_log* iniciar_logger(char*);
 void loguear(const char*, ...)__attribute__((format(printf, 1, 2)));
+void loguear_warning(const char*, ...)__attribute__((format(printf, 1, 2)));
 void loguear_error(const char*, ...)__attribute__((format(printf, 1, 2)));
 
 #endif /* utils_logger_h */
