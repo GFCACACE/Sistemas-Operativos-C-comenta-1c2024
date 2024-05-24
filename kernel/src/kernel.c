@@ -303,6 +303,7 @@ void recibir_pcb_de_cpu(){
 		default:
 			break;
 	}
+	sem_post(&sem_bin_cpu_libre);
 
 }
 

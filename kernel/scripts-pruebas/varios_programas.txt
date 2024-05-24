@@ -1,0 +1,5 @@
+INICIAR_PROCESO programa5.txt
+INICIAR_PROCESO programa5.txt
+INICIAR_PROCESO programa5.txt
+INICIAR_PROCESO programa5.txt
+EXIT

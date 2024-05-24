@@ -62,8 +62,7 @@ t_param interpretar_valor_instruccion(char*);
 bool fetch(t_pcb*);
 bool decode();
 bool execute(t_pcb*);
-bool check_interrupt(t_pcb*);
-bool devolver_contexto(t_pcb*);
+bool devolver_contexto(t_pcb *pcb,op_code codigo_operacion);
 bool actualizar_contexto(t_pcb*);
 bool actualizar_registros(t_pcb*);
 bool exe_set(t_param,t_param);
@@ -85,7 +84,7 @@ extern t_log* logger;
 extern t_config_cpu * config;
 extern t_registros_cpu* registros_cpu;
 extern int kernel_dispatch,dispatch,interrupt,kernel_interrupt,conexion_memoria;
-extern int cod_op_kernel_dispatch;
+//extern op_code cod_op_kernel_dispatch;
 extern t_dictionary* diccionario_registros_cpu;
 // Cambiar funciones en base a esto!!!!
 extern pthread_mutex_t mutex_interrupt;
@@ -94,5 +93,5 @@ extern char* INSTID;
 extern t_param PARAM1;
 extern t_param PARAM2;
 extern t_param PARAM3;
-extern int cod_op_kernel_interrupt;
+extern op_code cod_op_kernel_interrupt;
 #endif //cpu_h

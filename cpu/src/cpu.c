@@ -1,8 +1,8 @@
 #include "cpu.h"
 
 int kernel_dispatch, dispatch, interrupt, kernel_interrupt, conexion_memoria;
-int cod_op_kernel_dispatch;
-int cod_op_kernel_interrupt;
+//op_code cod_op_kernel_dispatch;
+op_code cod_op_kernel_interrupt;
 char *IR, *INSTID;
 t_param PARAM1, PARAM2, PARAM3;
 pthread_mutex_t mutex_interrupt= PTHREAD_MUTEX_INITIALIZER;
@@ -127,9 +127,11 @@ bool iniciar_cpu(char *path_config)
 		   iniciar_variables()	&&
 		   iniciar_gestion_interrupcion();
 }
+
+void resetear_ciclo(){cod_op_kernel_interrupt = EJECUTAR_CPU;}
 bool iniciar_variables()
 {
-	cod_op_kernel_interrupt = EJECUTAR_CPU;
+	resetear_ciclo();
 	//pthread_mutex_init(&mutex_interrupt, NULL);
 	return true;
 }
@@ -212,16 +214,24 @@ char *pedir_proxima_instruccion(t_pcb *pcb)
 	return recibir_instruccion();
 }
 
+bool hay_interrupcion(){return cod_op_kernel_interrupt != EJECUTAR_CPU;};
+
+bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !hay_interrupcion();};
+
  void ciclo_de_instruccion(t_pcb* pcb){
-	bool hay_interrupcion = false;
+
 	do{		
 		fetch(pcb);
 		decode();
 		execute(pcb);
-		hay_interrupcion=check_interrupt(pcb);
+		
+		if(hay_interrupcion())
+			devolver_contexto(pcb,cod_op_kernel_interrupt);
 
-	}while ((!es_exit(IR)) && !hay_interrupcion);
+	}while (continuar_ciclo_instruccion());
 	enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
+	resetear_ciclo();
+
 	if(IR!=NULL) free(IR);	
  }
 
@@ -340,7 +350,7 @@ bool execute(t_pcb *pcb)
 		liberar_param(PARAM2);
 		return true;
 	}
-	if (!strcmp(INSTID, "EXIT"))
+	if (es_exit(INSTID))
 	{
 		loguear("PID: <%d> - Ejecutando: <%s>", pcb->PID, INSTID);
 		exe_exit(pcb);
@@ -409,35 +419,14 @@ bool exe_io_gen_sleep(t_param interfaz, t_param unidades_de_trabajo)
 
 bool exe_exit(t_pcb *pcb)
 {
-	// devolver_contexto(pcb);
+	devolver_contexto(pcb,CPU_EXIT);
 	return true;
 }
 
-bool check_interrupt(t_pcb *pcb)
-{	
-	//int estado_interrupt;
-	/*cod_op_interrupt debería ser modificada por un thread
-	 dedicado a recibir de kernel si desea interrumpir*/
-
-	// enviar a mensaje a kernel para que decremente el quantum
-	// pthread_mutex_lock(&mutex_interrupt);
-	//estado_interrupt = cod_op_kernel_interrupt;
-	// pthread_mutex_unlock(&mutex_interrupt);
-	if (cod_op_kernel_interrupt != EJECUTAR_CPU)
-	{
-		devolver_contexto(pcb);
-		cod_op_kernel_interrupt = EJECUTAR_CPU;
-		return true;
-	}
-	return false;
-}
-bool devolver_contexto(t_pcb *pcb)
+bool devolver_contexto(t_pcb *pcb,op_code codigo_operacion)
 {
+	enviar_pcb(pcb,codigo_operacion,kernel_dispatch);
 	// el pcb Siempre debe devolverse por dispatch
-	if (!strcmp(INSTID, "EXIT"))
-		enviar_pcb(pcb, CPU_EXIT, dispatch);
-	else
-		enviar_pcb(pcb, cod_op_kernel_interrupt, dispatch);
 
 	return true;
 }
