@@ -62,6 +62,7 @@ t_param interpretar_valor_instruccion(char*);
 bool fetch(t_pcb*);
 bool decode();
 bool execute(t_pcb*);
+bool check_interrupt();
 bool devolver_contexto(t_pcb *pcb,op_code codigo_operacion);
 bool actualizar_contexto(t_pcb*);
 bool actualizar_registros(t_pcb*);

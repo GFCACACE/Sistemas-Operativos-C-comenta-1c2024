@@ -743,8 +743,18 @@ void planificacion_RR(){
 	//kernel chequea el quantum que le manda cpu luego de cada instrucción
 	//t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
 		// interrumpir_por_fin_quantum();	
-	ready_a_exec();
-	crear_hilo_quantum(pcb_exec);			
+	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
+	//////// IMPORTANTE HACER EL SEM_POST CUANDO CUELVA UN PCB DE CPU
+	t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
+	if(pcb != NULL){
+		pthread_mutex_lock(&mx_pcb_exec);
+		pcb_exec = pcb;
+		loguear("Se debe enviar el pcb en exec a la cpu");
+		loguear_pcb(pcb_exec);
+		enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
+		pthread_mutex_unlock(&mx_pcb_exec);
+	}
+	crear_hilo_quantum(pcb);
 }
 
 // Para VRR, en caso de que el proceso no ejecute todo su quantum se realiza la

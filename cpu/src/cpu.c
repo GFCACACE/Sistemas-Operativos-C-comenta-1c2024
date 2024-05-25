@@ -128,10 +128,10 @@ bool iniciar_cpu(char *path_config)
 		   iniciar_gestion_interrupcion();
 }
 
-void resetear_ciclo(){cod_op_kernel_interrupt = EJECUTAR_CPU;}
+
 bool iniciar_variables()
 {
-	resetear_ciclo();
+	cod_op_kernel_interrupt = EJECUTAR_CPU;
 	//pthread_mutex_init(&mutex_interrupt, NULL);
 	return true;
 }
@@ -214,9 +214,9 @@ char *pedir_proxima_instruccion(t_pcb *pcb)
 	return recibir_instruccion();
 }
 
-bool hay_interrupcion(){return cod_op_kernel_interrupt != EJECUTAR_CPU;};
+bool check_interrupt(){return (cod_op_kernel_interrupt != EJECUTAR_CPU && !es_exit(IR));};
 
-bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !hay_interrupcion();};
+bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !check_interrupt();};
 
  void ciclo_de_instruccion(t_pcb* pcb){
 
@@ -225,7 +225,7 @@ bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !hay_interrupcion();
 		decode();
 		execute(pcb);
 		
-		if(hay_interrupcion())
+		if(check_interrupt())
 			devolver_contexto(pcb,cod_op_kernel_interrupt);
 
 	}while (continuar_ciclo_instruccion());
@@ -233,7 +233,6 @@ bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !hay_interrupcion();
 	if(es_exit(IR))
 		enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
 
-	resetear_ciclo();
 
 	if(IR!=NULL) free(IR);	
  }
@@ -460,6 +459,7 @@ int ejecutar_proceso_cpu()
         switch (cod_op) {
             case EJECUTAR_PROCESO:
                 t_pcb *pcb = recibir_pcb(paquete); 
+				cod_op_kernel_interrupt = EJECUTAR_CPU;
                 ciclo_de_instruccion(pcb);
 				paquete_destroy(paquete);
                 break;				
