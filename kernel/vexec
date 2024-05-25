@@ -5,5 +5,5 @@ FILE=$workspace_basename
 BIN=./bin/$FILE
 make $BIN
 if test -f $BIN; then
-    valgrind --tool=memcheck --leak-check=yes --show-possibly-lost=no --show-reachable=no --num-callers=20 -s $BIN ./$FILE.config
+    valgrind --tool=memcheck --leak-check=yes --show-possibly-lost=no --show-reachable=no --num-callers=20 --log-file=vkernel.log -s $BIN ./$FILE.config
 fi

@@ -456,7 +456,7 @@ int ejecutar_proceso_cpu()
 	{
 		t_paquete *paquete = recibir_paquete(kernel_dispatch);
 		int cod_op = paquete->codigo_operacion;
-		loguear("Cod op: %d", cod_op);
+		loguear("Cod op Kernel: %d", cod_op);
         switch (cod_op) {
             case EJECUTAR_PROCESO:
                 t_pcb *pcb = recibir_pcb(paquete); 

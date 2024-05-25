@@ -295,10 +295,10 @@ void recibir_pcb_de_cpu(){
 	loguear_warning("Intento recibir de CPU!");
 	t_paquete *paquete = recibir_paquete(cpu_dispatch);
 	int cod_op = paquete->codigo_operacion;
-	loguear("Cod op: %d", cod_op);
+	loguear("Cod op CPU: %d", cod_op);
 	t_pcb* pcb_recibido = recibir_pcb(paquete);  
 	liberar_pcb_exec();
-
+	paquete_destroy(paquete);
 	switch (cod_op)
 	{
 		case CPU_EXIT:
@@ -324,7 +324,7 @@ void recibir_pcb_de_cpu(){
 			break;
 	}
 	sem_post(&sem_bin_cpu_libre);
-
+	
 }
 
 
@@ -688,9 +688,9 @@ void controlar_quantum (t_pcb* pcb_enviado){
 	t_pcb pcb;
 	memcpy(&pcb,pcb_enviado,sizeof(t_pcb));
 	if(config->QUANTUM)
-	{	usleep(config->QUANTUM);		
+	{	usleep(config->QUANTUM*1000);		
 		pthread_mutex_lock(&mx_pcb_exec);
-		if(pcb_exec->PID==pcb.PID){
+		if(pcb_exec != NULL && pcb_exec->PID==pcb.PID){
 			enviar_texto("FIN_QUANTUM",FIN_QUANTUM,cpu_interrupt);
 			loguear("PID: <%d> - Desalojado por fin de Quantum",pcb.PID);
 			
