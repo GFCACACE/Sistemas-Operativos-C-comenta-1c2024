@@ -125,7 +125,7 @@ void recibir_de_buffer(void* lugar_destino,t_buffer* buffer,size_t tam){
 
 t_pcb* recibir_pcb(t_paquete* paquete)
 {
-	t_pcb* pcb = pcb_create("");
+	t_pcb* pcb = pcb_create_copy("");
 	t_buffer* buffer = paquete->buffer;
 	buffer->desplazamiento = sizeof(uint32_t);
 	uint32_t path_size ;

@@ -2,7 +2,9 @@
 #
 int ultimo_pid=0;
 
+
 t_pcb* pcb_create(char* path_programa){
+
 	t_pcb* pcb = malloc(sizeof(t_pcb));
 	pcb->PID = ultimo_pid++;
 	pcb->archivos_abiertos = list_create();
@@ -12,6 +14,22 @@ t_pcb* pcb_create(char* path_programa){
     pcb->path = string_duplicate(path_programa);
    	return pcb;
 }
+t_pcb* pcb_create_copy(char* path_programa){
+
+	t_pcb* pcb = malloc(sizeof(t_pcb));
+	// pthread_mutex_lock(&mx_ultimo_pid);
+	// pcb->PID = ultimo_pid++;
+	// pthread_mutex_unlock(&mx_ultimo_pid);
+	pcb->archivos_abiertos = list_create();
+	pcb->registros_cpu = inicializar_registros(pcb->registros_cpu);
+	pcb->program_counter = 0;    
+	pcb->quantum = 0; // En caso de necesitarlo, el planificador de corto plazo lo inicializará con el valor adecuado 
+    pcb->path = string_duplicate(path_programa);
+   	return pcb;
+}
+
+
+
 
 t_registros_cpu*  inicializar_registros (t_registros_cpu* registros){
 	registros = malloc(sizeof(t_registros_cpu));

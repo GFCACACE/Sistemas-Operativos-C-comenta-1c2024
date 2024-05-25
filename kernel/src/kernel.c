@@ -292,6 +292,7 @@ void liberar_pcb_exec(){
 	pthread_mutex_unlock(&mx_pcb_exec);
 }
 void recibir_pcb_de_cpu(){
+	loguear_warning("Intento recibir de CPU!");
 	t_paquete *paquete = recibir_paquete(cpu_dispatch);
 	int cod_op = paquete->codigo_operacion;
 	loguear("Cod op: %d", cod_op);
@@ -515,6 +516,7 @@ bool iniciar_proceso(char** parametros){
 	
 	char *path = string_duplicate(parametros[1]);
 	loguear("PATH: %s",path);
+	// Crear if de planificacion para ver si se usa pcb_create o pcb_create_quantum?????????
 	t_pcb* pcb = pcb_create(path);   // Se crea el PCB
 	
 	bool proceso_creado = crear_proceso_en_memoria(pcb);
@@ -615,12 +617,13 @@ bool es_vrr(){
 
 bool proceso_estado(){
 	t_queue* estado_exec = queue_create();
+	pthread_mutex_lock(&mx_pcb_exec);
 	if(pcb_exec!=NULL)
 		queue_push(estado_exec,pcb_exec);
-
+	pthread_mutex_unlock(&mx_pcb_exec);
 	imprimir_cola(estado_new, "Nuevo");
     imprimir_cola(estado_ready, "Listo");
-    imprimir_cola(estado_blocked, "Suspendido");
+    imprimir_cola(estado_blocked, "Bloqueado");
 	imprimir_cola(estado_exec, "Ejecutando");	
 	imprimir_cola(estado_exit, "Finalizado");
 	imprimir_cola(estado_deleted, "Eliminado");
@@ -710,8 +713,10 @@ void crear_hilo_quantum(t_pcb* pcb){
 void ejecutar_proceso(){
 
 	loguear("Se debe enviar el pcb en exec a la cpu");
+	pthread_mutex_lock(&mx_pcb_exec);
 	loguear_pcb(pcb_exec);
 	enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
+	pthread_mutex_unlock(&mx_pcb_exec);
 	// Caso RR/VRR: Crear hilo con quantum
 	
 }
@@ -742,8 +747,6 @@ void planificacion_RR(){
 	crear_hilo_quantum(pcb_exec);			
 }
 
-// IDEA: en RR, CPU decrementa el quantum hasta llegar a 0 y una vez que llega
-// le avisa a kernel que el proceso terminó.
 // Para VRR, en caso de que el proceso no ejecute todo su quantum se realiza la
 // validacion correspondiente en kernel para saber a qué cola mandar el pcb
 // una manera de distinguir entre IO y fin de proceso es el codigo de op
@@ -751,6 +754,9 @@ void planificacion_RR(){
 
 void planificacion_VRR(){
 	loguear("Planificando por Virtual Round Robbin");
+
+	// TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 }
 
 
@@ -822,7 +828,9 @@ void ready_a_exec(){
 	//////// IMPORTANTE HACER EL SEM_POST CUANDO CUELVA UN PCB DE CPU
 	t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
 	if(pcb != NULL){
+		pthread_mutex_lock(&mx_pcb_exec);
 		pcb_exec = pcb;
+		pthread_mutex_unlock(&mx_pcb_exec);
 		ejecutar_proceso();
 	}
 }

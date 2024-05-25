@@ -309,8 +309,8 @@ void recibir_pcb_y_aplicar(t_paquete *paquete,t_validacion* (*accion)(t_pcb*),vo
 
 int recibir_procesos(){
 	 while (1) {
-		  t_paquete *paquete = recibir_paquete(conexion_kernel);
-		 int cod_op =paquete->codigo_operacion;
+		t_paquete *paquete = recibir_paquete(conexion_kernel);
+		int cod_op =paquete->codigo_operacion;
 		loguear("Cod op: %d", cod_op);
         switch (cod_op) {
 			case CREACION_PROCESO:
