@@ -214,9 +214,12 @@ char *pedir_proxima_instruccion(t_pcb *pcb)
 	return recibir_instruccion();
 }
 
-bool check_interrupt(){return (cod_op_kernel_interrupt != EJECUTAR_CPU && !es_exit(IR));};
-
-bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !check_interrupt();};
+bool check_interrupt(){return (cod_op_kernel_interrupt != EJECUTAR_CPU && !es_exit(IR) && !es_io_handler(INSTID));};
+bool es_io_handler(char* INSTID){
+if(!strcmp(INSTID,"IO_GEN_SLEEP")) return true;
+return false;
+}
+bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !check_interrupt() && !es_io_handler(INSTID);};
 
  void ciclo_de_instruccion(t_pcb* pcb){
 
@@ -345,9 +348,10 @@ bool execute(t_pcb *pcb)
 	}
 	if (!strcmp(INSTID, "IO_GEN_SLEEP"))
 	{
-		exe_io_gen_sleep(PARAM1, PARAM2);
+		
+		exe_io_gen_sleep(pcb,PARAM1, PARAM2);
 
-		actualizar_contexto(pcb);
+		
 		liberar_param(PARAM1);
 		liberar_param(PARAM2);
 		return true;
@@ -409,12 +413,16 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 	return true;
 }
 
-bool exe_io_gen_sleep(t_param interfaz, t_param unidades_de_trabajo)
+bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 {
 	char* texto = string_new();
+	
+	(uint32_t)registros_cpu->PC++;
+	actualizar_contexto(pcb);
+	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	sprintf(texto,"%s %s",interfaz.string_valor,unidades_de_trabajo.string_valor);
 	enviar_texto(texto,IO_GEN_SLEEP,kernel_dispatch);
-	(uint32_t)registros_cpu->PC++;
+	
 	free(texto);
 	return true;
 }

@@ -44,7 +44,7 @@ bool iniciar_variables();//semáforos y variables globales
 bool iniciar_gestion_interrupcion();
 
 bool iniciar_cpu(char*);
-
+bool es_io_handler(char*);
 t_config_cpu* iniciar_config_cpu(char*);
 t_dictionary* iniciar_diccionario_cpu();
 void config_destroy_cpu(t_config_cpu*);
@@ -77,7 +77,7 @@ bool exe_copy_string(void*);
 bool exe_wait(/*recurso*/);
 bool exe_signal(/*recurso*/);
 bool exe_exit(t_pcb*);
-bool exe_io_gen_sleep(t_param,t_param);
+bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 

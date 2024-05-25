@@ -287,6 +287,7 @@ void planificador_corto(){
 
 }
 void liberar_pcb_exec(){
+
 	pthread_mutex_lock(&mx_pcb_exec);
 	pcb_exec = NULL;
 	pthread_mutex_unlock(&mx_pcb_exec);
@@ -310,15 +311,21 @@ void recibir_pcb_de_cpu(){
 			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
 			sem_post(&sem_bin_ready);
 			break;
-		case CPU_INTERRUPT:
-			// QUE HACEMOS???
-			/* Puede pasar a ready( sem_post(&sem_bin_ready); ) , blocked (o en VRR a Ready+) */
-			//return false;
-			break;
-		case IO_GEN_SLEEP:
-            t_peticion_generica* peticion_generica = crear_peticion_generica(pcb_recibido,paquete->buffer);//CREAR FUNCION!!!
-            proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);//Crear semáforo blocked
-            enviar_peticion(peticion_generica); //Acá tiene la interfaz, se puede averiguar a qué conexión se envía mediante el diccionario. CREAR FUNCION!!!
+		case IO_HANDLER:
+            // t_peticion_generica* peticion_generica = crear_peticion_generica(pcb_recibido,paquete->buffer);//CREAR FUNCION!!!
+            // proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);//Crear semáforo blocked
+            // enviar_peticion(peticion_generica); //Acá tiene la interfaz, se puede averiguar a qué conexión se envía mediante el diccionario. CREAR FUNCION!!!
+			int cod_op_io = recibir_operacion(cpu_dispatch);
+			char* peticion;
+			char** splitter = string_array_new();
+			peticion = recibir_mensaje(cpu_dispatch);
+			switch(cod_op_io){
+				case IO_GEN_SLEEP:
+					splitter = string_split(peticion," ");
+					loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
+					// peticion_handler(splitter[0],pcb);// Chequea que exista la conexión y manda el pcb a EXIT si no o existe, o a BLOCKED mientras se ejecuta
+					break;
+			}
 			break;
 		default:
 			break;
