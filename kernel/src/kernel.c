@@ -11,14 +11,14 @@ pthread_mutex_t mx_new = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion
 pthread_mutex_t mx_ready = PTHREAD_MUTEX_INITIALIZER; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
 pthread_mutex_t mx_exit = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion en estado_exit. Podrían querer acceder consola, plp y pcp al mismo tiempo
 pthread_mutex_t mx_pcb_exec = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mx_deleted = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mx_temp = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mx_blocked = PTHREAD_MUTEX_INITIALIZER;
 
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
-t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_deleted,
+t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_temp,
 		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
 t_pcb* pcb_exec; 
 
@@ -150,7 +150,7 @@ bool iniciar_estados_planificacion(){
 	estado_ready = queue_create();
 	estado_blocked = queue_create();
 	estado_exit = queue_create();	
-	estado_deleted = queue_create();	
+	estado_temp = queue_create();	
 	if(es_vrr())
 		estado_ready_plus = queue_create();
 	
@@ -263,12 +263,12 @@ void plp_procesos_nuevos(){
 void plp_procesos_finalizados(){
 	while(1){
 		sem_wait(&sem_bin_exit);
-		loguear_warning("Se va a sacar un PCB de exit");
-		t_pcb* pcb = pop_estado_get_pcb(estado_exit,&mx_exit);
-		loguear_warning("Se sacó el PCB: %d de cola Exit para eliminar.", pcb->PID );
+		loguear_warning("Se va a sacar un PCB de temp");
+		t_pcb* pcb = pop_estado_get_pcb(estado_temp,&mx_temp);
+		loguear_warning("Se sacó el PCB: %d de cola temp para eliminar.", pcb->PID );
 		eliminar_proceso_en_memoria(pcb);
 		loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
-		push_proceso_a_estado(pcb,estado_deleted,&mx_deleted);
+		push_proceso_a_estado(pcb,estado_exit,&mx_exit);
 		sem_post(&sem_cont_grado_mp);
 		}
 }
@@ -282,7 +282,7 @@ void planificador_corto(){
 		recibir_pcb_de_cpu();
 		// verificar a que lista debe ir
 		// enviar a ready/blocked/exit (signal a esa cola)
-		/* Cuando recibe un pcb con centexto finalizado, lo agrega a la cola de exit y hace un sem_post(&sem_bin_exit) */
+		/* Cuando recibe un pcb con centexto finalizado, lo agrega a la cola de exit  */
 	}
 
 }
@@ -302,7 +302,7 @@ void recibir_pcb_de_cpu(){
 	switch (cod_op)
 	{
 		case CPU_EXIT:
-			proceso_a_estado(pcb_recibido, estado_exit,&mx_exit); 
+			proceso_a_estado(pcb_recibido, estado_temp,&mx_temp); 
 			proceso_estado();
 			sem_post(&sem_bin_exit);
 			break;
@@ -626,7 +626,7 @@ bool proceso_estado(){
     imprimir_cola(estado_blocked, "Bloqueado");
 	imprimir_cola(estado_exec, "Ejecutando");	
 	imprimir_cola(estado_exit, "Finalizado");
-	imprimir_cola(estado_deleted, "Eliminado");
+	imprimir_cola(estado_temp, "Temporal");
 	if( es_vrr())
 	imprimir_cola(estado_ready_plus,"Listo VRR");
 
@@ -872,7 +872,7 @@ void liberar_colas(){
 	liberar_cola(estado_new);
 	liberar_cola(estado_ready);
 	liberar_cola(estado_ready_plus);
-	liberar_cola(estado_deleted);
+	liberar_cola(estado_temp);
 	liberar_cola(io_stdin);
 	liberar_cola(io_stdout);
 	liberar_cola(io_generica);
@@ -893,7 +893,7 @@ void liberar_semaforos(){
 	pthread_mutex_destroy(&mx_ready);
 	pthread_mutex_destroy(&mx_exit);
 	pthread_mutex_destroy(&mx_pcb_exec);
-	pthread_mutex_destroy(&mx_deleted);
+	pthread_mutex_destroy(&mx_temp);
 }
 
 void finalizar_kernel(){
