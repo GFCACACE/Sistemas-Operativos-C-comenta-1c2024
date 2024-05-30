@@ -89,6 +89,7 @@ bool detener_planificacion(char**);
 bool proceso_estado();
 bool modificacion_estado();
 void ready_a_exec();
+void ready_plus_a_exec();
 void push_proceso_a_estado(t_pcb*, t_queue* ,pthread_mutex_t*);
 t_pcb* pop_estado_get_pcb(t_queue* ,pthread_mutex_t*);
 bool transicion_valida(t_queue*,t_queue*);
@@ -121,11 +122,18 @@ bool eliminar_proceso_en_memoria(t_pcb*);
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
 
 void recibir_pcb_de_cpu();
+void pasar_a_exit(t_pcb*);
 
 void liberar_pcb_exec();
 // bool iniciar_conexion_io();
 // void io_handler();
 // bool iniciar_servidor_kernel();
+
+bool eliminar_proceso(uint32_t);
+bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
+t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
+
+
 #endif /* kernel.h*/
 
 
