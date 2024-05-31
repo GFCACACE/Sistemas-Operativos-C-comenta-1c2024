@@ -64,6 +64,7 @@ t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
 extern t_config_kernel* config;
+extern t_dictionary* diccionario_conexiones_io;
 extern int grado_multiprogamacion_actual;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt,kernel_escucha, conexion_io;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
@@ -126,14 +127,15 @@ void pasar_a_exit(t_pcb*);
 
 void liberar_pcb_exec();
 t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**));
-// bool iniciar_conexion_io();
+void iniciar_threads_io();
+void iniciar_conexion_io();
+
 // void io_handler();
 // bool iniciar_servidor_kernel();
-
+bool existe_interfaz(char*);
 bool eliminar_proceso(uint32_t);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
-
 
 #endif /* kernel.h*/
 

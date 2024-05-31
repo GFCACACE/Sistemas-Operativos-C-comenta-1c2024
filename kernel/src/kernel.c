@@ -20,7 +20,7 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 //bool detener_plani = false;
 t_config_kernel* config;
-t_dictionary * comandos_consola;
+t_dictionary * comandos_consola,* diccionario_conexiones_io;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_temp,
 		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
 t_pcb* pcb_exec; 
@@ -173,7 +173,6 @@ bool iniciar_kernel(char* path_config){
 	iniciar_estados_planificacion()&&
 	iniciar_colas_entrada_salida()&&
 	iniciar_semaforos();
-	//&&iniciar_conexion_io();
 }
 bool iniciar_semaforos(){
 	sem_init(&sem_cont_grado_mp,0,config->GRADO_MULTIPROGRAMACION);
@@ -316,21 +315,27 @@ void recibir_pcb_de_cpu(){
 			sem_post(&sem_bin_ready);
 			break;
 		case IO_HANDLER:
-            // t_peticion_generica* peticion_generica = crear_peticion_generica(pcb_recibido,paquete->buffer);//CREAR FUNCION!!!
-            // proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);//Crear semáforo blocked
-            // enviar_peticion(peticion_generica); //Acá tiene la interfaz, se puede averiguar a qué conexión se envía mediante el diccionario. CREAR FUNCION!!!
-			int cod_op_io = recibir_operacion(cpu_dispatch);
+            int cod_op_io = recibir_operacion(cpu_dispatch);
 			char* peticion;
 			char** splitter = string_array_new();
 			peticion = recibir_mensaje(cpu_dispatch);
+			splitter = string_split(peticion," ");
 			// por acá deberíamos hallar el quantum restante? var global timestamp seteada en controlar quantum 
 			// que compare contra la hora del sistema? el resto iría a PCB->QUANTUM
 			//
+			if(!existe_interfaz(splitter[0])){
+				pasar_a_exit(pcb_recibido);
+				proceso_estado(); // Se puede eliminar, es para  ver los estados
+				break;
+			}
+			proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);
 			switch(cod_op_io){
 				case IO_GEN_SLEEP:
-					splitter = string_split(peticion," ");
+					
 					loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
-					// peticion_handler(splitter[0],pcb);// Chequea que exista la conexión y manda el pcb a EXIT si no o existe, o a BLOCKED mientras se ejecuta
+					enviar_texto(splitter[1],
+					IO_GEN_SLEEP,
+					(int)dictionary_get(diccionario_conexiones_io,splitter[0]));
 					if(es_vrr()){
 						// Verificar diferencia quantum, enviar a ready o ready+
 						// de acá no debería ir a blocked? tenemos que encontrar otro lugar para mandarlas a ready o readyplus
@@ -1070,20 +1075,33 @@ void pasar_a_exit(t_pcb* pcb){
 
 
 // BRAND NEW
+void iniciar_threads_io(){
+	pthread_t thread_io_conexion;
+	pthread_create(&thread_io_conexion,NULL, (void*) iniciar_conexion_io,NULL);
+	pthread_detach(thread_io_conexion);
+}
 //cambiar el tipo y ver como engancharlo.
-// bool iniciar_conexion_io(){
-// 	while (1){
-// 		pthread_t thread;
-//     	int *fd_conexion_ptr = malloc(sizeof(int));
-//     	*fd_conexion_ptr = accept(kernel_escucha, NULL, NULL);
-// 		//revisar
-// 		char* nombre_interfaz = recibir_mensaje(kernel_escucha);
-//     	pthread_create(&thread,NULL, (void*) io_handler(nombre_interfaz),fd_conexion_ptr);
-//     	//
-// 		pthread_detach(thread);
+void iniciar_conexion_io(){
+	diccionario_conexiones_io = dictionary_create();
+	while (1){
+		pthread_t thread;
+    	int *fd_conexion_ptr = malloc(sizeof(int));
+    	*fd_conexion_ptr = accept(kernel_escucha, NULL, NULL);
+		//revisar
+		char* nombre_interfaz = recibir_mensaje(kernel_escucha);
+		dictionary_put(diccionario_conexiones_io,nombre_interfaz,fd_conexion_ptr);
+    	pthread_create(&thread,NULL, (void*) io_handler(nombre_interfaz),fd_conexion_ptr);
+    	//
+		pthread_detach(thread);
 		
-// 	}
-// }
+	}
+
+}
+
+bool existe_interfaz(char* nombre_interfaz){
+	return dictionary_has_key(diccionario_conexiones_io,nombre_interfaz);
+}
+
 // BRAND NEW
 
 // // BRAND NEW
