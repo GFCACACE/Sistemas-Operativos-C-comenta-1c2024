@@ -145,7 +145,7 @@ void agregar_a_buffer(t_buffer* buffer,const void* lugar_origen,size_t tam){
 void* serializar_pcb(t_pcb* pcb,int* size)
 {	
 	
-	uint32_t path_size = strlen(pcb->path);// + 1;
+	uint32_t path_size = strlen(pcb->path)+ 1;
 	//		(PID,pc,quantum,size del path) + registros + prioridad + path_size
 	*size = sizeof(uint32_t) *10 +  + sizeof(uint8_t) *5 + path_size ;
 	t_buffer* buffer = crear_buffer(*size);
