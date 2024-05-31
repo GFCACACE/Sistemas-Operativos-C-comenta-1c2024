@@ -1,0 +1,3 @@
+IO_GEN_SLEEP jeje 2
+SET AX 1
+EXIT

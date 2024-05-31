@@ -9,13 +9,16 @@ sem_t sem_bin_cpu_libre; // Sincroniza que no haya ningun PCB ejecutando en CPU
 
 pthread_mutex_t mx_new = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion en estado_new. Podrían querer acceder consola y plp al mismo tiempo
 pthread_mutex_t mx_ready = PTHREAD_MUTEX_INITIALIZER; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
+pthread_mutex_t mx_ready_plus = PTHREAD_MUTEX_INITIALIZER; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
+pthread_mutex_t mx_blocked = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mx_exit = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion en estado_exit. Podrían querer acceder consola, plp y pcp al mismo tiempo
 pthread_mutex_t mx_pcb_exec = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mx_temp = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mx_blocked = PTHREAD_MUTEX_INITIALIZER;
+
 
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
+//bool detener_plani = false;
 t_config_kernel* config;
 t_dictionary * comandos_consola;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_temp,
@@ -245,7 +248,7 @@ void liberar_proceso(t_pcb* pcb){
 
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
-	while(1){
+	while(1/*!detener_plani*/){
 		sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
 		sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
 		bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
@@ -261,7 +264,7 @@ void plp_procesos_nuevos(){
 
 
 void plp_procesos_finalizados(){
-	while(1){
+	while(1/*!detener_plani*/){
 		sem_wait(&sem_bin_exit);
 		loguear_warning("Se va a sacar un PCB de temp");
 		t_pcb* pcb = pop_estado_get_pcb(estado_temp,&mx_temp);
@@ -274,8 +277,10 @@ void plp_procesos_finalizados(){
 }
 
 
+
+
 void planificador_corto(){
-	while(1){
+	while(1/*!detener_plani*/){
 		sem_wait(&sem_bin_ready); //Hay que ver si tiene que estar acá. En este caso se considera que cada replanificación pasa por aca
 		ejecutar_planificacion();
 		// Esperar la vuelta del PCB
@@ -287,6 +292,7 @@ void planificador_corto(){
 
 }
 void liberar_pcb_exec(){
+
 	pthread_mutex_lock(&mx_pcb_exec);
 	pcb_exec = NULL;
 	pthread_mutex_unlock(&mx_pcb_exec);
@@ -302,23 +308,35 @@ void recibir_pcb_de_cpu(){
 	switch (cod_op)
 	{
 		case CPU_EXIT:
-			proceso_a_estado(pcb_recibido, estado_temp,&mx_temp); 
-			proceso_estado();
-			sem_post(&sem_bin_exit);
+			pasar_a_exit(pcb_recibido);
+			proceso_estado(); // Se puede eliminar, es para  ver los estados
 			break;
 		case FIN_QUANTUM:
 			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
 			sem_post(&sem_bin_ready);
 			break;
-		case CPU_INTERRUPT:
-			// QUE HACEMOS???
-			/* Puede pasar a ready( sem_post(&sem_bin_ready); ) , blocked (o en VRR a Ready+) */
-			//return false;
-			break;
-		case IO_GEN_SLEEP:
-            t_peticion_generica* peticion_generica = crear_peticion_generica(pcb_recibido,paquete->buffer);//CREAR FUNCION!!!
-            proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);//Crear semáforo blocked
-            enviar_peticion(peticion_generica); //Acá tiene la interfaz, se puede averiguar a qué conexión se envía mediante el diccionario. CREAR FUNCION!!!
+		case IO_HANDLER:
+            // t_peticion_generica* peticion_generica = crear_peticion_generica(pcb_recibido,paquete->buffer);//CREAR FUNCION!!!
+            // proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);//Crear semáforo blocked
+            // enviar_peticion(peticion_generica); //Acá tiene la interfaz, se puede averiguar a qué conexión se envía mediante el diccionario. CREAR FUNCION!!!
+			int cod_op_io = recibir_operacion(cpu_dispatch);
+			char* peticion;
+			char** splitter = string_array_new();
+			peticion = recibir_mensaje(cpu_dispatch);
+			// por acá deberíamos hallar el quantum restante? var global timestamp seteada en controlar quantum 
+			// que compare contra la hora del sistema? el resto iría a PCB->QUANTUM
+			//
+			switch(cod_op_io){
+				case IO_GEN_SLEEP:
+					splitter = string_split(peticion," ");
+					loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
+					// peticion_handler(splitter[0],pcb);// Chequea que exista la conexión y manda el pcb a EXIT si no o existe, o a BLOCKED mientras se ejecuta
+					if(es_vrr()){
+						// Verificar diferencia quantum, enviar a ready o ready+
+						// de acá no debería ir a blocked? tenemos que encontrar otro lugar para mandarlas a ready o readyplus
+					}
+					break;
+			}
 			break;
 		default:
 			break;
@@ -603,7 +621,10 @@ bool multiprogramacion(char** substrings){
 
 }
 
-bool detener_planificacion(char** substrings){return true;}
+bool detener_planificacion(char** substrings){
+	return true;
+	//detener_plani = true;
+}
 
 void imprimir_cola(t_queue *cola, const char *estado) {
 
@@ -639,8 +660,7 @@ bool proceso_estado(){
 	imprimir_cola(estado_exec, "Ejecutando");	
 	imprimir_cola(estado_exit, "Finalizado");
 	imprimir_cola(estado_temp, "Temporal");
-	if( es_vrr())
-	imprimir_cola(estado_ready_plus,"Listo VRR");
+	if( es_vrr()) imprimir_cola(estado_ready_plus,"Listo VRR");
 
 	queue_destroy(estado_exec);
 	
@@ -669,6 +689,19 @@ void iniciar_consola(){
 void ejecutar_planificacion(){
 	config->ALGORITMO_PLANIFICACION.planificar();
 }
+
+void ready_a_exec(){
+	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
+	//////// IMPORTANTE HACER EL SEM_POST CUANDO CUELVA UN PCB DE CPU
+	t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
+	if(pcb != NULL){
+		pthread_mutex_lock(&mx_pcb_exec);
+		pcb_exec = pcb;
+		pthread_mutex_unlock(&mx_pcb_exec);
+		ejecutar_proceso();
+	}
+}
+
 
 void planificacion_FIFO(){
 	loguear("Planificando por FIFO");
@@ -774,18 +807,46 @@ void planificacion_RR(){
 // una manera de distinguir entre IO y fin de proceso es el codigo de op
 // que le manda cpu.
 
+void ready_plus_a_exec(t_pcb* pcb){
+	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
+	//////// IMPORTANTE HACER EL SEM_POST CUANDO CUELVA UN PCB DE CPU
+	//t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
+	if(pcb != NULL){
+		pthread_mutex_lock(&mx_pcb_exec);
+		pcb_exec = pcb;
+		loguear("Se debe enviar el pcb en exec a la cpu");
+		loguear_pcb(pcb_exec);
+		enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
+		pthread_mutex_unlock(&mx_pcb_exec);
+	}
+}
+
 void planificacion_VRR(){
 	loguear("Planificando por Virtual Round Robbin");
+	
+	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
+	//////// IMPORTANTE HACER EL SEM_POST CUANDO VUELVA UN PCB DE CPU
+	t_pcb* pcb;
+	bool ready_plus_vacia = queue_is_empty(estado_ready_plus); 
 
-	// TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+	if(ready_plus_vacia){
+		pcb = pop_estado_get_pcb(estado_ready_plus,&mx_ready_plus);
+		ready_plus_a_exec(pcb);
+	}
+	else{
+		pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
+		ready_a_exec(pcb);
+	}
+	crear_hilo_quantum(pcb); // Agregar diferencia timestamp!!
 }
 
 
 
 
-////// MODIFICACIONES DE ESTADO
 
+
+////// MODIFICACIONES DE ESTADO
+// ESTA FUNCION NO SE USA
 bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
 	if (estado_destino==estado_new){
 		return false;
@@ -797,9 +858,13 @@ bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
 		return false;
 	}
 
-	if(estado_destino==estado_blocked && estado_origen!=estado_new){
+	if(estado_destino==estado_blocked && estado_origen==estado_new){ ///// REVISAR ESTO!!!!!!!!!!!!!!!!
 		return false;
 	}	
+	// A ready+ solo se puede llegar si se bloqueo el proceso por I/O sin que se termine el quantum, por lo que solo puede venir de blocked
+	if(estado_destino==estado_ready_plus && estado_origen!=estado_blocked){
+		return false;
+	}
 
 	return true;
 }
@@ -826,7 +891,14 @@ bool transicion_valida(t_queue* estado_origen,t_queue* estado_destino){
 	}
 	if(estado_destino==estado_blocked && estado_origen==estado_new){
 		return false;
+	}
+	// A ready+ solo se puede llegar si se bloqueo el proceso por I/O sin que se termine el quantum, por lo que solo puede venir de blocked
+	if(estado_destino==estado_ready_plus && estado_origen!=estado_blocked){
+		return false;
 	}	
+	if(estado_destino==estado_ready_plus && estado_origen==estado_exit){
+		return false;
+	}
 
 	return true;
 }
@@ -845,17 +917,7 @@ t_pcb* pop_estado_get_pcb(t_queue* estado,pthread_mutex_t* mx_estado){
 }
 
 
-void ready_a_exec(){
-	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
-	//////// IMPORTANTE HACER EL SEM_POST CUANDO CUELVA UN PCB DE CPU
-	t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
-	if(pcb != NULL){
-		pthread_mutex_lock(&mx_pcb_exec);
-		pcb_exec = pcb;
-		pthread_mutex_unlock(&mx_pcb_exec);
-		ejecutar_proceso();
-	}
-}
+
 
 
 
@@ -903,7 +965,9 @@ void liberar_semaforos(){
 
 	pthread_mutex_destroy(&mx_new);
 	pthread_mutex_destroy(&mx_ready);
+	pthread_mutex_destroy(&mx_ready_plus);
 	pthread_mutex_destroy(&mx_exit);
+	pthread_mutex_destroy(&mx_blocked);
 	pthread_mutex_destroy(&mx_pcb_exec);
 	pthread_mutex_destroy(&mx_temp);
 }
@@ -951,6 +1015,59 @@ bool iniciar_servidor_kernel(){
 	loguear("El Servidor iniciado correctamente");
 	return true;
 }
+
+
+
+
+
+
+
+bool eliminar_proceso(uint32_t pid){ // Al implementar en consola, hay q parsear el char* a uint32_t
+	
+	bool _eliminar_proceso_en_lista(t_queue* estado, pthread_mutex_t* mutex_estado){
+		if (estado) return eliminar_proceso_en_lista(pid, estado, mutex_estado);
+		return false;
+	}
+
+	return ( _eliminar_proceso_en_lista(estado_new, &mx_new) || 
+	_eliminar_proceso_en_lista(estado_ready, &mx_ready) || 
+	_eliminar_proceso_en_lista(estado_blocked, &mx_blocked) || 
+	_eliminar_proceso_en_lista(estado_ready_plus, &mx_ready_plus) );
+
+}
+
+
+bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
+	t_pcb* pcb_buscado;
+	if (encontrar_en_lista(pid_buscado,estado_buscado, mutex_estado_buscado)){
+		pcb_buscado = encontrar_en_lista(pid_buscado,estado_buscado, mutex_estado_buscado);
+		pthread_mutex_lock(mutex_estado_buscado);
+		if (list_remove_element(estado_buscado->elements, pcb_buscado)) loguear("Se removio el PCB buscado");
+		pthread_mutex_unlock(mutex_estado_buscado);
+		pasar_a_exit(pcb_buscado);
+		return true;
+				
+	}
+	return false;
+}
+
+
+t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
+	bool es_el_pcb (t_pcb* pcb){
+		return (pcb->PID == pid_buscado);
+	};
+	t_pcb* pcb_encontrado = NULL;
+	pthread_mutex_lock(mutex_estado_buscado);
+	pcb_encontrado = list_find(estado_buscado->elements, (void*) es_el_pcb);
+	pthread_mutex_unlock(mutex_estado_buscado);
+	return pcb_encontrado;
+}
+
+void pasar_a_exit(t_pcb* pcb){
+	proceso_a_estado(pcb, estado_temp,&mx_temp); 
+	sem_post(&sem_bin_exit);
+}
+
 
 // BRAND NEW
 //cambiar el tipo y ver como engancharlo.
