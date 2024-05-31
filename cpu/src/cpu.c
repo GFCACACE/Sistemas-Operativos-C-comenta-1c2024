@@ -106,7 +106,7 @@ bool iniciar_conexion_memoria()
 
 bool iniciar_conexion_kernel()
 {
-	kernel_dispatch = esperar_cliente(dispatch);
+	//kernel_dispatch = esperar_cliente(dispatch);
 	interrupt = iniciar_servidor(config->PUERTO_ESCUCHA_INTERRUPT);
 	if (interrupt == -1)
 	{
