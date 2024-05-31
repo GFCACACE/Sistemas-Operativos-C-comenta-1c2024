@@ -123,6 +123,7 @@ void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
 void recibir_pcb_de_cpu();
 
 void liberar_pcb_exec();
+t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**));
 // bool iniciar_conexion_io();
 // void io_handler();
 // bool iniciar_servidor_kernel();

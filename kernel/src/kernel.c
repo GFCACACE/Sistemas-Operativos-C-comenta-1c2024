@@ -354,24 +354,31 @@ char* leer_texto_consola(){
 
 }
 
-void agregar_comando(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**)){
-    
-    t_comando_consola* comando = malloc(sizeof(t_comando_consola));
+t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**)){
+     t_comando_consola* comando = malloc(sizeof(t_comando_consola));
     comando->comando = code;
-    comando->parametros = params;
+    comando->parametros =  string_duplicate(params);
     comando->funcion = funcion;
-	comando->nombre= nombre;
+    comando->nombre= string_duplicate(nombre);
 
-    void _agregar_comando_(char* texto){
-        dictionary_put(comandos_consola,texto,comando);
-    }
-
-    _agregar_comando_(string_itoa(code));
-    _agregar_comando_(nombre);
-
+    return comando;
 }
 
 
+void agregar_comando(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**)){
+    
+   
+    void _agregar_comando_(char* texto){
+		 t_comando_consola* comando = comando_consola_create(code,nombre,params,funcion);
+        dictionary_put(comandos_consola,texto,comando);		
+
+    }
+	 char* code_str = string_itoa(code);
+    _agregar_comando_(code_str);
+	free(code_str);
+    _agregar_comando_(nombre);
+
+}
 
 
 void imprimir_valores_leidos(char** substrings){
@@ -441,6 +448,9 @@ int ejecutar_comando_consola(char*params){
        		comando_consola->funcion(parametros);
 		}
 	}
+	 for (char** p = parametros; *p != NULL; p++) {
+        free(*p);
+    }
 	free(parametros);
 	return numero_comando;
 }
@@ -557,8 +567,10 @@ void listar_comandos(){
 
 
 	for (int i = 0; i < cantidad; i++) {
-		t_comando_consola* comando = dictionary_get(comandos_consola,string_itoa(i));
+		char* id = string_itoa(i);
+		t_comando_consola* comando = dictionary_get(comandos_consola,id);
         printf("\t%d. %s %s\n",i ,comando->nombre ,comando->parametros);
+		free(id);
     }
 	printf("%s",decoracion);
 }
@@ -641,6 +653,7 @@ bool finalizar_consola(char** parametros){
 	return false;
 }
 
+
 void iniciar_consola(){
 	char *cadenaLeida;
 	int comando = -1;
@@ -649,8 +662,7 @@ void iniciar_consola(){
         cadenaLeida =  leer_texto_consola();	
 		comando = ejecutar_comando_consola(cadenaLeida);
 		free(cadenaLeida);
-    }
-	
+    }	
 
 }
 
@@ -726,7 +738,7 @@ void interrumpir_por_fin_quantum(){
 	t_pcb* pcb;
 	pthread_mutex_lock(&mx_pcb_exec);
 	pcb = pcb_exec;
-	pcb_exec = NULL;
+	pcb_exec = NULL;	
 	pthread_mutex_unlock(&mx_pcb_exec);
 	push_proceso_a_estado(pcb,estado_ready,&mx_ready); // Thread safe
 	// Se reemplaza esta función por la función push_proceso_a_estado, que tiene mutex
@@ -734,7 +746,7 @@ void interrumpir_por_fin_quantum(){
 
 	sem_post(&sem_bin_ready); //Se le avisa a pcp que un nuevo proceso ingresó a esa lista
 
-	loguear_pcb(pcb);
+
 
 }
 
@@ -896,6 +908,23 @@ void liberar_semaforos(){
 	pthread_mutex_destroy(&mx_temp);
 }
 
+void liberar_comando(void* c){
+	 t_comando_consola* comando = (t_comando_consola*)c;
+	 if(comando){
+		if(comando->parametros)
+		free(comando->parametros);
+		if(comando->nombre)
+		free(comando->nombre);
+		 free(comando);
+		comando=NULL;
+	 }
+}
+void liberar_comandos(){
+	
+	if(comandos_consola!=NULL) 
+		dictionary_destroy_and_destroy_elements(comandos_consola,liberar_comando);
+}
+
 void finalizar_kernel(){
 	
 	if (conexion_memoria != -1) liberar_conexion(conexion_memoria);
@@ -903,7 +932,7 @@ void finalizar_kernel(){
 	if (cpu_interrupt != -1) liberar_conexion(cpu_interrupt);
 	if(config!=NULL) config_destroy_kernel(config);
 	if(logger!=NULL) log_destroy(logger);
-	if(comandos_consola!=NULL) dictionary_destroy(comandos_consola);
+	liberar_comandos();
 	liberar_colas();
 	liberar_semaforos();	
 }

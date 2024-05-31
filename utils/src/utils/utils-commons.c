@@ -33,9 +33,9 @@ t_pcb* pcb_create_copy(char* path_programa){
 
 t_registros_cpu*  inicializar_registros (t_registros_cpu* registros){
 	registros = malloc(sizeof(t_registros_cpu));
-	registros->AX=registros->BX=registros->CX=registros->DX=registros->EAX=registros->EBX=registros->ECX =registros->EDX =
-	registros->SI = registros->DI = registros->PC = 0;
-
+	// registros->AX=registros->BX=registros->CX=registros->DX=registros->EAX=registros->EBX=registros->ECX =registros->EDX =
+	// registros->SI = registros->DI = registros->PC = 0;
+   memset(registros, 0, sizeof(t_registros_cpu));
 	if (registros == NULL)
 	{
 		loguear_error("No se pudieron iniciar los registros correctamente");
