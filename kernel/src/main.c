@@ -9,7 +9,8 @@ int main_kernel(int argc, char** argv) {
     //Iniciamos mediante una funcion las config, el logger y las conexiones
     //Asignamos un flag que nos devolverá si se pudo iniciar el módulo o no.
     bool modulo_iniciado = iniciar_kernel(argv[1]);
-    //En caso de que no se haya inicializado, finalizamos el programa
+    iniciar_threads_io();
+   // En caso de que no se haya inicializado, finalizamos el programa
     if(!modulo_iniciado){
         finalizar_kernel();
         return EXIT_FAILURE;
@@ -17,7 +18,7 @@ int main_kernel(int argc, char** argv) {
     iniciar_planificadores();
 	
     iniciar_consola();
-    iniciar_threads_io();
+    
     finalizar_kernel();
 
     return EXIT_SUCCESS;

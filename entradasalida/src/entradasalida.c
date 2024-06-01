@@ -107,7 +107,7 @@ bool iniciar_conexion_kernel(){
 		loguear_error("No se pudo conectar kernel");
 		return false;
 	}
-	enviar_mensaje(config->NOMBRE,conexion_kernel);
+	enviar_texto(config->NOMBRE,NEW_IO,conexion_kernel);
     return true;
 }
 
@@ -125,7 +125,7 @@ bool iniciar_conexion_memoria(){
 
 bool iniciar_io(char* path_config, char* nombre){
     return iniciar_log_config(path_config, nombre)
-    && iniciar_conexion_memoria()
+    // && iniciar_conexion_memoria()
     && iniciar_conexion_kernel();
 }
 

@@ -166,7 +166,8 @@ bool iniciar_estados_planificacion(){
 bool iniciar_kernel(char* path_config){
 	return
 	iniciar_logger_config(path_config)&&
-	inicializar_comandos()&&
+	inicializar_comandos() &&
+	iniciar_servidor_kernel()&&
 	iniciar_conexion_memoria()&&
 	iniciar_dispatch()&&
 	iniciar_interrupt()&&
@@ -1086,11 +1087,12 @@ void iniciar_conexion_io(){
 	while (1){
 		pthread_t thread;
     	int *fd_conexion_ptr = malloc(sizeof(int));
-    	*fd_conexion_ptr = accept(kernel_escucha, NULL, NULL);
-		//revisar
-		char* nombre_interfaz = recibir_mensaje(kernel_escucha);
+    	*fd_conexion_ptr = esperar_cliente(kernel_escucha);
+		if(*fd_conexion_ptr == -1) return EXIT_FAILURE;
+		char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
+		loguear("bienvenido %s",nombre_interfaz);
 		dictionary_put(diccionario_conexiones_io,nombre_interfaz,fd_conexion_ptr);
-    	pthread_create(&thread,NULL, (void*) io_handler(nombre_interfaz),fd_conexion_ptr);
+    	pthread_create(&thread,NULL, (void*) io_handler,(nombre_interfaz,fd_conexion_ptr));
     	//
 		pthread_detach(thread);
 		
@@ -1102,12 +1104,34 @@ bool existe_interfaz(char* nombre_interfaz){
 	return dictionary_has_key(diccionario_conexiones_io,nombre_interfaz);
 }
 
+char *recibir_nombre(int conexion){
+	char* nombre = string_new();
+	if(recibir_operacion(conexion) == NEW_IO)
+	nombre = recibir_mensaje(conexion);
+	return nombre;
+}
 // BRAND NEW
 
 // // BRAND NEW
-// void io_handler(char* nombre){
-// 	// envia a la interfaz correspodiente la operación que debe ejecutar
-// }
+void io_handler(char* nombre, int conexion){
+	while(1){
+		char* mensaje = string_new();
+		int cod_operacion = recibir_operacion(conexion);
+		switch (cod_operacion){
+
+			case CHECK_IO:
+				loguear_warning("A IMPLEMENTAR COMO MANEJA CUANDO VUELVE DE IO (arreglate manu y tino");
+				break;
+
+		}
+		mensaje = recibir_mensaje(conexion);
+		
+		loguear(mensaje);
+		free(mensaje);
+
+	}
+	// envia a la interfaz correspodiente la operación que debe ejecutar
+}
 // // BRAND NEW
 
 // // BRAND NEW

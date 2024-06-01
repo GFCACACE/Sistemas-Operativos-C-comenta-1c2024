@@ -82,6 +82,7 @@ bool iniciar_kernel(char*);
 bool iniciar_logger_config();
 bool inicializar_comandos();
 char* leer_texto_consola();
+char *recibir_nombre(int);
 bool iniciar_proceso(char** parametros);
 bool finalizar_proceso(char**);
 bool iniciar_planificacion(char**);
@@ -130,8 +131,8 @@ t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char*
 void iniciar_threads_io();
 void iniciar_conexion_io();
 
-// void io_handler();
-// bool iniciar_servidor_kernel();
+void io_handler(char*, int);
+bool iniciar_servidor_kernel();
 bool existe_interfaz(char*);
 bool eliminar_proceso(uint32_t);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
