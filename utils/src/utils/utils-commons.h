@@ -41,8 +41,10 @@ typedef enum
 	//IO
 	IO_GEN_SLEEP,
 	//IO - Kernel
-	NEW_IO,
-	CHECK_IO
+	NUEVA_IO,
+	TERMINO_IO_GEN_SLEEP,
+	TERMINO_STDIN,
+	TERMINO_STDOUT
 }op_code;
 
 // BRAND NEW

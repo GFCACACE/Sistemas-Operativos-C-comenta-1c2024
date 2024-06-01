@@ -60,6 +60,12 @@ typedef struct t_comando_consola {
 	bool (*funcion)(char**);
 }t_comando_consola;
 
+typedef struct{
+	char* nombre;
+	t_queue* estado_blocked;
+	pthread_mutex_t mx_blocked;
+}t_blocked_interfaz;
+
 t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
@@ -131,7 +137,8 @@ t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char*
 void iniciar_threads_io();
 void iniciar_conexion_io();
 
-void io_handler(char*, int);
+void io_handler(t_blocked_interfaz*, int);
+bool le_queda_quantum(t_pcb* pcb);
 bool iniciar_servidor_kernel();
 bool existe_interfaz(char*);
 bool eliminar_proceso(uint32_t);

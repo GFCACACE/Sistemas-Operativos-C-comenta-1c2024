@@ -23,6 +23,9 @@ t_config_kernel* config;
 t_dictionary * comandos_consola,* diccionario_conexiones_io;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_temp,
 		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
+//
+t_blocked_interfaz* blocked_interfaz;
+//
 t_pcb* pcb_exec; 
 
 
@@ -342,9 +345,14 @@ void recibir_pcb_de_cpu(){
 						// de acá no debería ir a blocked? tenemos que encontrar otro lugar para mandarlas a ready o readyplus
 					}
 					break;
+				default:
+					pasar_a_exit(pcb_recibido);
+					proceso_estado(); // Se puede eliminar, es para  ver los estados
+					break;
 			}
 			break;
 		default:
+			
 			break;
 	}
 	sem_post(&sem_bin_cpu_libre);
@@ -1084,15 +1092,32 @@ void iniciar_threads_io(){
 //cambiar el tipo y ver como engancharlo.
 void iniciar_conexion_io(){
 	diccionario_conexiones_io = dictionary_create();
+	//
+	
+	//
 	while (1){
+		t_blocked_interfaz* blocked_interfaz = malloc(sizeof(t_blocked_interfaz));
+
+		// int mutex = pthread_mutex_init(blocked_interfaz->mx_blocked, NULL);
+		// if(mutex == -1){
+		// 	loguear_warning("El mutex no se inicio correctamente.");
+		// 	return EXIT_FAILURE;
+		// }
+		//blocked_interfaz -> mx_blocked = PTHREAD_MUTEX_INITIALIZER;
+
+		blocked_interfaz -> estado_blocked = queue_create();
+
 		pthread_t thread;
     	int *fd_conexion_ptr = malloc(sizeof(int));
     	*fd_conexion_ptr = esperar_cliente(kernel_escucha);
 		if(*fd_conexion_ptr == -1) return EXIT_FAILURE;
 		char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
+		///
+		blocked_interfaz -> nombre = nombre_interfaz; 
+		//
 		loguear("bienvenido %s",nombre_interfaz);
 		dictionary_put(diccionario_conexiones_io,nombre_interfaz,fd_conexion_ptr);
-    	pthread_create(&thread,NULL, (void*) io_handler,(nombre_interfaz,fd_conexion_ptr));
+    	pthread_create(&thread,NULL, (void*) io_handler,(blocked_interfaz,fd_conexion_ptr));
     	//
 		pthread_detach(thread);
 		
@@ -1106,33 +1131,41 @@ bool existe_interfaz(char* nombre_interfaz){
 
 char *recibir_nombre(int conexion){
 	char* nombre = string_new();
-	if(recibir_operacion(conexion) == NEW_IO)
+	if(recibir_operacion(conexion) == NUEVA_IO)
 	nombre = recibir_mensaje(conexion);
 	return nombre;
 }
 // BRAND NEW
 
+
+bool le_queda_quantum(t_pcb* pcb){
+	return pcb->quantum == config->QUANTUM;
+	//VERIFICAR DESPUES DE HACER VIRTUAL ROUND ROBIN
+}
 // // BRAND NEW
-void io_handler(char* nombre, int conexion){
+void io_handler(t_blocked_interfaz* blocked_interfaz, int conexion){
 	while(1){
 		char* mensaje = string_new();
 		int cod_operacion = recibir_operacion(conexion);
+		t_pcb* pcb;
 		
-		
+	
 		switch (cod_operacion){
-
-			case CHECK_IO:
+			case TERMINO_IO_GEN_SLEEP:
 				mensaje = recibir_mensaje(conexion);
-				loguear_warning("A IMPLEMENTAR COMO MANEJA CUANDO VUELVE DE IO (arreglate manu y tino");
-				break;
-			
-				
+				pthread_mutex_lock(&blocked_interfaz -> mx_blocked);
+				pcb = queue_pop(blocked_interfaz-> estado_blocked);
+				pthread_mutex_unlock(&blocked_interfaz -> mx_blocked);
+				if(es_vrr()){
+					if(le_queda_quantum(pcb))
+						push_proceso_a_estado(pcb,estado_ready_plus,&mx_ready_plus);
+				}
+				push_proceso_a_estado(pcb,estado_ready,&mx_ready);
+				break;		
+				default:
+					break;
 		}
-		
-		
-		
 		free(mensaje);
-
 	}
 	// envia a la interfaz correspodiente la operación que debe ejecutar
 }
