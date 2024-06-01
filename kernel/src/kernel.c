@@ -1117,16 +1117,20 @@ void io_handler(char* nombre, int conexion){
 	while(1){
 		char* mensaje = string_new();
 		int cod_operacion = recibir_operacion(conexion);
+		
+		
 		switch (cod_operacion){
 
 			case CHECK_IO:
+				mensaje = recibir_mensaje(conexion);
 				loguear_warning("A IMPLEMENTAR COMO MANEJA CUANDO VUELVE DE IO (arreglate manu y tino");
 				break;
-
+			
+				
 		}
-		mensaje = recibir_mensaje(conexion);
 		
-		loguear(mensaje);
+		
+		
 		free(mensaje);
 
 	}
