@@ -9,6 +9,7 @@
 #include <utils/utils-commons.h>
 #include <utils/utils-config.h>
 #include <readline/readline.h>
+#include <time.h>
 #define MODULO "kernel"
 
 typedef enum
@@ -61,7 +62,6 @@ typedef struct t_comando_consola {
 }t_comando_consola;
 
 typedef struct{
-	char* nombre;
 	t_queue* estado_blocked;
 	pthread_mutex_t mx_blocked;
 }t_blocked_interfaz;
@@ -70,7 +70,7 @@ t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
 extern t_config_kernel* config;
-extern t_dictionary* diccionario_conexiones_io;
+extern t_dictionary* diccionario_conexiones_io, *diccionario_struct_io;
 extern int grado_multiprogamacion_actual;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt,kernel_escucha, conexion_io;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
@@ -144,6 +144,8 @@ bool existe_interfaz(char*);
 bool eliminar_proceso(uint32_t);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
+
+void modificar_quantum_restante(t_pcb* pcb);
 
 #endif /* kernel.h*/
 

@@ -107,7 +107,7 @@ bool iniciar_conexion_kernel(){
 		loguear_error("No se pudo conectar kernel");
 		return false;
 	}
-	enviar_texto(config->NOMBRE,NEW_IO,conexion_kernel);
+	enviar_texto(config->NOMBRE,NUEVA_IO,conexion_kernel);
     return true;
 }
 
