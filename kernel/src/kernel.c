@@ -338,9 +338,7 @@ void recibir_pcb_de_cpu(){
 			char** splitter = string_array_new();
 			peticion = recibir_mensaje(cpu_dispatch);
 			splitter = string_split(peticion," ");
-			// por acá deberíamos hallar el quantum restante? var global timestamp seteada en controlar quantum 
-			// que compare contra la hora del sistema? el resto iría a PCB->QUANTUM
-			//
+			
 			if(!existe_interfaz(splitter[0]/*Nombre*/)){
 				pasar_a_exit(pcb_recibido);
 				proceso_estado(); // Se puede eliminar, es para  ver los estados
@@ -357,9 +355,14 @@ void recibir_pcb_de_cpu(){
 					
 					loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
 					enviar_texto(splitter[1],
-					IO_GEN_SLEEP,
-					(int)dictionary_get(diccionario_conexiones_io,splitter[0]));
+								IO_GEN_SLEEP,
+								(int)dictionary_get(diccionario_conexiones_io,splitter[0]));
 					break;
+				case IO_STDIN_READ:
+					break;
+				case IO_STDOUT_WRITE:
+					break;
+
 				default:
 					pasar_a_exit(pcb_recibido);
 					proceso_estado(); // Se puede eliminar, es para  ver los estados
@@ -563,7 +566,7 @@ bool iniciar_proceso(char** parametros){
 			printf("\tINICIAR_PROCESO debe recibir 1 parámetro:\n\tPath (string)\n");
 
 		return validado;
-	}
+	};
 
 	loguear("iniciando proceso...");
 	imprimir_valores_leidos(parametros);	
@@ -577,6 +580,8 @@ bool iniciar_proceso(char** parametros){
 	t_pcb* pcb = pcb_create(path);   // Se crea el PCB
 	
 	bool proceso_creado = crear_proceso_en_memoria(pcb);
+
+	//
 	if(proceso_creado){
 		push_proceso_a_estado(pcb,estado_new,&mx_new); //Pasa el PCB a New
 		sem_post(&sem_bin_new);
@@ -880,26 +885,26 @@ void planificacion_VRR(){
 
 
 ////// MODIFICACIONES DE ESTADO
-// ESTA FUNCION NO SE USA
-bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
-	if (estado_destino==estado_new){
-		return false;
-	}
-	if(estado_origen==estado_exit){
-		return false;
-	}
-	if(estado_destino==estado_ready && estado_origen==estado_exit){
-		return false;
-	}
+// // ESTA FUNCION NO SE USA
+// bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
+// 	if (estado_destino==estado_new){
+// 		return false;
+// 	}
+// 	if(estado_origen==estado_exit){
+// 		return false;
+// 	}
+// 	if(estado_destino==estado_ready && estado_origen==estado_exit){
+// 		return false;
+// 	}
 
-	if(estado_destino==estado_blocked && estado_origen==estado_new){ ///// REVISAR ESTO!!!!!!!!!!!!!!!!
-		return false;
-	}	
+// 	if(estado_destino==estado_blocked && estado_origen==estado_new){ ///// REVISAR ESTO!!!!!!!!!!!!!!!!
+// 		return false;
+// 	}	
 	
 	
 
-	return true;
-}
+// 	return true;
+// }
 
 bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino,pthread_mutex_t* sem_origen,pthread_mutex_t* sem_destino){	
 	bool transicion = transicion_valida(estado_origen, estado_destino);
@@ -1048,46 +1053,47 @@ bool iniciar_servidor_kernel(){
 
 
 
-
 bool eliminar_proceso(uint32_t pid){ // Al implementar en consola, hay q parsear el char* a uint32_t
 	
 	bool _eliminar_proceso_en_lista(t_queue* estado, pthread_mutex_t* mutex_estado){
-		if (estado) return eliminar_proceso_en_lista(pid, estado, mutex_estado);
+		if (!queue_is_empty(estado)) return eliminar_proceso_en_lista(pid, estado, mutex_estado);
 		return false;
-	}
+	};
+
 
 	if (es_vrr()){
-		return ( _eliminar_proceso_en_lista(estado_new, &mx_new) || 
-	_eliminar_proceso_en_lista(estado_ready, &mx_ready) || 
-	_eliminar_proceso_en_lista(estado_blocked, &mx_blocked) || 
+		return (_eliminar_proceso_en_lista(estado_new, &mx_new) || 
+	_eliminar_proceso_en_lista(estado_ready, &mx_ready) ||
+	// deberíamos hacer una función que itere entre los distintos estados blocked?
+	_eliminar_proceso_en_lista(estado_blocked, &mx_blocked) ||
+	// 
 	_eliminar_proceso_en_lista(estado_ready_plus, &mx_ready_plus) );
 	}
-	return ( _eliminar_proceso_en_lista(estado_new, &mx_new) || 
+	return (_eliminar_proceso_en_lista(estado_new, &mx_new) || 
 	_eliminar_proceso_en_lista(estado_ready, &mx_ready) || 
 	_eliminar_proceso_en_lista(estado_blocked, &mx_blocked) );
-
 }
-
 
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
 	t_pcb* pcb_buscado;
+	/////// la función que evalua el condicional devuelve un pcb... en este caso, se toma como un true?
 	if (encontrar_en_lista(pid_buscado,estado_buscado, mutex_estado_buscado)){
+	/////
 		pcb_buscado = encontrar_en_lista(pid_buscado,estado_buscado, mutex_estado_buscado);
 		pthread_mutex_lock(mutex_estado_buscado);
 		if (list_remove_element(estado_buscado->elements, pcb_buscado)) loguear("Se removio el PCB buscado");
 		pthread_mutex_unlock(mutex_estado_buscado);
 		pasar_a_exit(pcb_buscado);
 		return true;
-				
 	}
 	return false;
 }
 
 
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
-	bool es_el_pcb (t_pcb* pcb){
-		return (pcb->PID == pid_buscado);
-	};
+
+	bool es_el_pcb (t_pcb* pcb){return pid_buscado == pcb->PID;};
+
 	t_pcb* pcb_encontrado = NULL;
 	pthread_mutex_lock(mutex_estado_buscado);
 	pcb_encontrado = list_find(estado_buscado->elements, (void*) es_el_pcb);
@@ -1101,13 +1107,12 @@ void pasar_a_exit(t_pcb* pcb){
 }
 
 
-// BRAND NEW
 void iniciar_threads_io(){
 	pthread_t thread_io_conexion;
 	pthread_create(&thread_io_conexion,NULL, (void*) iniciar_conexion_io,NULL);
 	pthread_detach(thread_io_conexion);
 }
-//cambiar el tipo y ver como engancharlo.
+
 void iniciar_conexion_io(){
 	diccionario_conexiones_io = dictionary_create();
 	diccionario_struct_io = dictionary_create();
@@ -1138,6 +1143,8 @@ void iniciar_conexion_io(){
 		dictionary_put(diccionario_struct_io,nombre_interfaz, blocked_interfaz);
     	pthread_create(&thread,NULL, (void*) io_handler,(blocked_interfaz,fd_conexion_ptr)); // VER SI VA PUNTERO ACA (Joaco :) )
     	//
+		//liberar_struct();
+		//liberar_puntero();
 		pthread_detach(thread);
 		
 	}
@@ -1154,21 +1161,20 @@ char *recibir_nombre(int conexion){
 	nombre = recibir_mensaje(conexion);
 	return nombre;
 }
-// BRAND NEW
+
 
 
 bool le_queda_quantum(t_pcb* pcb){
 	return pcb->quantum != config->QUANTUM;
 	//VERIFICAR DESPUES DE HACER VIRTUAL ROUND ROBIN
 }
-// // BRAND NEW
+
 void io_handler(t_blocked_interfaz* blocked_interfaz, int conexion){
 	while(1){
 		char* mensaje = string_new();
 		int cod_operacion = recibir_operacion(conexion);
 		t_pcb* pcb;
 		
-	
 		switch (cod_operacion){
 			case TERMINO_IO_GEN_SLEEP:
 				mensaje = recibir_mensaje(conexion);
@@ -1180,7 +1186,15 @@ void io_handler(t_blocked_interfaz* blocked_interfaz, int conexion){
 						push_proceso_a_estado(pcb,estado_ready_plus,&mx_ready_plus);
 				}
 				push_proceso_a_estado(pcb,estado_ready,&mx_ready);
-				break;		
+				break;
+			case TERMINO_STDIN:
+				mensaje = recibir_mensaje(conexion);
+				//enviar mensaje recibido a memoria para que lo almacene en 
+				pthread_mutex_lock(&blocked_interfaz -> mx_blocked);
+				pcb = queue_pop(blocked_interfaz-> estado_blocked);
+				pthread_mutex_unlock(&blocked_interfaz -> mx_blocked);
+
+
 				default:
 					break;
 		}
@@ -1188,16 +1202,3 @@ void io_handler(t_blocked_interfaz* blocked_interfaz, int conexion){
 	}
 	// envia a la interfaz correspodiente la operación que debe ejecutar
 }
-// // BRAND NEW
-
-// // BRAND NEW
-// void recibir_peticion_io_de_cpu(){
-// 	// while(1)?
-// 	// recibe una petición de la CPU
-// 	// verifica que exista la interfaz 
-// 	// verifica que esté conectada
-// 	// verifica que la interfaz admita dicha operación
-// 	// envia el proceso a BLOCKED
-// 	//
-// }
-// // BRAND NEW
