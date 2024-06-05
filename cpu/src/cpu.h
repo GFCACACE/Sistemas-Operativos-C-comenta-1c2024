@@ -72,15 +72,18 @@ bool exe_mov_out(t_param,t_param);
 bool exe_sum(t_param,t_param);
 bool exe_sub(t_param,t_param);
 bool exe_jnz(t_param,t_param);
-bool exe_resize(void*);
-bool exe_copy_string(void*);
+bool exe_resize(t_pcb*,t_param);
+bool exe_copy_string(t_param);
 bool exe_wait(/*recurso*/);
 bool exe_signal(/*recurso*/);
 bool exe_exit(t_pcb*);
 bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
-
+/*MMU*/
+uint32_t mmu(uint32_t);
+//////////////////////////////////
+extern int tamanio_pagina;
 extern t_log* logger;
 extern t_config_cpu * config;
 extern t_registros_cpu* registros_cpu;

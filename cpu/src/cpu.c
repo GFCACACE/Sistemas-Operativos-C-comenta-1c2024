@@ -1,6 +1,7 @@
 #include "cpu.h"
 
 int kernel_dispatch, dispatch, interrupt, kernel_interrupt, conexion_memoria;
+int tamanio_pagina;
 //op_code cod_op_kernel_dispatch;
 op_code cod_op_kernel_interrupt;
 char *IR, *INSTID;
@@ -99,6 +100,11 @@ bool iniciar_conexion_memoria()
 	{
 		loguear_error("Fallo en la conexión con Memoria");
 		return false;
+	}
+	int codigo_operacion = recibir_operacion(conexion_memoria);
+	if(codigo_operacion = TAMANIO_PAGINA){
+		tamanio_pagina=atoi(recibir_mensaje(conexion_memoria));
+		loguear("TAM_PAGINA: %d B");
 	}
 
 	return true;
@@ -222,16 +228,16 @@ return false;
 bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !check_interrupt() && !es_io_handler(INSTID);};
 
  void ciclo_de_instruccion(t_pcb* pcb){
-
+	bool flag_execute;
 	do{		
 		fetch(pcb);
 		decode();
-		execute(pcb);
+		flag_execute = execute(pcb);
 		
 		if(check_interrupt())
 			devolver_contexto(pcb,cod_op_kernel_interrupt);
 
-	}while (continuar_ciclo_instruccion());
+	}while (continuar_ciclo_instruccion() && flag_execute);
 
 	if(es_exit(IR))
 		enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
@@ -356,6 +362,18 @@ bool execute(t_pcb *pcb)
 		liberar_param(PARAM2);
 		return true;
 	}
+	if(!strcmp(INSTID, "COPY_STRING")){
+		exe_copy_string(PARAM1);
+		actualizar_contexto(pcb);
+		liberar_param(PARAM1);
+		return true;
+	}
+	if(!strcmp(INSTID, "RESIZE")){
+		bool flag_resize=exe_resize(pcb,PARAM1);
+		
+		liberar_param(PARAM1);
+		return flag_resize;
+	}
 	if (es_exit(INSTID))
 	{
 		loguear("PID: <%d> - Ejecutando: <%s>", pcb->PID, INSTID);
@@ -363,6 +381,7 @@ bool execute(t_pcb *pcb)
 		loguear("Saliendo...");
 		return true;
 	}
+
 
 	return false;
 }
@@ -426,11 +445,54 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 	free(texto);
 	return true;
 }
-
+bool exe_mov_in(t_param registro_datos,t_param registro_direccion){
+	char* direccion_enviar = string_new();
+	char* valor_memoria = string_new();
+	uint32_t direccion_fisica=mmu((uint32_t*)registro_direccion.puntero);
+	sprintf(direccion_enviar,"%d",direccion_fisica);
+	enviar_texto(direccion_enviar,ACCESO_TABLA_PAGINAS,conexion_memoria);
+	
+	int response = recibir_operacion(conexion_memoria);
+	if(response == VALOR_CONSULTA_CPU){
+		valor_memoria = recibir_mensaje(conexion_memoria);
+		registro_datos.string_valor =string_duplicate(valor_memoria);
+		registro_datos.size = sizeof(uint32_t);
+		uint32_t* valor = malloc(registro_datos.size);
+		*valor = (uint32_t) atoi(valor_memoria);
+		registro_datos.puntero = &valor;
+	}
+	registros_cpu->PC++;
+	free(direccion_enviar);
+	free(valor_memoria);
+	return true;
+}
+bool exe_resize(t_pcb* pcb,t_param tamanio){
+	enviar_texto(tamanio.string_valor,RESIZE,conexion_memoria);
+	int response = recibir_operacion(conexion_memoria);
+	if(response == OUT_OF_MEMORY){
+		actualizar_contexto(pcb);
+		devolver_contexto(pcb, OUT_OF_MEMORY);
+		return false;
+	}
+	return true;
+}
+bool exe_copy_string(t_param tamanio){
+	memcpy(&registros_cpu->DI,&registros_cpu->SI,atoi(tamanio.string_valor));
+	registros_cpu->PC++;
+	return true;
+}
 bool exe_exit(t_pcb *pcb)
 {
 	devolver_contexto(pcb,CPU_EXIT);
 	return true;
+}
+
+uint32_t mmu (uint32_t direccion_logica){
+	uint32_t direccion_fisica;
+	uint32_t numero_pagina = floor(direccion_logica/tamanio_pagina);
+	uint32_t desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
+	direccion_fisica = tamanio_pagina * numero_pagina + desplazamiento;
+	return direccion_fisica;
 }
 
 bool devolver_contexto(t_pcb *pcb,op_code codigo_operacion)

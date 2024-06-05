@@ -94,7 +94,10 @@ bool iniciar_conexion_cpu(){
 			loguear_error("Falló la conexión con cpu");
 			return false;
 		}
-
+		char* tamanio_pagina = string_new();
+		sprintf(tamanio_pagina,"%d",config_memoria->TAM_PAGINA);
+		enviar_texto(tamanio_pagina,TAMANIO_PAGINA,conexion_cpu);
+		free(tamanio_pagina);
 		return true;
 }
 
