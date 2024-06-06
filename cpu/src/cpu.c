@@ -450,7 +450,7 @@ bool exe_mov_in(t_param registro_datos,t_param registro_direccion){
 	char* valor_memoria = string_new();
 	uint32_t direccion_fisica=mmu((uint32_t*)registro_direccion.puntero);
 	sprintf(direccion_enviar,"%d",direccion_fisica);
-	enviar_texto(direccion_enviar,ACCESO_TABLA_PAGINAS,conexion_memoria);
+	enviar_texto(direccion_enviar,LECTURA_MEMORIA,conexion_memoria);
 	
 	int response = recibir_operacion(conexion_memoria);
 	if(response == VALOR_CONSULTA_CPU){
@@ -490,8 +490,16 @@ bool exe_exit(t_pcb *pcb)
 uint32_t mmu (uint32_t direccion_logica){
 	uint32_t direccion_fisica;
 	uint32_t numero_pagina = floor(direccion_logica/tamanio_pagina);
+	char* nro_pagina = string_new();
+	char* nro_frame = string_new();
+	sprintf(nro_pagina,"%d",numero_pagina);
+	enviar_texto(nro_pagina,ACCESO_TABLA_PAGINAS,conexion_memoria);
+	free(nro_pagina);
+	int response = recibir_operacion(conexion_memoria);
+	if(response == ACCESO_TABLA_PAGINAS)
+		nro_frame = recibir_mensaje(conexion_memoria);
 	uint32_t desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
-	direccion_fisica = tamanio_pagina * numero_pagina + desplazamiento;
+	direccion_fisica = tamanio_pagina * (uint32_t)atoi(nro_frame) + desplazamiento;
 	return direccion_fisica;
 }
 
