@@ -5,3 +5,5 @@
 
 void io_stdin_read();
 char* leer_texto_consola();
+
+#endif

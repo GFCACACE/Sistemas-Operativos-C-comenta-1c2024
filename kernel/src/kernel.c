@@ -22,7 +22,7 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 //bool detener_plani = false;
 t_config_kernel* config;
-t_dictionary * comandos_consola,* diccionario_conexiones_io, *diccionario_struct_io;
+t_dictionary * comandos_consola,* diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_temp,
 		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
 //
@@ -194,18 +194,6 @@ bool iniciar_semaforos(){
 	return true;
 }
 
-// bool iniciar_conexion_io(){
-// 	pthread_t thread_io;
-
-// 	pthread_create(&thread_io,NULL, (void*)io_handler,NULL);
-
-// 	pthread_detach(thread_io);
-// 	if(thread_io == -1){
-// 		loguear_error("No se pudo iniciar la I/O.");
-// 		return false;
-// 	}
-// 	return true;
-// }
 
 bool iniciar_planificadores(){
 	pthread_t thread_plp_new;
@@ -344,19 +332,30 @@ void recibir_pcb_de_cpu(){
 				proceso_estado(); // Se puede eliminar, es para  ver los estados
 				break;
 			}
+			
 			//proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);
-			t_blocked_interfaz* interfaz = dictionary_get(diccionario_struct_io, splitter[0]);
-			pthread_mutex_lock(&interfaz->mx_blocked);
+			t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked, splitter[0]);
+			
+			//pthread_mutex_lock(&interfaz->mx_blocked);
 			proceso_a_estado(pcb_recibido, interfaz->estado_blocked, &interfaz->mx_blocked);
-			pthread_mutex_unlock(&interfaz->mx_blocked);
-
+			//pthread_mutex_unlock(&interfaz->mx_blocked);
+			loguear_warning("Paso los mutex");
+			
 			switch(cod_op_io){
 				case IO_GEN_SLEEP:
-					
+					loguear_warning("Entra al case");
+					char* pid_mas_unidades = string_new();
+					sprintf(pid_mas_unidades,"%u",pcb_recibido->PID);
+					loguear_warning("El pid es %s", pid_mas_unidades);
+					strcat(pid_mas_unidades," ");
+					strcat(pid_mas_unidades, splitter[1]);
+					loguear_warning("El mensaje es %s", pid_mas_unidades);
+
 					loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
-					enviar_texto(splitter[1],
+					enviar_texto(pid_mas_unidades,
 								IO_GEN_SLEEP,
-								(int)dictionary_get(diccionario_conexiones_io,splitter[0]));
+								(int)dictionary_get(diccionario_nombre_conexion,splitter[0]));
+					loguear_warning("Peticion a IO enviada");
 					break;
 				case IO_STDIN_READ:
 					break;
@@ -1114,8 +1113,9 @@ void iniciar_threads_io(){
 }
 
 void iniciar_conexion_io(){
-	diccionario_conexiones_io = dictionary_create();
-	diccionario_struct_io = dictionary_create();
+	diccionario_nombre_conexion = dictionary_create();
+	diccionario_nombre_qblocked = dictionary_create();
+	diccionario_conexion_qblocked = dictionary_create();
 	//
 	
 	//
@@ -1138,13 +1138,18 @@ void iniciar_conexion_io(){
 		}
 		char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
 		//
+		char* string_conexion = string_itoa(*fd_conexion_ptr);
 		loguear("bienvenido %s",nombre_interfaz);
-		dictionary_put(diccionario_conexiones_io,nombre_interfaz,*fd_conexion_ptr);
-		dictionary_put(diccionario_struct_io,nombre_interfaz, blocked_interfaz);
-    	pthread_create(&thread,NULL, (void*) io_handler,(blocked_interfaz,fd_conexion_ptr)); // VER SI VA PUNTERO ACA (Joaco :) )
+		dictionary_put(diccionario_nombre_conexion,nombre_interfaz,*fd_conexion_ptr);
+		dictionary_put(diccionario_nombre_qblocked,nombre_interfaz, blocked_interfaz);
+		dictionary_put(diccionario_conexion_qblocked,string_conexion, blocked_interfaz);
+		
+    	pthread_create(&thread,NULL, (void*) io_handler,(fd_conexion_ptr)); // VER SI VA PUNTERO ACA (Joaco :) )
     	//
 		//liberar_struct();
 		//liberar_puntero();
+		//free(string_conexion);
+		//free(nombre_interfaz);
 		pthread_detach(thread);
 		
 	}
@@ -1152,7 +1157,7 @@ void iniciar_conexion_io(){
 }
 
 bool existe_interfaz(char* nombre_interfaz){
-	return dictionary_has_key(diccionario_conexiones_io,nombre_interfaz);
+	return dictionary_has_key(diccionario_nombre_conexion,nombre_interfaz);
 }
 
 char *recibir_nombre(int conexion){
@@ -1169,30 +1174,42 @@ bool le_queda_quantum(t_pcb* pcb){
 	//VERIFICAR DESPUES DE HACER VIRTUAL ROUND ROBIN
 }
 
-void io_handler(t_blocked_interfaz* blocked_interfaz, int conexion){
+void io_handler(int *ptr_conexion){
 	while(1){
-		char* mensaje = string_new();
+		int conexion = *ptr_conexion;
 		int cod_operacion = recibir_operacion(conexion);
+		loguear_warning("LLego el cod op %d", cod_operacion);
+		char* mensaje = string_new();
+		mensaje = recibir_mensaje(conexion);
+		loguear_warning("Llego el mensaje %s", mensaje);
 		t_pcb* pcb;
-		
+		char* string_conexion = string_itoa(conexion);
+		loguear_warning("Antes del get del diccionario");
+		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
+		free(string_conexion);
 		switch (cod_operacion){
 			case TERMINO_IO_GEN_SLEEP:
-				mensaje = recibir_mensaje(conexion);
-				pthread_mutex_lock(&blocked_interfaz -> mx_blocked);
-				pcb = queue_pop(blocked_interfaz-> estado_blocked);
-				pthread_mutex_unlock(&blocked_interfaz -> mx_blocked);
+				//mensaje = recibir_mensaje(conexion);
+				pthread_mutex_lock(&interfaz -> mx_blocked);
+				pcb = queue_pop(interfaz -> estado_blocked);
+				pthread_mutex_unlock(&interfaz -> mx_blocked);
+				// pop_estado_get_pcb()
+				loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+
 				if(es_vrr()){
 					if(le_queda_quantum(pcb))
 						push_proceso_a_estado(pcb,estado_ready_plus,&mx_ready_plus);
 				}
 				push_proceso_a_estado(pcb,estado_ready,&mx_ready);
+				sem_post(&sem_bin_ready);
+
 				break;
 			case TERMINO_STDIN:
-				mensaje = recibir_mensaje(conexion);
+				//mensaje = recibir_mensaje(conexion);
 				//enviar mensaje recibido a memoria para que lo almacene en 
-				pthread_mutex_lock(&blocked_interfaz -> mx_blocked);
-				pcb = queue_pop(blocked_interfaz-> estado_blocked);
-				pthread_mutex_unlock(&blocked_interfaz -> mx_blocked);
+				// pthread_mutex_lock(&blocked_interfaz -> mx_blocked);
+				// pcb = queue_pop(blocked_interfaz-> estado_blocked);
+				// pthread_mutex_unlock(&blocked_interfaz -> mx_blocked);
 
 
 				default:

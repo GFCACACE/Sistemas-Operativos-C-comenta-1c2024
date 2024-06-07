@@ -137,7 +137,7 @@ t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char*
 void iniciar_threads_io();
 void iniciar_conexion_io();
 
-void io_handler(t_blocked_interfaz*, int);
+void io_handler(int* conexion);
 bool le_queda_quantum(t_pcb* pcb);
 bool iniciar_servidor_kernel();
 bool existe_interfaz(char*);

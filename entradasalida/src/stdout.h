@@ -3,3 +3,5 @@
 #include "entradasalida.h"
 
 void io_stdout_write();
+
+#endif

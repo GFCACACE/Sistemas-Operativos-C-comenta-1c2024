@@ -144,32 +144,36 @@ void finalizar_io(){
 
 int ejecutar_op_io()
 {
-	loguear("Arranco la ejecucion del proceso");
+	loguear("IO conectada: Esperando ordenes");
 	while (1)
 	{
-		t_paquete *paquete = recibir_paquete(conexion_kernel);
-		int cod_op = paquete->codigo_operacion;
-		t_peticion_generica *peticion = recibir_peticion_generica(paquete);
+		//t_paquete *paquete = recibir_paquete(conexion_kernel);
+		int cod_op = recibir_operacion(conexion_kernel);
+		char* peticion;
+		char** splitter = string_array_new();
+		peticion = recibir_mensaje(conexion_kernel);
+		splitter = string_split(peticion," ");
 		loguear("Cod op: %d", cod_op);
         switch (cod_op) {
 			//BRAND NEW
             case IO_GEN_SLEEP:
 				char*mensaje = string_new();
-				sprintf(mensaje,"PID: <%d> - Operacion: <IO_GEN_SLEEP>",peticion->process_id);
+				sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
 				loguear(mensaje);
-				io_gen_sleep(peticion->unidades_de_trabajo);
-				enviar_mensaje(mensaje,conexion_kernel); // no está hecha
+				io_gen_sleep(atoi(splitter[1]));
+				//loguear_warning("Ya termino de dormir zzzzz");
+				enviar_texto(mensaje,TERMINO_IO_GEN_SLEEP,conexion_kernel);
+				loguear_warning("Termino el io_gen_sleep");
                 break;			
 			//BRAND NEW	
             case -1:
 			loguear_error("Problemas en la comunicacion con el servidor. Cerrando conexion...");
-			paquete_destroy(paquete);
+			//paquete_destroy(paquete);
 			return EXIT_FAILURE;
 		default:
 			log_warning(logger, "Operacion desconocida. No quieras meter la pata");
-			paquete_destroy(paquete);
+			//paquete_destroy(paquete);
 			return EXIT_FAILURE;
 		}
-		// Si no se agrega otro caso, convertir switch en IF
 	}
 }
