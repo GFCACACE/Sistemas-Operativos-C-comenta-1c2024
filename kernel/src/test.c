@@ -11,8 +11,8 @@ void crear_procesos(){
      queue_push(estado_new,  pcb_create_quantum("programa2",3));
 
      queue_push(estado_ready,  pcb_create_quantum("programa3",3));
-     queue_push(estado_blocked,  pcb_create_quantum("programa4",5));
-      queue_push(estado_ready,  pcb_create_quantum("programa5",2));
+    // queue_push(estado_blocked,  pcb_create_quantum("programa4",5));
+        queue_push(estado_ready,  pcb_create_quantum("programa5",2));
 
       pcb_exec =  pcb_create("programa6");
       pcb_exec->quantum = 0;

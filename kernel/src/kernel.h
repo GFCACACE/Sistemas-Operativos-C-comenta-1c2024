@@ -88,8 +88,10 @@ extern t_dictionary* diccionario_conexiones_io, *diccionario_struct_io;
 extern int grado_multiprogamacion_actual;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt,kernel_escucha, conexion_io;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
-extern t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus,*estado_exec, *estado_temp;
+extern t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus,*estado_exec, *estado_temp;
 extern t_pcb* pcb_exec;
+extern t_list* lista_interfaces_blocked;
+extern bool detener_planificacion;
 /*
 extern t_queue* io_stdin;
 extern t_queue* io_stdout;
@@ -107,7 +109,7 @@ bool iniciar_proceso(char** parametros);
 bool finalizar_proceso(char**);
 bool iniciar_planificacion(char**);
 bool multiprogramacion(char**);
-bool detener_planificacion(char**);
+bool detener_plani(char**);
 bool proceso_estado();
 bool modificacion_estado();
 void ready_a_exec();
@@ -142,6 +144,7 @@ void ejecutar_planificacion();
 void ejecutar_proceso();
 bool crear_proceso_en_memoria(t_pcb*);
 bool eliminar_proceso_en_memoria(t_pcb*);
+bool eliminar_proceso_en_blocked(uint32_t pid_buscado);
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
 
 void recibir_pcb_de_cpu();

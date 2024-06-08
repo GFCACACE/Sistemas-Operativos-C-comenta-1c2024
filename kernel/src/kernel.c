@@ -20,15 +20,16 @@ time_t tiempo_inicial, tiempo_final;
 
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
-//bool detener_plani = false;
+bool detener_planificacion = false;
 t_config_kernel* config;
 t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked;
-t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_temp,
+t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp,
 		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
 //
 t_blocked_interfaz* blocked_interfaz;
 //
 t_pcb* pcb_exec; 
+t_list* lista_interfaces_blocked;
 
 
  // Crear el diccionario de algoritmo
@@ -109,7 +110,7 @@ bool inicializar_comandos(){
 	agregar_comando(FINALIZAR_PROCESO,"FINALIZAR_PROCESO","[PID]",&finalizar_proceso);
     agregar_comando(DETENER_PLANIFICACION,"DETENER_PLANIFICACION","[]",&iniciar_planificacion);
 	agregar_comando(INICIAR_PLANIFICACION,"INICIAR_PLANIFICACION","[]",&multiprogramacion);
-    agregar_comando(MULTIPROGRAMACION,"MULTIPROGRAMACION","[VALOR]",&detener_planificacion);
+    agregar_comando(MULTIPROGRAMACION,"MULTIPROGRAMACION","[VALOR]",&detener_plani);
 	agregar_comando(PROCESO_ESTADO,"PROCESO_ESTADO","[]",&proceso_estado);
     agregar_comando(EXIT,"EXIT","[]",&finalizar_consola);
 	return true;
@@ -156,7 +157,7 @@ bool iniciar_estados_planificacion(){
 
 	estado_new = queue_create();
 	estado_ready = queue_create();
-	estado_blocked = queue_create();
+	//estado_blocked = queue_create();
 	estado_exit = queue_create();	
 	estado_temp = queue_create();	
 	if(es_vrr())
@@ -233,13 +234,13 @@ bool inicializar_dictionario_mutex_colas(){
 	_agregar_estado(NEW,estado_new);
 	_agregar_estado(READY,estado_ready);
 	_agregar_estado(EXEC,pcb_exec);
-	_agregar_estado(BLOCKED,estado_blocked);
+	//_agregar_estado(BLOCKED,estado_blocked);
 	_agregar_estado(EXIT_STATE,estado_exit);
 
 	_agregar_mx(NEW,&mx_new);
 	_agregar_mx(READY,&mx_ready);
 	_agregar_mx(EXEC,&mx_pcb_exec);
-	_agregar_mx(BLOCKED,&mx_blocked);
+	//_agregar_mx(BLOCKED,&mx_blocked);
 	_agregar_mx(EXIT_STATE,&mx_exit);
 	return true;
 }
@@ -364,49 +365,54 @@ void liberar_proceso(t_pcb* pcb){
 
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
-	while(1/*!detener_plani*/){
-		sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
-		sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
-		bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
-		if(proceso_new_a_ready){
-			sem_post(&sem_bin_ready);
-			loguear("El proceso ingresó correctamente a la lista de ready");
-		}
-		else {
-			loguear("Se fue todo al carajo en plp_procesos_nuevos");
+	while(1){
+		while(!detener_planificacion){
+			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
+			sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
+			bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
+			if(proceso_new_a_ready){
+				sem_post(&sem_bin_ready);
+				loguear("El proceso ingresó correctamente a la lista de ready");
+			}
+			else {
+				loguear("Se fue todo al carajo en plp_procesos_nuevos");
+			}
 		}
 	}
 }
 
 
 void plp_procesos_finalizados(){
-	while(1/*!detener_plani*/){
-		sem_wait(&sem_bin_exit);
-		loguear_warning("Se va a sacar un PCB de temp");
-		t_pcb* pcb = pop_estado_get_pcb(estado_temp,&mx_temp);
-		loguear_warning("Se sacó el PCB: %d de cola temp para eliminar.", pcb->PID );
-		eliminar_proceso_en_memoria(pcb);
-		loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
-		push_proceso_a_estado(pcb,estado_exit,&mx_exit);
-		proceso_estado();
-		sem_post(&sem_cont_grado_mp);
+	while(1){
+		while(!detener_planificacion){
+			sem_wait(&sem_bin_exit);
+			loguear_warning("Se va a sacar un PCB de temp");
+			t_pcb* pcb = pop_estado_get_pcb(estado_temp,&mx_temp);
+			loguear_warning("Se sacó el PCB: %d de cola temp para eliminar.", pcb->PID );
+			eliminar_proceso_en_memoria(pcb);
+			loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
+			push_proceso_a_estado(pcb,estado_exit,&mx_exit);
+			proceso_estado();
+			sem_post(&sem_cont_grado_mp);
 		}
+	}
 }
 
 
 
 
 void planificador_corto(){
-	while(1/*!detener_plani*/){
-		sem_wait(&sem_bin_ready); //Hay que ver si tiene que estar acá. En este caso se considera que cada replanificación pasa por aca
-		ejecutar_planificacion();
-		// Esperar la vuelta del PCB
-		recibir_pcb_de_cpu();
-		// verificar a que lista debe ir
-		// enviar a ready/blocked/exit (signal a esa cola)
-		/* Cuando recibe un pcb con centexto finalizado, lo agrega a la cola de exit  */
+	while(1){
+		while(!detener_planificacion){
+			sem_wait(&sem_bin_ready); //Hay que ver si tiene que estar acá. En este caso se considera que cada replanificación pasa por aca
+			ejecutar_planificacion();
+			// Esperar la vuelta del PCB
+			recibir_pcb_de_cpu();
+			// verificar a que lista debe ir
+			// enviar a ready/blocked/exit (signal a esa cola)
+			/* Cuando recibe un pcb con centexto finalizado, lo agrega a la cola de exit  */
+		}
 	}
-
 }
 void liberar_pcb_exec(){
 
@@ -443,6 +449,7 @@ void recibir_pcb_de_cpu(){
 	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
 	liberar_pcb_exec();
 	paquete_destroy(paquete);
+	// PAUSAR POR DETENER PLANI
 	switch (cod_op)
 	{
 		case CPU_EXIT:
@@ -802,7 +809,7 @@ bool multiprogramacion(char** substrings){
 
 }
 
-bool detener_planificacion(char** substrings){
+bool detener_plani(char** substrings){
 	return true;
 	//detener_plani = true;
 }
@@ -837,7 +844,8 @@ bool proceso_estado(){
 	pthread_mutex_unlock(&mx_pcb_exec);
 	imprimir_cola(estado_new, "Nuevo");
     imprimir_cola(estado_ready, "Listo");
-    imprimir_cola(estado_blocked, "Bloqueado");
+    //imprimir_cola(estado_blocked, "Bloqueado");
+	// imprimir_todas las colas de blocked
 	imprimir_cola(estado_exec, "Ejecutando");	
 	imprimir_cola(estado_exit, "Finalizado");
 	imprimir_cola(estado_temp, "Temporal");
@@ -1072,9 +1080,9 @@ bool transicion_valida(t_queue* estado_origen,t_queue* estado_destino){
 	if(estado_destino==estado_ready && estado_origen==estado_exit){
 		return false;
 	}
-	if(estado_destino==estado_blocked && estado_origen==estado_new){
-		return false;
-	}
+	// if(estado_destino==estado_blocked && estado_origen==estado_new){
+	// 	return false;
+	// }
 	
 	return true;
 }
@@ -1117,7 +1125,7 @@ void liberar_colas(){
 			queue_destroy_and_destroy_elements(cola,liberar_pcb);
 	};
 
-	liberar_cola(estado_blocked);
+	//liberar_cola(estado_blocked);
 	liberar_cola(estado_exit);
 	liberar_cola(estado_new);
 	liberar_cola(estado_ready);
@@ -1145,7 +1153,7 @@ void liberar_semaforos(){
 	pthread_mutex_destroy(&mx_ready);
 	if(es_vrr()) pthread_mutex_destroy(&mx_ready_plus);
 	pthread_mutex_destroy(&mx_exit);
-	pthread_mutex_destroy(&mx_blocked);
+	//pthread_mutex_destroy(&mx_blocked);
 	pthread_mutex_destroy(&mx_pcb_exec);
 	pthread_mutex_destroy(&mx_temp);
 }
@@ -1213,14 +1221,13 @@ bool eliminar_proceso(uint32_t pid){ // Al implementar en consola, hay q parsear
 	if (es_vrr()){
 		return (_eliminar_proceso_en_lista(estado_new, &mx_new) || 
 	_eliminar_proceso_en_lista(estado_ready, &mx_ready) ||
-	// deberíamos hacer una función que itere entre los distintos estados blocked?
-	_eliminar_proceso_en_lista(estado_blocked, &mx_blocked) ||
-	// 
+	eliminar_proceso_en_blocked(pid) ||   
 	_eliminar_proceso_en_lista(estado_ready_plus, &mx_ready_plus) );
 	}
 	return (_eliminar_proceso_en_lista(estado_new, &mx_new) || 
 	_eliminar_proceso_en_lista(estado_ready, &mx_ready) || 
-	_eliminar_proceso_en_lista(estado_blocked, &mx_blocked) );
+	eliminar_proceso_en_blocked(pid)   
+	);
 }
 
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
@@ -1236,6 +1243,22 @@ bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pth
 		return true;
 	}
 	return false;
+}
+bool eliminar_proceso_en_blocked(uint32_t pid){
+	bool _eliminar_proceso_en_lista(t_queue* estado, pthread_mutex_t* mutex_estado){
+		if (!queue_is_empty(estado)) return eliminar_proceso_en_lista(pid, estado, mutex_estado);
+		return false;
+	};
+	if(lista_interfaces_blocked == NULL || lista_interfaces_blocked->head == NULL){
+		return false;
+	}
+	for(t_link_element *nodo_interfaz_actual = lista_interfaces_blocked->head; nodo_interfaz_actual != NULL; nodo_interfaz_actual = nodo_interfaz_actual->next){
+			// Obtener el dato almacenado en el nodo actual
+        	t_blocked_interfaz *interfaz_blocked = (t_blocked_interfaz*)nodo_interfaz_actual->data;
+			if(_eliminar_proceso_en_lista(interfaz_blocked->estado_blocked,&interfaz_blocked->mx_blocked)) return true;
+		}
+	return false;
+	
 }
 
 
@@ -1267,7 +1290,7 @@ void iniciar_conexion_io(){
 	diccionario_nombre_qblocked = dictionary_create();
 	diccionario_conexion_qblocked = dictionary_create();
 	//
-	
+	lista_interfaces_blocked = list_create();
 	//
 	while (1){
 		t_blocked_interfaz* blocked_interfaz = malloc(sizeof(t_blocked_interfaz));
@@ -1278,7 +1301,6 @@ void iniciar_conexion_io(){
 			//jump al principio?
 		}
 		blocked_interfaz -> estado_blocked = queue_create();
-
 		pthread_t thread;
     	int *fd_conexion_ptr = malloc(sizeof(int));
     	*fd_conexion_ptr = esperar_cliente(kernel_escucha);
@@ -1293,7 +1315,9 @@ void iniciar_conexion_io(){
 		dictionary_put(diccionario_nombre_conexion,nombre_interfaz,*fd_conexion_ptr);
 		dictionary_put(diccionario_nombre_qblocked,nombre_interfaz, blocked_interfaz);
 		dictionary_put(diccionario_conexion_qblocked,string_conexion, blocked_interfaz);
-		
+		//
+		list_add(lista_interfaces_blocked,blocked_interfaz);
+		//
     	pthread_create(&thread,NULL, (void*) io_handler,(fd_conexion_ptr)); // VER SI VA PUNTERO ACA (Joaco :) )
     	//
 		//liberar_struct();
