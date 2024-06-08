@@ -157,7 +157,7 @@ int ejecutar_op_io()
         switch (cod_op) {
 			//BRAND NEW
             case IO_GEN_SLEEP:
-				char*mensaje = string_new();
+				char mensaje[50];
 				sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
 				loguear(mensaje);
 				io_gen_sleep(atoi(splitter[1]));
