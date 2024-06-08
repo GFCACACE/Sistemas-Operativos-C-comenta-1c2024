@@ -20,7 +20,7 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 //bool detener_plani = false;
 t_config_kernel* config;
-t_dictionary * comandos_consola;
+t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary;;
 t_queue* estado_new, *estado_ready, *estado_blocked, *estado_exit, *estado_ready_plus, *estado_temp,
 		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
 t_pcb* pcb_exec; 
@@ -172,7 +172,8 @@ bool iniciar_kernel(char* path_config){
 	iniciar_interrupt()&&
 	iniciar_estados_planificacion()&&
 	iniciar_colas_entrada_salida()&&
-	iniciar_semaforos();
+	iniciar_semaforos()&&
+	inicializar_dictionario_mutex_colas();
 	//&&iniciar_conexion_io();
 }
 bool iniciar_semaforos(){
@@ -186,6 +187,7 @@ bool iniciar_semaforos(){
 	// mx_exit = PTHREAD_MUTEX_INITIALIZER; 
 	// mx_ready = PTHREAD_MUTEX_INITIALIZER; 
 	// mx_pcb_exec = PTHREAD_MUTEX_INITIALIZER;    
+
 	return true;
 }
 
@@ -201,6 +203,114 @@ bool iniciar_semaforos(){
 // 	}
 // 	return true;
 // }
+bool inicializar_dictionario_mutex_colas(){
+
+ estados_dictionary = dictionary_create();
+ estados_mutexes_dictionary = dictionary_create();
+
+ 
+		void _agregar(t_codigo_estado codigo,void* estado,t_dictionary* diccionario){
+			char* clave = string_itoa(codigo);
+			dictionary_put(diccionario,clave,estado);
+			free(clave);
+		}
+
+		void _agregar_estado(t_codigo_estado codigo,void* estado){
+			_agregar(codigo,estado,estados_dictionary);
+		}
+
+		void _agregar_mx(t_codigo_estado codigo,pthread_mutex_t* mx){
+			_agregar(codigo,mx,estados_mutexes_dictionary);
+		}
+
+
+	_agregar_estado(NEW,estado_new);
+	_agregar_estado(READY,estado_ready);
+	_agregar_estado(EXEC,pcb_exec);
+	_agregar_estado(BLOCKED,estado_blocked);
+	_agregar_estado(EXIT_STATE,estado_exit);
+
+	_agregar_mx(NEW,&mx_new);
+	_agregar_mx(READY,&mx_ready);
+	_agregar_mx(EXEC,&mx_pcb_exec);
+	_agregar_mx(BLOCKED,&mx_blocked);
+	_agregar_mx(EXIT_STATE,&mx_exit);
+	return true;
+}
+
+void liberar_diccionario_colas(){
+	if(estados_dictionary)
+	dictionary_destroy(estados_dictionary);
+	if(estados_mutexes_dictionary)
+	dictionary_destroy(estados_mutexes_dictionary);
+}
+void bloquear_mutex_colas(){
+	void _bloquear(char* _,void* element){
+		pthread_mutex_t* mutex = (pthread_mutex_t*)element;
+		pthread_mutex_lock(mutex);
+	}
+	dictionary_iterator(estados_mutexes_dictionary,_bloquear);
+}
+
+void desbloquear_mutex_colas(){
+	void _desbloquear(char* _,void* element){
+		pthread_mutex_t* mutex = (pthread_mutex_t*)element;
+		pthread_mutex_unlock(mutex);
+	}
+	dictionary_iterator(estados_mutexes_dictionary,_desbloquear);
+}
+
+
+bool pcb_es_id (void* elem, uint32_t pid){
+		t_pcb* pcb = (t_pcb*)elem;
+		return pcb->PID == pid;
+}
+
+
+t_queue* buscar_cola_de_pcb(uint32_t pid){
+
+	bool _es_id (void* elem){
+		return pcb_es_id(elem,pid);
+	}
+
+	bool _es_del_pcb(void* elem){
+		t_queue* cola = (t_queue*)elem;
+		return list_any_satisfy(cola->elements,_es_id);
+	}
+
+	return list_find(get_estados(),_es_del_pcb);
+}
+
+t_pcb* buscar_pcb_en_cola(t_queue* cola,uint32_t pid){
+
+	bool _es_id (void* elem){
+		return pcb_es_id(elem,pid);
+	}
+	return list_find(cola->elements,_es_id);
+}
+
+bool esta_en_exec(uint32_t pid){
+	return pcb_exec!=NULL && pcb_exec->PID==pid;
+}
+
+t_pcb_query* buscar_pcb(uint32_t pid){
+	bloquear_mutex_colas();
+	t_queue* cola = NULL;
+	if(!esta_en_exec(pid))
+		cola = buscar_cola_de_pcb(pid);
+	t_pcb_query* pcb_query = malloc(sizeof(t_pcb_query));
+	pcb_query->estado = cola;
+	pcb_query->pcb = cola!=NULL? buscar_pcb_en_cola(cola,pid):pcb_exec;
+	desbloquear_mutex_colas();
+
+	return pcb_query;
+}
+
+/// @brief 
+	//Retorna una lista de t_queue* con las colas de estados
+/// @return 
+t_list* get_estados(){return dictionary_elements(estados_dictionary);}
+
 
 bool iniciar_planificadores(){
 	pthread_t thread_plp_new;
@@ -272,6 +382,7 @@ void plp_procesos_finalizados(){
 		eliminar_proceso_en_memoria(pcb);
 		loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
 		push_proceso_a_estado(pcb,estado_exit,&mx_exit);
+		proceso_estado();
 		sem_post(&sem_cont_grado_mp);
 		}
 }
@@ -297,22 +408,32 @@ void liberar_pcb_exec(){
 	pcb_exec = NULL;
 	pthread_mutex_unlock(&mx_pcb_exec);
 }
+
+t_pcb_query * recibir_pcb_y_actualizar(t_paquete* paquete){
+
+	t_pcb* pcb_recibido = recibir_pcb(paquete);  
+	t_pcb_query* pcb_query = buscar_pcb(pcb_recibido->PID);
+	reemplazar_pcb_con(pcb_query->pcb,pcb_recibido);
+	pcb_destroy(pcb_recibido);
+	return pcb_query;
+}
+
+
 void recibir_pcb_de_cpu(){
 	loguear_warning("Intento recibir de CPU!");
 	t_paquete *paquete = recibir_paquete(cpu_dispatch);
 	int cod_op = paquete->codigo_operacion;
 	loguear("Cod op CPU: %d", cod_op);
-	t_pcb* pcb_recibido = recibir_pcb(paquete);  
+	t_pcb_query* pcb_query = recibir_pcb_y_actualizar(paquete);
 	liberar_pcb_exec();
 	paquete_destroy(paquete);
 	switch (cod_op)
 	{
 		case CPU_EXIT:
-			pasar_a_exit(pcb_recibido);
-			proceso_estado(); // Se puede eliminar, es para  ver los estados
+			pasar_a_exit(pcb_query->pcb);			 
 			break;
 		case FIN_QUANTUM:
-			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
+			proceso_a_estado(pcb_query->pcb, estado_ready,&mx_ready); 
 			sem_post(&sem_bin_ready);
 			break;
 		case IO_HANDLER:
@@ -320,28 +441,37 @@ void recibir_pcb_de_cpu(){
             // proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);//Crear semáforo blocked
             // enviar_peticion(peticion_generica); //Acá tiene la interfaz, se puede averiguar a qué conexión se envía mediante el diccionario. CREAR FUNCION!!!
 			int cod_op_io = recibir_operacion(cpu_dispatch);
-			char* peticion;
-			char** splitter = string_array_new();
-			peticion = recibir_mensaje(cpu_dispatch);
+			char* peticion = recibir_mensaje(cpu_dispatch);
+			
 			// por acá deberíamos hallar el quantum restante? var global timestamp seteada en controlar quantum 
 			// que compare contra la hora del sistema? el resto iría a PCB->QUANTUM
-			//
+			// 
+			
+			// char** splitter =  string_split(peticion, " ");			
 			switch(cod_op_io){
 				case IO_GEN_SLEEP:
-					splitter = string_split(peticion," ");
-					loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
+					// splitter = string_split(peticion," ");
+					// loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
+					loguear_warning("IO_GEN_SLEEP -> Interfaz:");
 					// peticion_handler(splitter[0],pcb);// Chequea que exista la conexión y manda el pcb a EXIT si no o existe, o a BLOCKED mientras se ejecuta
 					if(es_vrr()){
 						// Verificar diferencia quantum, enviar a ready o ready+
 						// de acá no debería ir a blocked? tenemos que encontrar otro lugar para mandarlas a ready o readyplus
 					}
 					break;
+				default:
+                        loguear_warning("Código de operación IO no reconocido");
+                        break;
 			}
+			free(peticion);
+			//string_array_destroy(splitter);
 			break;
 		default:
 			break;
 	}
 	sem_post(&sem_bin_cpu_libre);
+	
+	free(pcb_query);
 	
 }
 
@@ -389,13 +519,14 @@ void agregar_comando(op_code_kernel code,char* nombre,char* params,bool(*funcion
     void _agregar_comando_(char* texto){
 		 t_comando_consola* comando = comando_consola_create(code,nombre,params,funcion);
         dictionary_put(comandos_consola,texto,comando);		
-
+		//free(texto);
     }
 	 char* code_str = string_itoa(code);
     _agregar_comando_(code_str);
 	free(code_str);
     _agregar_comando_(nombre);
-
+	
+	//liberar_comando(comando);
 }
 
 
@@ -443,7 +574,9 @@ bool ejecutar_scripts_de_archivo(char** parametros){
 	free(path);
 
 	if(instrucciones_sript!=NULL)
-	list_iterate(instrucciones_sript,ejecutar_sript);
+	{	list_iterate(instrucciones_sript,ejecutar_sript);
+		list_destroy_and_destroy_elements(instrucciones_sript,free);
+	}
 	
 	return true;
 
@@ -452,6 +585,14 @@ bool ejecutar_scripts_de_archivo(char** parametros){
 bool existe_comando(char* comando){
    return (dictionary_has_key(comandos_consola,comando));
 }
+
+// void liberar_parametros(char** parametros){
+// 	for (char** p = parametros; *p != NULL; p++) {
+//         free(*p);
+//     }
+// 	free(parametros);
+// }
+
 int ejecutar_comando_consola(char*params){
 
 	char** parametros = string_split(params," ");  
@@ -466,10 +607,8 @@ int ejecutar_comando_consola(char*params){
        		comando_consola->funcion(parametros);
 		}
 	}
-	 for (char** p = parametros; *p != NULL; p++) {
-        free(*p);
-    }
-	free(parametros);
+	
+	string_array_destroy(parametros);
 	return numero_comando;
 }
 
@@ -539,24 +678,26 @@ bool iniciar_proceso(char** parametros){
 	loguear("iniciando proceso...");
 	imprimir_valores_leidos(parametros);	
 
-	if(!parametros_iniciar_proceso_validos(parametros))
-	return false;
-	
-	char *path = string_duplicate(parametros[1]);
-	loguear("PATH: %s",path);
-	// Crear if de planificacion para ver si se usa pcb_create o pcb_create_quantum?????????
-	t_pcb* pcb = pcb_create(path);   // Se crea el PCB
-	
-	bool proceso_creado = crear_proceso_en_memoria(pcb);
-	if(proceso_creado){
-		push_proceso_a_estado(pcb,estado_new,&mx_new); //Pasa el PCB a New
-		sem_post(&sem_bin_new);
-	}
-	else pcb_destroy(pcb);
+	bool parametros_validos = parametros_iniciar_proceso_validos(parametros);
 
-	free(path);
+	if(parametros_validos){
+	
+		char *path = string_duplicate(parametros[1]);
+		loguear("PATH: %s",path);
+		// Crear if de planificacion para ver si se usa pcb_create o pcb_create_quantum?????????
+		t_pcb* pcb = pcb_create(path);   // Se crea el PCB
 		
-	return true;
+		bool proceso_creado = crear_proceso_en_memoria(pcb);
+		if(proceso_creado){
+			push_proceso_a_estado(pcb,estado_new,&mx_new); //Pasa el PCB a New
+			sem_post(&sem_bin_new);
+		}
+		else pcb_destroy(pcb);
+
+		free(path);
+	}
+			
+	return parametros_validos;
 }
 
 
@@ -682,8 +823,7 @@ void iniciar_consola(){
         cadenaLeida =  leer_texto_consola();	
 		comando = ejecutar_comando_consola(cadenaLeida);
 		free(cadenaLeida);
-    }	
-
+    }
 }
 
 void ejecutar_planificacion(){
@@ -989,6 +1129,7 @@ void liberar_comandos(){
 		dictionary_destroy_and_destroy_elements(comandos_consola,liberar_comando);
 }
 
+
 void finalizar_kernel(){
 	
 	if (conexion_memoria != -1) liberar_conexion(conexion_memoria);
@@ -999,6 +1140,7 @@ void finalizar_kernel(){
 	liberar_comandos();
 	liberar_colas();
 	liberar_semaforos();	
+	liberar_diccionario_colas();
 }
 
 

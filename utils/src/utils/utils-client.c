@@ -3,18 +3,28 @@
 
 void* serializar_paquete(t_paquete* paquete, int bytes)
 {
-	void * magic = malloc(bytes);
-	int desplazamiento = 0;
+	void *magic = malloc(bytes);
+    if (magic == NULL) {
+        perror("Error al asignar memoria para la serialización");
+        return NULL;
+    }
 
-	memcpy(magic + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
-	desplazamiento+= sizeof(int);
-	memcpy(magic + desplazamiento, &(paquete->buffer->size), sizeof(int));
-	desplazamiento+= sizeof(int);
-	memcpy(magic + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
-	desplazamiento+= paquete->buffer->size;
+    int desplazamiento = 0;
 
-	return magic;  // MAGIC?
+    // Copiar el código de operación
+    memcpy(magic + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
+    desplazamiento += sizeof(int);
+
+    // Copiar el tamaño del buffer
+    memcpy(magic + desplazamiento, &(paquete->buffer->size), sizeof(int));
+    desplazamiento += sizeof(int);
+
+    // Copiar el contenido del buffer
+    memcpy(magic + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
+
+    return magic;
 }
+
 
 int crear_conexion(char *ip, int puerto)
 {
@@ -48,10 +58,18 @@ int crear_conexion(char *ip, int puerto)
 
 
 void enviar_stream(void*stream,int size,int socket,op_code codigo_operacion){
-	t_paquete* paquete = crear_paquete(codigo_operacion);	
+	t_paquete* paquete = crear_paquete(codigo_operacion);
+
+	if (paquete == NULL) {
+        perror("Error en enviar_stream al crear_paquete");
+        return;
+    }  
+					   	
 	agregar_a_paquete(paquete,stream,size);	
+	
 	enviar_paquete(paquete,socket);
-	paquete_destroy(paquete);
+	
+	eliminar_paquete(paquete);
 }
 
 void _enviar_texto(char* texto,op_code operacion,int socket){
@@ -61,6 +79,9 @@ void _enviar_texto(char* texto,op_code operacion,int socket){
 }
 void enviar_texto(char* texto,op_code operacion,int socket){
 
+													  
+										  
+										 
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 
 	paquete->codigo_operacion = operacion;
@@ -76,11 +97,12 @@ void enviar_texto(char* texto,op_code operacion,int socket){
 	send(socket, a_enviar, bytes, 0);
 
 	free(a_enviar);
-	paquete_destroy(paquete);
+	eliminar_paquete(paquete);
 
 }
 
 void enviar_mensaje(char* mensaje, int socket)
+												
 {
 	enviar_texto(mensaje,MENSAJE,socket);
 	
@@ -89,41 +111,82 @@ void enviar_mensaje(char* mensaje, int socket)
 t_buffer* crear_buffer(size_t size)
 {
 	t_buffer* buffer = malloc(sizeof(t_buffer));
-	buffer->size = size;
-	buffer->stream = malloc(buffer->size);
-	buffer->desplazamiento = 0;
+    if (buffer == NULL) {
+        perror("Error al alocar memoria para t_buffer");
+        return NULL;
+    }
+    buffer->size = size;
+    buffer->stream = calloc(1, buffer->size);
+    buffer->desplazamiento = 0;
 
-	return buffer;
+    return buffer;
 }
+
 
 
 t_paquete* crear_paquete(op_code codigo_operacion)
 {
-	t_paquete* paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = codigo_operacion;
-	paquete->buffer = crear_buffer(0);
-	return paquete;
+	 t_paquete* paquete = malloc(sizeof(t_paquete));
+    if (paquete == NULL) {
+        perror("Error al alocar memoria para t_paquete");
+        return NULL;
+    }
+	 memset(paquete, 0, sizeof(t_paquete)); // Inicializa todos los bytes
+    paquete->codigo_operacion = codigo_operacion;
+    paquete->buffer = crear_buffer(0);
+    if (paquete->buffer == NULL) {
+        free(paquete);
+        return NULL;
+    }
+
+    return paquete;
 }
 
 void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 {
-	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
+   if (paquete == NULL || paquete->buffer == NULL || valor == NULL) {
+        perror("Error: Paquete, buffer o valor es NULL");
+        return;
+    }
 
-	memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
-	memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), valor, tamanio);
+    void* nuevo_stream = realloc(paquete->buffer->stream, paquete->buffer->size + sizeof(int) + tamanio);
+    if (nuevo_stream == NULL) {
+        perror("Error al reasignar memoria para el stream del paquete");
+        return;
+    }
 
-	paquete->buffer->size += tamanio + 2*sizeof(int);
+    paquete->buffer->stream = nuevo_stream;
+    memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
+    memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), valor, tamanio);
+    paquete->buffer->size += sizeof(int) + tamanio;							  
+								 
 }
 
 void enviar_paquete(t_paquete* paquete, int socket_cliente)
 {
-	int bytes = paquete->buffer->size + 2*sizeof(int);
-	void* a_enviar = serializar_paquete(paquete, bytes);
+	 if (paquete == NULL || paquete->buffer == NULL || paquete->buffer->stream == NULL) {
+        perror("Error: Paquete o buffer es NULL");
+        return;
+    }
 
-	send(socket_cliente, a_enviar, bytes, 0);
+    int bytes = paquete->buffer->size + 2*sizeof(int);
+    void* a_enviar = serializar_paquete(paquete, bytes);
 
-	free(a_enviar);
+    if (a_enviar == NULL) {
+        perror("Error al serializar el paquete");
+        return;
+    }
+
+    ssize_t bytes_enviados = send(socket_cliente, a_enviar, bytes, 0);
+    if (bytes_enviados == -1) {
+        perror("Error al enviar el paquete");
+    } else if (bytes_enviados != bytes) {
+        fprintf(stderr, "Advertencia: no se enviaron todos los bytes del paquete\n");
+    }
+
+    free(a_enviar);					  
 }
+
 
 void eliminar_paquete(t_paquete* paquete)
 {
@@ -150,6 +213,8 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 	*size = sizeof(uint32_t) *10 +  + sizeof(uint8_t) *5 + path_size ;
 	t_buffer* buffer = crear_buffer(*size);
 
+								
+
 	agregar_a_buffer(buffer, &pcb->PID, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &pcb->prioridad, sizeof(uint8_t));
 	agregar_a_buffer(buffer, &pcb->program_counter, sizeof(uint32_t));
@@ -167,6 +232,9 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 	agregar_a_buffer(buffer, &path_size, sizeof(uint32_t));
 	agregar_a_buffer(buffer, pcb->path, path_size);
 
+ 
+								 
+														
 	void * stream = buffer->stream;
 	free(buffer);
 
@@ -175,7 +243,14 @@ void* serializar_pcb(t_pcb* pcb,int* size)
 
 void enviar_pcb(t_pcb* pcb,op_code operacion,int socket){
 	int size;
-	void* stream = serializar_pcb(pcb,&size);
+	void* stream = serializar_pcb(pcb,&size);									
+					 
 	enviar_stream(stream,size,socket,operacion);
 	free(stream);
 }
+
+															
+							  
+											
+
+ 

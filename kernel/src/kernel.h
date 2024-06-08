@@ -53,12 +53,26 @@ typedef enum
 	EXIT
 }op_code_kernel;
 
+typedef enum
+{
+	NEW,
+	READY,
+	BLOCKED,
+	EXEC,
+	EXIT_STATE
+}t_codigo_estado;
+
 typedef struct t_comando_consola {
 	op_code_kernel comando;
 	char* parametros;
 	char* nombre;
 	bool (*funcion)(char**);
 }t_comando_consola;
+
+typedef struct t_pcb_query {
+	t_pcb* pcb;
+	t_queue* estado;
+}t_pcb_query;
 
 t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
@@ -108,6 +122,7 @@ bool iniciar_colas_entrada_salida();
 void iniciar_consola();
 bool iniciar_planificadores();
 bool iniciar_sem_multiprogramacion();
+bool inicializar_dictionario_mutex_colas();
 void planificador_corto();
 void plp_procesos_nuevos();
 void plp_procesos_finalizados();
@@ -133,6 +148,14 @@ t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char*
 bool eliminar_proceso(uint32_t);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
+
+t_queue* buscar_cola_de_pcb(uint32_t pid);
+t_pcb* buscar_pcb_en_cola(t_queue* cola,uint32_t pid);
+t_pcb_query* buscar_pcb(uint32_t pid);
+t_list* get_estados();
+
+void bloquear_mutex_colas();
+void desbloquear_mutex_colas();
 
 
 #endif /* kernel.h*/
