@@ -71,8 +71,7 @@ char* recibir_mensaje(int socket_cliente)
 {
 	int size;
 	char* buffer = recibir_buffer(&size, socket_cliente);
-	log_info(logger, "Me llegó el mensaje %s", buffer);
-	//free(buffer);
+	// log_info(logger, "Me llegó el mensaje %s", buffer);
 	return buffer;
 }
 
@@ -146,6 +145,7 @@ t_pcb* recibir_pcb(t_paquete* paquete)
 	recibir_de_buffer(&pcb->registros_cpu->DI, buffer, sizeof(uint32_t));	
 	recibir_de_buffer(&path_size, buffer, sizeof(uint32_t));
 
+	//free(pcb->path);
 	pcb->path = realloc(pcb->path,path_size);
 	recibir_de_buffer(pcb->path, buffer, path_size);
 

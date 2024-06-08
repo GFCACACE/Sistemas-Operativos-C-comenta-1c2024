@@ -9,9 +9,16 @@ void buffer_destroy(t_buffer* buffer){
 	}
 
 }
-void paquete_destroy(t_paquete* paquete){
-	buffer_destroy(paquete->buffer);
-	free(paquete);
+void paquete_destroy(t_paquete* paquete) {
+    if (paquete) {
+        if (paquete->buffer) {
+            if (paquete->buffer->stream) {
+                free(paquete->buffer->stream);
+            }
+            free(paquete->buffer);
+        }
+        free(paquete);
+    }
 }
 
 t_peticion_generica* recibir_peticion_generica(t_paquete* paquete){

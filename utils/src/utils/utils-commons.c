@@ -6,9 +6,10 @@ int ultimo_pid=0;
 t_pcb* pcb_create(char* path_programa){
 
 	t_pcb* pcb = malloc(sizeof(t_pcb));
+	 memset(pcb, 0, sizeof(t_pcb));
 	pcb->PID = ultimo_pid++;
 	pcb->archivos_abiertos = list_create();
-	pcb->registros_cpu = inicializar_registros(pcb->registros_cpu);
+	pcb->registros_cpu = inicializar_registros();
 	pcb->program_counter = 0;    
 	pcb->quantum = 0; // En caso de necesitarlo, el planificador de corto plazo lo inicializará con el valor adecuado 
     pcb->path = string_duplicate(path_programa);
@@ -21,7 +22,7 @@ t_pcb* pcb_create_copy(char* path_programa){
 	// pcb->PID = ultimo_pid++;
 	// pthread_mutex_unlock(&mx_ultimo_pid);
 	pcb->archivos_abiertos = list_create();
-	pcb->registros_cpu = inicializar_registros(pcb->registros_cpu);
+	pcb->registros_cpu = inicializar_registros();
 	pcb->program_counter = 0;    
 	pcb->quantum = 0; // En caso de necesitarlo, el planificador de corto plazo lo inicializará con el valor adecuado 
     pcb->path = string_duplicate(path_programa);
@@ -30,20 +31,15 @@ t_pcb* pcb_create_copy(char* path_programa){
 
 
 
+t_registros_cpu* inicializar_registros(){
+    t_registros_cpu* registros = calloc(1, sizeof(t_registros_cpu));
 
-t_registros_cpu*  inicializar_registros (t_registros_cpu* registros){
-	registros = malloc(sizeof(t_registros_cpu));
-	// registros->AX=registros->BX=registros->CX=registros->DX=registros->EAX=registros->EBX=registros->ECX =registros->EDX =
-	// registros->SI = registros->DI = registros->PC = 0;
-   memset(registros, 0, sizeof(t_registros_cpu));
-	if (registros == NULL)
-	{
-		loguear_error("No se pudieron iniciar los registros correctamente");
-		return NULL;
-	}
+    if (registros == NULL){
+        loguear_error("No se pudieron iniciar los registros correctamente");
+        return NULL;
+    }
 
-	 return registros;
-
+    return registros;
 }
 
 
@@ -222,4 +218,36 @@ t_validacion* validacion_new(){
 	return validacion;
 	
 }
+void liberar_pcb_contenido(t_pcb* pcb) {
+    if (pcb->registros_cpu != NULL) {
+        free(pcb->registros_cpu);
+    }
+    if (pcb->path != NULL) {
+        free(pcb->path);
+    }
+}
+void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen) {
+    liberar_pcb_contenido(destino); // Liberar la memoria del destino
 
+    // Asignar el contenido del origen al destino
+    destino->PID = origen->PID;
+    destino->program_counter = origen->program_counter;
+    destino->prioridad = origen->prioridad;
+    destino->quantum = origen->quantum;
+
+    // Asignar registros_cpu
+    destino->registros_cpu = (t_registros_cpu*)malloc(sizeof(t_registros_cpu));
+    if (destino->registros_cpu != NULL) {
+        memcpy(destino->registros_cpu, origen->registros_cpu, sizeof(t_registros_cpu));
+    }
+
+    // Asignar path
+    if (origen->path != NULL) {
+        destino->path = (char*)malloc(strlen(origen->path) + 1);
+        if (destino->path != NULL) {
+            strcpy(destino->path, origen->path);
+        }
+    } else {
+        destino->path = NULL;
+    }
+}
