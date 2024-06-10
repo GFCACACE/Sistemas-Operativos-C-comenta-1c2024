@@ -25,5 +25,6 @@ t_paquete* recibir_paquete(int);
 char* recibir_mensaje(int);
 int recibir_operacion(int);
 t_pcb* recibir_pcb(t_paquete*);
+t_tamanio_proceso* recibir_tamanio_proceso(t_paquete* paquete);
 
 #endif /* utils_server_h */

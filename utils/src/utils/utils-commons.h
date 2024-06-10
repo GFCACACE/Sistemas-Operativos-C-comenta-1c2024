@@ -99,6 +99,13 @@ typedef struct
 	char* path;
 } t_pcb;
 
+
+typedef struct
+{
+	uint32_t PID;
+	uint32_t tamanio;
+} t_tamanio_proceso;
+
 typedef struct t_validacion
 {
 	bool resultado;
@@ -120,5 +127,7 @@ char* get_linea_archivo(char* directorio,char* nombre_archivo,int posicion);
 bool es_exit(void *comando);
 t_registros_cpu* inicializar_registros();
 void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen);
+void loguear_tamanio_proceso(t_tamanio_proceso* tamanio_proceso);
+t_tamanio_proceso* tamanio_proceso_create(uint32_t pid, uint32_t tamanio);
 
 #endif /* utils_commons_h */

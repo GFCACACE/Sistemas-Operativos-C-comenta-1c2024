@@ -466,8 +466,15 @@ bool exe_mov_in(t_param registro_datos,t_param registro_direccion){
 	free(valor_memoria);
 	return true;
 }
-bool exe_resize(t_pcb* pcb,t_param tamanio){
-	enviar_texto(tamanio.string_valor,RESIZE,conexion_memoria);
+bool exe_resize(t_pcb* pcb,t_param p_tamanio){
+//	enviar_texto(tamanio.string_valor,RESIZE,conexion_memoria);
+	uint32_t tamanio = atoi(p_tamanio.string_valor);
+	t_tamanio_proceso* tamanio_proceso= tamanio_proceso_create(pcb->PID,tamanio);
+    enviar_tamanio_proceso(tamanio_proceso,RESIZE,conexion_memoria);
+    loguear_tamanio_proceso(tamanio_proceso);
+    free(tamanio_proceso);
+
+
 	int response = recibir_operacion(conexion_memoria);
 	if(response == OUT_OF_MEMORY){
 		actualizar_contexto(pcb);
@@ -540,7 +547,7 @@ int ejecutar_proceso_cpu()
 				cod_op_kernel_interrupt = EJECUTAR_CPU;
                 ciclo_de_instruccion(pcb);
 				paquete_destroy(paquete);
-                break;				
+                break;	
             case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");
 			paquete_destroy(paquete);

@@ -29,7 +29,12 @@ t_pcb* pcb_create_copy(char* path_programa){
    	return pcb;
 }
 
-
+t_tamanio_proceso* tamanio_proceso_create(uint32_t pid, uint32_t tamanio){
+	t_tamanio_proceso* tamanio_proceso = malloc(sizeof(t_tamanio_proceso));
+	tamanio_proceso->PID = pid;
+	tamanio_proceso->tamanio = tamanio;
+	return tamanio_proceso;
+}
 
 t_registros_cpu* inicializar_registros(){
     t_registros_cpu* registros = calloc(1, sizeof(t_registros_cpu));
@@ -85,6 +90,13 @@ void loguear_pcb(t_pcb* pcb){
 	printf("FIN LOGUEO PCB\n");
 }
 
+void loguear_tamanio_proceso(t_tamanio_proceso* tamanio_proceso){
+	printf("LOGUEO TAMAÑO PROCESO\n");
+	loguear("PID: %d",tamanio_proceso->PID);
+	loguear("Tamaño: %d",tamanio_proceso->tamanio);
+	printf("=============================== \n");
+
+}
 
 bool is_numeric(const char* str) {
     if (str == NULL || *str == '\0') 

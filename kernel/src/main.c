@@ -9,16 +9,20 @@ int main_kernel(int argc, char** argv) {
     //Iniciamos mediante una funcion las config, el logger y las conexiones
     //Asignamos un flag que nos devolverá si se pudo iniciar el módulo o no.
     bool modulo_iniciado = iniciar_kernel(argv[1]);
-    iniciar_threads_io();
+    //iniciar_threads_io();
    // En caso de que no se haya inicializado, finalizamos el programa
     if(!modulo_iniciado){
         finalizar_kernel();
         return EXIT_FAILURE;
     } 
-    iniciar_planificadores();
+  //  iniciar_planificadores();
 	
-    iniciar_consola();
-    
+   // iniciar_consola();
+    t_tamanio_proceso* tamanio_proceso= tamanio_proceso_create(15,47);
+    enviar_tamanio_proceso(tamanio_proceso,RESIZE,cpu_dispatch);
+    loguear_tamanio_proceso(tamanio_proceso);
+    free(tamanio_proceso);
+
     finalizar_kernel();
 
     return EXIT_SUCCESS;
