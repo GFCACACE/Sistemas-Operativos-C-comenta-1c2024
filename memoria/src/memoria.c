@@ -150,6 +150,7 @@ bool inicializar_memoria(){
 bool iniciar_paginacion(){
 	
 	memoriaPrincipal = malloc(config_memoria->TAM_MEMORIA);
+	
 	tamanio_pagina = config_memoria-> TAM_PAGINA;
 	if(memoriaPrincipal == NULL){
 		loguear_error("No se reservó la memoria correctamente");
@@ -236,8 +237,6 @@ int buscar_instrucciones(){
                 enviar_proxima_instruccion(pcb);
 				paquete_destroy(paquete);
                 break;
-			case LECTURA_MEMORIA:
-				break;
 			case RESIZE:
 				t_tamanio_proceso* tamanio_proceso =  recibir_tamanio_proceso(paquete);
 				t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(tamanio_proceso->PID));
@@ -257,6 +256,30 @@ int buscar_instrucciones(){
 					}
 				
 				paquete_destroy(paquete);
+			case ACCESO_TABLA_PAGINAS:
+				tamanio_proceso =  recibir_tamanio_proceso(paquete);
+				proceso_en_memoria = dictionary_get(procesos,string_itoa(tamanio_proceso->PID));
+				tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
+				int nro_pagina = tamanio_proceso->tamanio;
+
+				return obtener_frame(tabla_de_paginas_proceso, nro_pagina);
+
+
+			case LECTURA_MEMORIA:
+				//int direccion_fisica = atoi(recibir_mensaje(paquete));
+				// nos paramos en memoriaPrincipal + nroMarco * tam_marco + offset 
+				//int dato_consultado;	
+				
+				//memcpy(&dato_consultado,direccion_fisica,sizeof(direccion_fisica));
+				
+				//enviar_texto(dato_consultado,VALOR_CONSULTA_CPU,conexion_cpu);
+				
+	
+				
+	
+	
+				//nos paramos en memoriaPrincipal + nroMarco * tam_marco + offset 
+				break;
 
 			case ESCRITURA_MEMORIA:
 			//TODO
@@ -465,6 +488,10 @@ for (int i = ultimo_indice_actual;i > ultimo_indice_nuevo;i--){
 
 int convertir_bytes_a_paginas(int tamanio_bytes){
 	return tamanio_bytes / config_memoria->TAM_PAGINA; //Debería siempre devolver un entero no? Son múltiplos del tamanio memoria
+}
+
+int obtener_frame(t_list* tabla_de_paginas,int nro_pagina){
+	return list_get(tabla_de_paginas,nro_pagina); //Tengo que convertir en int?
 }
 
 

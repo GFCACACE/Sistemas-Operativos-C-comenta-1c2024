@@ -494,13 +494,17 @@ bool exe_exit(t_pcb *pcb)
 	return true;
 }
 
-uint32_t mmu (uint32_t direccion_logica){
+uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica){
 	uint32_t direccion_fisica;
 	uint32_t numero_pagina = floor(direccion_logica/tamanio_pagina);
 	char* nro_pagina = string_new();
 	char* nro_frame = string_new();
 	sprintf(nro_pagina,"%d",numero_pagina);
-	enviar_texto(nro_pagina,ACCESO_TABLA_PAGINAS,conexion_memoria);
+	// Agrego el pcb y ple paso un proceso a la memoria para que pueda encontrar que proceso le está pidiendo la CPU
+	t_tamanio_proceso* tamanio_proceso= tamanio_proceso_create(pcb->PID,(u_int32_t)nro_pagina); //Vamos con esta conversion?
+	//Haciendo esta reutilización, capaz hay que cambiar el nombre de tamanio. Acá en tamanio le estamos pasando una página
+	enviar_tamanio_proceso(tamanio_proceso,ACCESO_TABLA_PAGINAS,conexion_memoria);
+	//enviar_texto(nro_pagina,ACCESO_TABLA_PAGINAS,conexion_memoria);
 	free(nro_pagina);
 	int response = recibir_operacion(conexion_memoria);
 	if(response == ACCESO_TABLA_PAGINAS)
