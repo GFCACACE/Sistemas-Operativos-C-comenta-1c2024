@@ -1,9 +1,29 @@
 #!/bin/bash
+
+# Verificar si al menos se pasó el primer parámetro
+if [ "$#" -lt 1 ]; then
+    echo "Uso: $0 <config_file> [<optional_second_param>]"
+    exit 1
+fi
+
+# Parámetros
+config_file=$1
+second_param=$2
+
+# Ruta del workspace
 workspace_path="$PWD"
 workspace_basename=$(basename "$workspace_path")
 FILE=$workspace_basename
 BIN=./bin/$FILE
+
+# Compilar
 make $BIN
+
+# Verificar si el binario fue creado y ejecutar
 if test -f $BIN; then
-    $BIN ./$FILE.config
+    if [ -n "$second_param" ]; then
+        $BIN "$config_file" "$second_param"
+    else
+        $BIN "$config_file"
+    fi
 fi

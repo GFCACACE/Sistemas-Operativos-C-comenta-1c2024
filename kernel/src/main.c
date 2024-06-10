@@ -15,13 +15,10 @@ int main_kernel(int argc, char** argv) {
         finalizar_kernel();
         return EXIT_FAILURE;
     } 
-  //  iniciar_planificadores();
+    iniciar_planificadores();
 	
-   // iniciar_consola();
-    t_tamanio_proceso* tamanio_proceso= tamanio_proceso_create(15,47);
-    enviar_tamanio_proceso(tamanio_proceso,RESIZE,cpu_dispatch);
-    loguear_tamanio_proceso(tamanio_proceso);
-    free(tamanio_proceso);
+    iniciar_consola();
+
 
     finalizar_kernel();
 
