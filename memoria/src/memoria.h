@@ -1,5 +1,5 @@
-#ifndef kernel_h
-#define kernel_h
+#ifndef memoria_h
+#define memoria_h
 #include <utils/hello.h>
 #include<commons/config.h>
 #include<commons/string.h>
@@ -28,7 +28,7 @@ typedef struct
 {
 	t_list* instrucciones;
 	t_pcb* pcb;
-
+	t_list* tabla_paginas;
 } t_proceso;
 
 
@@ -55,5 +55,13 @@ void cargar_programa_de(t_pcb*,char*);
 void enviar_proxima_instruccion (t_pcb* pcb);
 int buscar_instrucciones();
 int recibir_procesos();
-
-#endif /* kernel.h*/
+void crear_frames_memoria_principal(int);
+int asignar_frame();
+void remover_proceso_del_frame(int);
+void imprimir_uso_frames();
+int convertir_bytes_a_paginas(int);
+bool validar_ampliacion_proceso(int);
+void ampliar_proceso(t_list* ,int );
+void reducir_proceso(t_list* ,int);
+t_tamanio_proceso* recibir_tamanio_proceso(t_paquete*);
+#endif /* memoria.h*/
