@@ -245,7 +245,7 @@ int buscar_instrucciones(){
 				int pag_solictadas_respecto_actual = diferencia_tamaño_nuevo_y_actual(tabla_de_paginas_proceso,tamanio_proceso);   // Devuelve la diferencia entre la cantidad de paginas solicitadas y las que actualmente tiene el proceso
 				
 					if(pag_solictadas_respecto_actual>0){ //AMPLIACION_PROCESO
-						if(validar_ampliacion_proceso){
+						if(validar_ampliacion_proceso(pag_solictadas_respecto_actual)){
 							ampliar_proceso(tabla_de_paginas_proceso,pag_solictadas_respecto_actual);
 						}else{
 							return OUT_OF_MEMORY;
@@ -473,6 +473,7 @@ int asignar_frame(){
 	bool uso = list_get(frames,indice);
 	while(uso == true){
 	uso = list_get(frames,indice);
+	indice++;
 	}
 	list_add_in_index(frames,indice,true);
 	return indice;
