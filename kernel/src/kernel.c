@@ -428,6 +428,64 @@ void modificar_quantum_restante(t_pcb* pcb){
 	}
 }
 
+void io_gen_sleep(int pid,char** splitter){
+	loguear_warning("Entra al case");
+	char pid_mas_unidades [20];//string_new();
+	sprintf(pid_mas_unidades,"%u",pid);
+	loguear_warning("El pid es %s", pid_mas_unidades);
+	strcat(pid_mas_unidades," ");
+	strcat(pid_mas_unidades, splitter[1]);
+	loguear_warning("El mensaje es %s", pid_mas_unidades);
+
+	loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
+	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, splitter[0]);
+	int conexion_io = *(int *)ptr_conexion;
+
+	enviar_texto(pid_mas_unidades,
+				IO_GEN_SLEEP,
+				conexion_io);
+	loguear_warning("Peticion a IO enviada");
+}
+void io_handler_exec(t_pcb* pcb_recibido){
+	int cod_op_io = recibir_operacion(cpu_dispatch);
+	char* peticion;
+	char** splitter = string_array_new();
+	peticion = recibir_mensaje(cpu_dispatch);
+	splitter = string_split(peticion," ");
+
+	if(!existe_interfaz(splitter[0]/*Nombre*/)){
+		pasar_a_exit(pcb_recibido);
+		proceso_estado(); // Se puede eliminar, es para  ver los estados
+		return;
+	}
+
+	//proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);
+	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked, splitter[0]);
+
+	//pthread_mutex_lock(&interfaz->mx_blocked);
+	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, &interfaz->mx_blocked);
+	//pthread_mutex_unlock(&interfaz->mx_blocked);
+	loguear_warning("Paso los mutex");
+
+	switch(cod_op_io){
+		case IO_GEN_SLEEP:
+				io_gen_sleep(pcb_recibido->PID,splitter);
+			break;
+		case IO_STDIN_READ:
+			break;
+		case IO_STDOUT_WRITE:
+			break;
+
+		default:
+			pasar_a_exit(pcb_recibido);
+			proceso_estado(); // Se puede eliminar, es para  ver los estados
+			break;
+	}
+	free(peticion);
+	//string_array_destroy(splitter);
+}
+
+
 void recibir_pcb_de_cpu(){
 	loguear_warning("Intento recibir de CPU!");
 	t_paquete *paquete = recibir_paquete(cpu_dispatch);
@@ -452,54 +510,7 @@ void recibir_pcb_de_cpu(){
 			sem_post(&sem_bin_ready);
 			break;
 		case IO_HANDLER:
-            int cod_op_io = recibir_operacion(cpu_dispatch);
-			char* peticion;
-			char** splitter = string_array_new();
-			peticion = recibir_mensaje(cpu_dispatch);
-			splitter = string_split(peticion," ");
-			
-			if(!existe_interfaz(splitter[0]/*Nombre*/)){
-				pasar_a_exit(pcb_recibido);
-				proceso_estado(); // Se puede eliminar, es para  ver los estados
-				break;
-			}
-			
-			//proceso_a_estado(pcb_recibido,estado_blocked,&mx_blocked);
-			t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked, splitter[0]);
-			
-			//pthread_mutex_lock(&interfaz->mx_blocked);
-			proceso_a_estado(pcb_recibido, interfaz->estado_blocked, &interfaz->mx_blocked);
-			//pthread_mutex_unlock(&interfaz->mx_blocked);
-			loguear_warning("Paso los mutex");
-			
-			switch(cod_op_io){
-				case IO_GEN_SLEEP:
-					loguear_warning("Entra al case");
-					char pid_mas_unidades [20];//string_new();
-					sprintf(pid_mas_unidades,"%u",pcb_recibido->PID);
-					loguear_warning("El pid es %s", pid_mas_unidades);
-					strcat(pid_mas_unidades," ");
-					strcat(pid_mas_unidades, splitter[1]);
-					loguear_warning("El mensaje es %s", pid_mas_unidades);
-
-					loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
-					enviar_texto(pid_mas_unidades,
-								IO_GEN_SLEEP,
-								(int)dictionary_get(diccionario_nombre_conexion,splitter[0]));
-					loguear_warning("Peticion a IO enviada");
-					break;
-				case IO_STDIN_READ:
-					break;
-				case IO_STDOUT_WRITE:
-					break;
-
-				default:
-					pasar_a_exit(pcb_recibido);
-					proceso_estado(); // Se puede eliminar, es para  ver los estados
-					break;
-			}
-			free(peticion);
-			//string_array_destroy(splitter);
+            io_handler_exec(pcb_recibido);
 			break;
 		default:
 			
@@ -1313,13 +1324,13 @@ void iniciar_conexion_io(){
 		//
 		char* string_conexion = string_itoa(*fd_conexion_ptr);
 		loguear("bienvenido %s",nombre_interfaz);
-		dictionary_put(diccionario_nombre_conexion,nombre_interfaz,*fd_conexion_ptr);
+		dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
 		dictionary_put(diccionario_nombre_qblocked,nombre_interfaz, blocked_interfaz);
 		dictionary_put(diccionario_conexion_qblocked,string_conexion, blocked_interfaz);
 		//
 		list_add(lista_interfaces_blocked,blocked_interfaz);
 		//
-    	pthread_create(&thread,NULL, (void*) io_handler,(fd_conexion_ptr)); // VER SI VA PUNTERO ACA (Joaco :) )
+    	pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr)); // VER SI VA PUNTERO ACA (Joaco :) )
     	//
 		//liberar_struct();
 		//liberar_puntero();
