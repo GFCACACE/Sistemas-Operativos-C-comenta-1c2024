@@ -475,7 +475,7 @@ void recibir_pcb_de_cpu(){
 			
 			if(!existe_interfaz(splitter[0]/*Nombre*/)){
 				pasar_a_exit(pcb_recibido);
-				proceso_estado(); // Se puede eliminar, es para  ver los estados
+				//proceso_estado(); // Se puede eliminar, es para  ver los estados
 				break;
 			}
 			
@@ -510,7 +510,7 @@ void recibir_pcb_de_cpu(){
 
 				default:
 					pasar_a_exit(pcb_recibido);
-					proceso_estado(); // Se puede eliminar, es para  ver los estados
+					//proceso_estado(); // Se puede eliminar, es para  ver los estados
 					break;
 			}
 			free(peticion);
@@ -904,7 +904,7 @@ void ejecutar_proceso(){
 
 	loguear("Se debe enviar el pcb en exec a la cpu");
 	pthread_mutex_lock(&mx_pcb_exec);
-	loguear_pcb(pcb_exec);
+	//loguear_pcb(pcb_exec);
 	enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
 	pthread_mutex_unlock(&mx_pcb_exec);
 	
