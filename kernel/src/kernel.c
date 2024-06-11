@@ -8,6 +8,8 @@ sem_t sem_bin_ready; //Sincroniza que pcp no actúe hasta que haya un nuevo elem
 sem_t sem_bin_exit; //Sincroniza que plp (hilo exit) no actúe hasta que haya un nuevo elemento en exit
 sem_t sem_bin_cpu_libre; // Sincroniza que no haya ningun PCB ejecutando en CPU
 
+sem_t sem_bin_recibir_pcb;
+
 pthread_mutex_t mx_new = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion en estado_new. Podrían querer acceder consola y plp al mismo tiempo
 pthread_mutex_t mx_ready = PTHREAD_MUTEX_INITIALIZER; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
 pthread_mutex_t mx_ready_plus = PTHREAD_MUTEX_INITIALIZER; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
@@ -20,7 +22,7 @@ time_t tiempo_inicial, tiempo_final;
 
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
-bool detener_planificacion = false;
+bool detener_planificacion_bool = false;
 t_config_kernel* config;
 t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked;
 t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp,
@@ -108,9 +110,9 @@ bool inicializar_comandos(){
     agregar_comando(EJECUTAR_SCRIPT,"EJECUTAR_SCRIPT","[PATH]",&ejecutar_scripts_de_archivo);
     agregar_comando(INICIAR_PROCESO,"INICIAR_PROCESO","[PATH]",&iniciar_proceso);
 	agregar_comando(FINALIZAR_PROCESO,"FINALIZAR_PROCESO","[PID]",&finalizar_proceso);
-    agregar_comando(DETENER_PLANIFICACION,"DETENER_PLANIFICACION","[]",&iniciar_planificacion);
-	agregar_comando(INICIAR_PLANIFICACION,"INICIAR_PLANIFICACION","[]",&multiprogramacion);
-    agregar_comando(MULTIPROGRAMACION,"MULTIPROGRAMACION","[VALOR]",&detener_plani);
+    agregar_comando(DETENER_PLANIFICACION,"DETENER_PLANIFICACION","[]",&detener_planificacion);
+	agregar_comando(INICIAR_PLANIFICACION,"INICIAR_PLANIFICACION","[]",&iniciar_planificacion);
+    agregar_comando(MULTIPROGRAMACION,"MULTIPROGRAMACION","[VALOR]",&multiprogramacion);
 	agregar_comando(PROCESO_ESTADO,"PROCESO_ESTADO","[]",&proceso_estado);
     agregar_comando(EXIT,"EXIT","[]",&finalizar_consola);
 	return true;
@@ -189,6 +191,7 @@ bool iniciar_semaforos(){
 	sem_init(&sem_bin_ready,0,0);
 	sem_init(&sem_bin_exit,0,0);
 	sem_init(&sem_bin_cpu_libre,0,1);
+	sem_init(&sem_bin_recibir_pcb,0,0);
 
 	// mx_new = PTHREAD_MUTEX_INITIALIZER; 
 	// mx_exit = PTHREAD_MUTEX_INITIALIZER; 
@@ -366,7 +369,7 @@ void liberar_proceso(t_pcb* pcb){
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
 	while(1){
-		while(!detener_planificacion){
+		while(!detener_planificacion_bool){
 			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
 			sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
 			bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
@@ -384,7 +387,7 @@ void plp_procesos_nuevos(){
 
 void plp_procesos_finalizados(){
 	while(1){
-		while(!detener_planificacion){
+		while(!detener_planificacion_bool){
 			sem_wait(&sem_bin_exit);
 			loguear_warning("Se va a sacar un PCB de temp");
 			t_pcb* pcb = pop_estado_get_pcb(estado_temp,&mx_temp);
@@ -403,10 +406,11 @@ void plp_procesos_finalizados(){
 
 void planificador_corto(){
 	while(1){
-		while(!detener_planificacion){
+		while(!detener_planificacion_bool){
 			sem_wait(&sem_bin_ready); //Hay que ver si tiene que estar acá. En este caso se considera que cada replanificación pasa por aca
 			ejecutar_planificacion();
 			// Esperar la vuelta del PCB
+			sem_post(&sem_bin_recibir_pcb);
 			recibir_pcb_de_cpu();
 			// verificar a que lista debe ir
 			// enviar a ready/blocked/exit (signal a esa cola)
@@ -449,7 +453,7 @@ void recibir_pcb_de_cpu(){
 	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
 	liberar_pcb_exec();
 	paquete_destroy(paquete);
-	// PAUSAR POR DETENER PLANI
+	sem_wait(&sem_bin_recibir_pcb);
 	switch (cod_op)
 	{
 		case CPU_EXIT:
@@ -651,6 +655,14 @@ int ejecutar_comando_consola(char*params){
 		comando_consola = dictionary_get(comandos_consola,comando);
 		numero_comando = comando_consola->comando;
 		if(comando_consola->comando != EXIT){
+
+			// pthread_t thread_instruccion;
+
+			// pthread_create(&thread_instruccion,NULL,(bool*)comando_consola->funcion,parametros);
+
+			// pthread_detach(thread_instruccion);
+			// if (thread_instruccion == -1)
+			// 	loguear_error("No se pudo iniciar el hilo de la instruccion %s", parametros[0]);
        		comando_consola->funcion(parametros);
 		}
 	}
@@ -782,9 +794,17 @@ void listar_comandos(){
 }
 
 bool iniciar_planificacion(char** substrings){
-	
+	if(detener_planificacion_bool){
+		sem_post(&sem_bin_cpu_libre);
+		detener_planificacion_bool = false;
+	}
 	return true;
 
+}
+bool detener_planificacion(char** substrings){
+	sem_wait(&sem_bin_cpu_libre);
+	detener_planificacion_bool = true;
+	return true;
 }
 
 bool multiprogramacion(char** substrings){
@@ -813,6 +833,8 @@ bool detener_plani(char** substrings){
 	return true;
 	//detener_plani = true;
 }
+
+
 
 void imprimir_cola(t_queue *cola, const char *estado) {
 
@@ -1148,6 +1170,7 @@ void liberar_semaforos(){
 	sem_destroy(&sem_bin_ready);
 	sem_destroy(&sem_bin_exit);
 	sem_destroy(&sem_bin_cpu_libre);
+	sem_destroy(&sem_bin_recibir_pcb);
 
 	pthread_mutex_destroy(&mx_new);
 	pthread_mutex_destroy(&mx_ready);

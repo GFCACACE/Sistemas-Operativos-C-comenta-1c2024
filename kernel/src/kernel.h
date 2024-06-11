@@ -91,7 +91,7 @@ extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 extern t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus,*estado_exec, *estado_temp;
 extern t_pcb* pcb_exec;
 extern t_list* lista_interfaces_blocked;
-extern bool detener_planificacion;
+extern bool detener_planificacion_bool;
 /*
 extern t_queue* io_stdin;
 extern t_queue* io_stdout;
@@ -108,6 +108,7 @@ char *recibir_nombre(int);
 bool iniciar_proceso(char** parametros);
 bool finalizar_proceso(char**);
 bool iniciar_planificacion(char**);
+bool detener_planificacion(char**);
 bool multiprogramacion(char**);
 bool detener_plani(char**);
 bool proceso_estado();
