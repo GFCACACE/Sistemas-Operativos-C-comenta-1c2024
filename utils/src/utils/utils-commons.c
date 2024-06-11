@@ -77,7 +77,7 @@ void loguear_registros(t_registros_cpu* registros){
 }
 
 void loguear_pcb(t_pcb* pcb){
-	printf("LOGUEO PCB\n");
+//	printf("LOGUEO PCB\n");
 	loguear("PID: %d",pcb->PID);
 	loguear("program_counter: %d",pcb->program_counter);
 	loguear("Prioridad: %d",pcb->prioridad);
@@ -85,9 +85,9 @@ void loguear_pcb(t_pcb* pcb){
 	loguear_registros(pcb->registros_cpu);
 	loguear("Cant. de archivos abiertos: %d",list_size( pcb->archivos_abiertos));
     loguear("PATH: %s",pcb->path);
-	printf("==========================----- \n");
+//	printf("==========================----- \n");
 
-	printf("FIN LOGUEO PCB\n");
+//	printf("FIN LOGUEO PCB\n");
 }
 
 void loguear_pid_value(t_pid_valor* pid_atributo){
