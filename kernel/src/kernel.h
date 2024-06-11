@@ -148,6 +148,7 @@ bool eliminar_proceso_en_memoria(t_pcb*);
 bool eliminar_proceso_en_blocked(uint32_t pid_buscado);
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
 
+
 void recibir_pcb_de_cpu();
 void pasar_a_exit(t_pcb*);
 

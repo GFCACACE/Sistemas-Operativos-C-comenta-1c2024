@@ -8,7 +8,7 @@ sem_t sem_bin_ready; //Sincroniza que pcp no actúe hasta que haya un nuevo elem
 sem_t sem_bin_exit; //Sincroniza que plp (hilo exit) no actúe hasta que haya un nuevo elemento en exit
 sem_t sem_bin_cpu_libre; // Sincroniza que no haya ningun PCB ejecutando en CPU
 
-//sem_t sem_bin_recibir_pcb;
+sem_t sem_bin_recibir_pcb;
 
 pthread_mutex_t mx_new = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion en estado_new. Podrían querer acceder consola y plp al mismo tiempo
 pthread_mutex_t mx_ready = PTHREAD_MUTEX_INITIALIZER; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
@@ -30,7 +30,7 @@ t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_te
 //
 t_blocked_interfaz* blocked_interfaz;
 //
-t_pcb* pcb_exec; 
+t_pcb* pcb_exec;
 t_list* lista_interfaces_blocked;
 
 
@@ -191,7 +191,7 @@ bool iniciar_semaforos(){
 	sem_init(&sem_bin_ready,0,0);
 	sem_init(&sem_bin_exit,0,0);
 	sem_init(&sem_bin_cpu_libre,0,1);
-	//sem_init(&sem_bin_recibir_pcb,0,0);
+	sem_init(&sem_bin_recibir_pcb,0,0);
 
 	// mx_new = PTHREAD_MUTEX_INITIALIZER; 
 	// mx_exit = PTHREAD_MUTEX_INITIALIZER; 
@@ -381,7 +381,7 @@ void plp_procesos_finalizados(){
 			eliminar_proceso_en_memoria(pcb);
 			loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
 			push_proceso_a_estado(pcb,estado_exit,&mx_exit);
-			proceso_estado();
+			//proceso_estado();
 			sem_post(&sem_cont_grado_mp);
 		}
 	}
@@ -396,7 +396,7 @@ void planificador_corto(){
 			sem_wait(&sem_bin_ready); //Hay que ver si tiene que estar acá. En este caso se considera que cada replanificación pasa por aca
 			ejecutar_planificacion();
 			// Esperar la vuelta del PCB
-			//sem_post(&sem_bin_recibir_pcb);
+			sem_post(&sem_bin_recibir_pcb);
 			recibir_pcb_de_cpu();
 			// verificar a que lista debe ir
 			// enviar a ready/blocked/exit (signal a esa cola)
@@ -439,7 +439,7 @@ void recibir_pcb_de_cpu(){
 	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
 	liberar_pcb_exec();
 	paquete_destroy(paquete);
-	//sem_wait(&sem_bin_recibir_pcb);
+	sem_wait(&sem_bin_recibir_pcb);
 	switch (cod_op)
 	{
 		case CPU_EXIT:
@@ -639,10 +639,9 @@ int ejecutar_comando_consola(char*params){
 		comando_consola = dictionary_get(comandos_consola,comando);
 		numero_comando = comando_consola->comando;
 		if(comando_consola->comando != EXIT){
-
 			// pthread_t thread_instruccion;
 
-			// pthread_create(&thread_instruccion,NULL,(bool*)comando_consola->funcion,parametros);
+			// pthread_create(&thread_instruccion,NULL,(bool*)(comando_consola->funcion),parametros);
 
 			// pthread_detach(thread_instruccion);
 			// if (thread_instruccion == -1)
@@ -779,14 +778,13 @@ void listar_comandos(){
 
 bool iniciar_planificacion(char** substrings){
 	if(detener_planificacion_bool){
-		sem_post(&sem_bin_cpu_libre);
+		sem_post(&sem_bin_recibir_pcb);
 		detener_planificacion_bool = false;
 	}
 	return true;
-
 }
 bool detener_planificacion(char** substrings){
-	sem_wait(&sem_bin_cpu_libre);
+	sem_wait(&sem_bin_recibir_pcb);
 	detener_planificacion_bool = true;
 	return true;
 }
@@ -864,9 +862,10 @@ bool finalizar_consola(char** parametros){
 void iniciar_consola(){
 	char *cadenaLeida;
 	int comando = -1;
+	int comando2;
 	 while (comando == -1 || comando != EXIT) {
 		listar_comandos();
-        cadenaLeida =  leer_texto_consola();	
+        cadenaLeida =  leer_texto_consola();
 		comando = ejecutar_comando_consola(cadenaLeida);
 		free(cadenaLeida);
     }
@@ -1126,13 +1125,12 @@ void liberar_semaforos(){
 	sem_destroy(&sem_bin_ready);
 	sem_destroy(&sem_bin_exit);
 	sem_destroy(&sem_bin_cpu_libre);
-	//sem_destroy(&sem_bin_recibir_pcb);
+	sem_destroy(&sem_bin_recibir_pcb);
 
 	pthread_mutex_destroy(&mx_new);
 	pthread_mutex_destroy(&mx_ready);
 	if(es_vrr()) pthread_mutex_destroy(&mx_ready_plus);
 	pthread_mutex_destroy(&mx_exit);
-	//pthread_mutex_destroy(&mx_blocked);
 	pthread_mutex_destroy(&mx_pcb_exec);
 	pthread_mutex_destroy(&mx_temp);
 }
@@ -1299,10 +1297,9 @@ void iniciar_conexion_io(){
 		//
     	pthread_create(&thread,NULL, (void*) io_handler,(fd_conexion_ptr)); // VER SI VA PUNTERO ACA (Joaco :) )
     	//
-		//liberar_struct();
-		//liberar_puntero();
-		//free(string_conexion);
-		//free(nombre_interfaz);
+		free(blocked_interfaz);
+		free(string_conexion);
+		free(nombre_interfaz);
 		pthread_detach(thread);
 		
 	}
