@@ -8,7 +8,7 @@ sem_t sem_bin_ready; //Sincroniza que pcp no actúe hasta que haya un nuevo elem
 sem_t sem_bin_exit; //Sincroniza que plp (hilo exit) no actúe hasta que haya un nuevo elemento en exit
 sem_t sem_bin_cpu_libre; // Sincroniza que no haya ningun PCB ejecutando en CPU
 
-sem_t sem_bin_recibir_pcb;
+//sem_t sem_bin_recibir_pcb;
 
 pthread_mutex_t mx_new = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion en estado_new. Podrían querer acceder consola y plp al mismo tiempo
 pthread_mutex_t mx_ready = PTHREAD_MUTEX_INITIALIZER; //Garantiza mutua exclusion en estado_ready. Podrían querer acceder plp y pcp al mismo tiempo
@@ -94,7 +94,7 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 
 bool iniciar_logger_config(char* path_config){
 	decir_hola(MODULO);
-    logger = iniciar_logger(MODULO);
+    logger = iniciar_logger_(MODULO,0);
 	if(logger == NULL) printf("EL LOGGER NO PUDO SER INICIADO.\n");
 	config = iniciar_config_kernel(path_config);
 	if(config == NULL) {
@@ -191,7 +191,7 @@ bool iniciar_semaforos(){
 	sem_init(&sem_bin_ready,0,0);
 	sem_init(&sem_bin_exit,0,0);
 	sem_init(&sem_bin_cpu_libre,0,1);
-	sem_init(&sem_bin_recibir_pcb,0,0);
+	//sem_init(&sem_bin_recibir_pcb,0,0);
 
 	// mx_new = PTHREAD_MUTEX_INITIALIZER; 
 	// mx_exit = PTHREAD_MUTEX_INITIALIZER; 
@@ -201,49 +201,35 @@ bool iniciar_semaforos(){
 	return true;
 }
 
-// bool iniciar_conexion_io(){
-// 	pthread_t thread_io;
 
-// 	pthread_create(&thread_io,NULL, (void*)io_handler,NULL);
-
-// 	pthread_detach(thread_io);
-// 	if(thread_io == -1){
-// 		loguear_error("No se pudo iniciar la I/O.");
-// 		return false;
-// 	}
-// 	return true;
-// }
 bool inicializar_dictionario_mutex_colas(){
-
- estados_dictionary = dictionary_create();
- estados_mutexes_dictionary = dictionary_create();
+	estados_dictionary = dictionary_create();
+	estados_mutexes_dictionary = dictionary_create();
 
  
-		void _agregar(t_codigo_estado codigo,void* estado,t_dictionary* diccionario){
-			char* clave = string_itoa(codigo);
-			dictionary_put(diccionario,clave,estado);
-			free(clave);
-		}
+	void _agregar(t_codigo_estado codigo,void* estado,t_dictionary* diccionario){
+		char* clave = string_itoa(codigo);
+		dictionary_put(diccionario,clave,estado);
+		free(clave);
+	};
 
-		void _agregar_estado(t_codigo_estado codigo,void* estado){
-			_agregar(codigo,estado,estados_dictionary);
-		}
+	void _agregar_estado(t_codigo_estado codigo,void* estado){
+		_agregar(codigo,estado,estados_dictionary);
+	};
 
-		void _agregar_mx(t_codigo_estado codigo,pthread_mutex_t* mx){
-			_agregar(codigo,mx,estados_mutexes_dictionary);
-		}
+	void _agregar_mx(t_codigo_estado codigo,pthread_mutex_t* mx){
+		_agregar(codigo,mx,estados_mutexes_dictionary);
+	};
 
 
 	_agregar_estado(NEW,estado_new);
 	_agregar_estado(READY,estado_ready);
 	_agregar_estado(EXEC,pcb_exec);
-	//_agregar_estado(BLOCKED,estado_blocked);
 	_agregar_estado(EXIT_STATE,estado_exit);
 
 	_agregar_mx(NEW,&mx_new);
 	_agregar_mx(READY,&mx_ready);
 	_agregar_mx(EXEC,&mx_pcb_exec);
-	//_agregar_mx(BLOCKED,&mx_blocked);
 	_agregar_mx(EXIT_STATE,&mx_exit);
 	return true;
 }
@@ -258,7 +244,7 @@ void bloquear_mutex_colas(){
 	void _bloquear(char* _,void* element){
 		pthread_mutex_t* mutex = (pthread_mutex_t*)element;
 		pthread_mutex_lock(mutex);
-	}
+	};
 	dictionary_iterator(estados_mutexes_dictionary,_bloquear);
 }
 
@@ -266,14 +252,14 @@ void desbloquear_mutex_colas(){
 	void _desbloquear(char* _,void* element){
 		pthread_mutex_t* mutex = (pthread_mutex_t*)element;
 		pthread_mutex_unlock(mutex);
-	}
+	};
 	dictionary_iterator(estados_mutexes_dictionary,_desbloquear);
 }
 
 
 bool pcb_es_id (void* elem, uint32_t pid){
-		t_pcb* pcb = (t_pcb*)elem;
-		return pcb->PID == pid;
+	t_pcb* pcb = (t_pcb*)elem;
+	return pcb->PID == pid;
 }
 
 
@@ -410,7 +396,7 @@ void planificador_corto(){
 			sem_wait(&sem_bin_ready); //Hay que ver si tiene que estar acá. En este caso se considera que cada replanificación pasa por aca
 			ejecutar_planificacion();
 			// Esperar la vuelta del PCB
-			sem_post(&sem_bin_recibir_pcb);
+			//sem_post(&sem_bin_recibir_pcb);
 			recibir_pcb_de_cpu();
 			// verificar a que lista debe ir
 			// enviar a ready/blocked/exit (signal a esa cola)
@@ -453,7 +439,7 @@ void recibir_pcb_de_cpu(){
 	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
 	liberar_pcb_exec();
 	paquete_destroy(paquete);
-	sem_wait(&sem_bin_recibir_pcb);
+	//sem_wait(&sem_bin_recibir_pcb);
 	switch (cod_op)
 	{
 		case CPU_EXIT:
@@ -554,7 +540,7 @@ char* leer_texto_consola(){
 }
 
 t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**)){
-     t_comando_consola* comando = malloc(sizeof(t_comando_consola));
+    t_comando_consola* comando = malloc(sizeof(t_comando_consola));
     comando->comando = code;
     comando->parametros =  string_duplicate(params);
     comando->funcion = funcion;
@@ -565,13 +551,11 @@ t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char*
 
 
 void agregar_comando(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**)){
-    
-   
     void _agregar_comando_(char* texto){
 		 t_comando_consola* comando = comando_consola_create(code,nombre,params,funcion);
         dictionary_put(comandos_consola,texto,comando);		
 		//free(texto);
-    }
+    };
 	 char* code_str = string_itoa(code);
     _agregar_comando_(code_str);
 	free(code_str);
@@ -586,7 +570,7 @@ void imprimir_valores_leidos(char** substrings){
 	int index=0;
 	void imprimir_valor(char* leido){
 		printf("substring[%d] vale:%s\n",index++,leido);
-	}
+	};
 	string_iterate_lines(substrings,imprimir_valor);
 }
 
@@ -829,13 +813,6 @@ bool multiprogramacion(char** substrings){
 
 }
 
-bool detener_plani(char** substrings){
-	return true;
-	//detener_plani = true;
-}
-
-
-
 void imprimir_cola(t_queue *cola, const char *estado) {
 
 	void imprimir_estado(void* elem){
@@ -866,7 +843,6 @@ bool proceso_estado(){
 	pthread_mutex_unlock(&mx_pcb_exec);
 	imprimir_cola(estado_new, "Nuevo");
     imprimir_cola(estado_ready, "Listo");
-    //imprimir_cola(estado_blocked, "Bloqueado");
 	// imprimir_todas las colas de blocked
 	imprimir_cola(estado_exec, "Ejecutando");	
 	imprimir_cola(estado_exit, "Finalizado");
@@ -1061,26 +1037,6 @@ void planificacion_VRR(){
 
 
 ////// MODIFICACIONES DE ESTADO
-// // ESTA FUNCION NO SE USA
-// bool modificacion_estado(t_queue* estado_origen,t_queue* estado_destino){
-// 	if (estado_destino==estado_new){
-// 		return false;
-// 	}
-// 	if(estado_origen==estado_exit){
-// 		return false;
-// 	}
-// 	if(estado_destino==estado_ready && estado_origen==estado_exit){
-// 		return false;
-// 	}
-
-// 	if(estado_destino==estado_blocked && estado_origen==estado_new){ ///// REVISAR ESTO!!!!!!!!!!!!!!!!
-// 		return false;
-// 	}	
-	
-	
-
-// 	return true;
-// }
 
 bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino,pthread_mutex_t* sem_origen,pthread_mutex_t* sem_destino){	
 	bool transicion = transicion_valida(estado_origen, estado_destino);
@@ -1140,7 +1096,7 @@ void liberar_colas(){
 
 	void liberar_pcb(void *pcb){
 		pcb_destroy((t_pcb*)pcb);
-	}
+	};
 
 	void liberar_cola(t_queue* cola){
 		if(cola!=NULL)
@@ -1170,7 +1126,7 @@ void liberar_semaforos(){
 	sem_destroy(&sem_bin_ready);
 	sem_destroy(&sem_bin_exit);
 	sem_destroy(&sem_bin_cpu_libre);
-	sem_destroy(&sem_bin_recibir_pcb);
+	//sem_destroy(&sem_bin_recibir_pcb);
 
 	pthread_mutex_destroy(&mx_new);
 	pthread_mutex_destroy(&mx_ready);
