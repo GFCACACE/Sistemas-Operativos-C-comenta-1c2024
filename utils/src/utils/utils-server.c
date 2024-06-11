@@ -152,15 +152,15 @@ t_pcb* recibir_pcb(t_paquete* paquete)
 	return pcb;
 }
 
-t_tamanio_proceso* recibir_tamanio_proceso(t_paquete* paquete)
+t_pid_valor* recibir_pid_value(t_paquete* paquete)
 {
-	t_tamanio_proceso* tamanio_proceso = malloc(sizeof(t_tamanio_proceso));
+	t_pid_valor* pid_value = malloc(sizeof(t_pid_valor));
 	t_buffer* buffer = paquete->buffer;
 	buffer->desplazamiento = sizeof(uint32_t);
 	
-	recibir_de_buffer(&tamanio_proceso->PID,buffer,sizeof(uint32_t));
-	recibir_de_buffer(&tamanio_proceso->tamanio,buffer,sizeof(uint32_t));
+	recibir_de_buffer(&pid_value->PID,buffer,sizeof(uint32_t));
+	recibir_de_buffer(&pid_value->valor,buffer,sizeof(uint32_t));
 
-	return tamanio_proceso;
+	return pid_value;
 
 }

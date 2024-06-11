@@ -63,7 +63,7 @@ int convertir_bytes_a_paginas(int);
 bool validar_ampliacion_proceso(int);
 void ampliar_proceso(t_list* ,int );
 void reducir_proceso(t_list* ,int);
-t_tamanio_proceso* recibir_tamanio_proceso(t_paquete*);
+t_pid_valor* recibir_pid_value(t_paquete*);
 
 char* obtener_frame(t_list* tabla_de_paginas,int nro_pagina);
 int calcular_bytes_restantes(int valor);

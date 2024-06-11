@@ -29,11 +29,11 @@ t_pcb* pcb_create_copy(char* path_programa){
    	return pcb;
 }
 
-t_tamanio_proceso* tamanio_proceso_create(uint32_t pid, uint32_t tamanio){
-	t_tamanio_proceso* tamanio_proceso = malloc(sizeof(t_tamanio_proceso));
-	tamanio_proceso->PID = pid;
-	tamanio_proceso->tamanio = tamanio;
-	return tamanio_proceso;
+t_pid_valor* pid_value_create(uint32_t pid, uint32_t valor){
+	t_pid_valor* pid_atributo = malloc(sizeof(t_pid_valor));
+	pid_atributo->PID = pid;
+	pid_atributo->valor = valor;
+	return pid_atributo;
 }
 
 t_registros_cpu* inicializar_registros(){
@@ -90,10 +90,10 @@ void loguear_pcb(t_pcb* pcb){
 	printf("FIN LOGUEO PCB\n");
 }
 
-void loguear_tamanio_proceso(t_tamanio_proceso* tamanio_proceso){
-	printf("LOGUEO TAMAÑO PROCESO\n");
-	loguear("PID: %d",tamanio_proceso->PID);
-	loguear("Tamaño: %d",tamanio_proceso->tamanio);
+void loguear_pid_value(t_pid_valor* pid_atributo){
+	printf("LOGUEO PID VALUE\n");
+	loguear("PID: %d",pid_atributo->PID);
+	loguear("Valor: %d",pid_atributo->valor);
 	printf("=============================== \n");
 
 }
@@ -262,4 +262,28 @@ void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen) {
     } else {
         destino->path = NULL;
     }
+}
+
+
+int list_find_index(t_list* self, bool(*condition)(void*)) {
+    if (self == NULL || condition == NULL) {
+        return -1;
+    }
+
+    t_link_element *current_element = self->head;
+    int index = 0;
+
+    while (current_element != NULL) {
+        if (condition(current_element->data)) {
+            return index;
+        }
+        current_element = current_element->next;
+        index++;
+    }
+
+    return -1;  // No se encontró ningún elemento que cumpla la condición
+}
+
+bool is_true(void* element){
+   return element!=NULL && *(bool*)element;
 }

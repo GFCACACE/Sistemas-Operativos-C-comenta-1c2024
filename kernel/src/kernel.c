@@ -180,7 +180,8 @@ bool iniciar_kernel(char* path_config){
 	iniciar_estados_planificacion()&&
 	iniciar_colas_entrada_salida()&&
 	iniciar_semaforos()&&
-	inicializar_dictionario_mutex_colas();
+	inicializar_dictionario_mutex_colas()&&
+	iniciar_threads_io();
 	//&&iniciar_conexion_io();
 }
 bool iniciar_semaforos(){
@@ -1277,10 +1278,12 @@ void pasar_a_exit(t_pcb* pcb){
 }
 
 
-void iniciar_threads_io(){
+bool iniciar_threads_io(){
 	pthread_t thread_io_conexion;
 	pthread_create(&thread_io_conexion,NULL, (void*) iniciar_conexion_io,NULL);
 	pthread_detach(thread_io_conexion);
+
+	return true;
 }
 
 void iniciar_conexion_io(){

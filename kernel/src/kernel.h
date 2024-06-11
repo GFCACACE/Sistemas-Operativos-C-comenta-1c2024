@@ -152,7 +152,7 @@ void pasar_a_exit(t_pcb*);
 
 void liberar_pcb_exec();
 t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char* params,bool(*funcion)(char**));
-void iniciar_threads_io();
+bool iniciar_threads_io();
 void iniciar_conexion_io();
 
 void io_handler(int* conexion);

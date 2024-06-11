@@ -243,7 +243,7 @@ int buscar_instrucciones(){
                 break;
 			case RESIZE:
 				int cod_op_a_devolver = RESIZE_OK;
-				t_tamanio_proceso* tamanio_proceso =  recibir_tamanio_proceso(paquete);
+				t_pid_valor* tamanio_proceso =  recibir_pid_value(paquete);
 				t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(tamanio_proceso->PID));
 				t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
 				int pag_solictadas_respecto_actual = diferencia_tamaño_nuevo_y_actual(tabla_de_paginas_proceso,tamanio_proceso);   // Devuelve la diferencia entre la cantidad de paginas solicitadas y las que actualmente tiene el proceso
@@ -263,10 +263,10 @@ int buscar_instrucciones(){
 				paquete_destroy(paquete);
 				break;
 			case ACCESO_TABLA_PAGINAS:
-				tamanio_proceso =  recibir_tamanio_proceso(paquete);
-				proceso_en_memoria = dictionary_get(procesos,string_itoa(tamanio_proceso->PID));
+				t_pid_valor* pid_pagina =  recibir_pid_value(paquete);
+				proceso_en_memoria = dictionary_get(procesos,string_itoa(pid_pagina->PID));
 				tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
-				int nro_pagina = tamanio_proceso->tamanio;
+				int nro_pagina = pid_pagina->valor;
 				char* frame = obtener_frame(tabla_de_paginas_proceso, nro_pagina);
 				enviar_texto(frame,RESPUESTA_NRO_FRAME,conexion_cpu);
 				free(frame);
@@ -457,9 +457,9 @@ void imprimir_uso_frames(){
 //  -> 2. Quiere decir que es ampliación y se están pidiendo dos paginas mas de las que ya tiene
 //  -> -4. Quiere decir que es reducción y deben sacar las últimas 4 páginas del proceso
 //  -> 0 (No se si se va a dar este caso, lo contemplo. No hay resize. Mismo tamanio)
-int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,t_tamanio_proceso* tamanio_proceso){
+int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,t_pid_valor* tamanio_proceso){
 
-int cantidad_paginas_solicitadas = convertir_bytes_a_paginas(tamanio_proceso->tamanio);
+int cantidad_paginas_solicitadas = convertir_bytes_a_paginas(tamanio_proceso->valor);
 
 if (list_is_empty(tabla_paginas)){
 	return cantidad_paginas_solicitadas;

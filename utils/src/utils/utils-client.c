@@ -205,11 +205,11 @@ void agregar_a_buffer(t_buffer* buffer,const void* lugar_origen,size_t tam){
 	buffer->desplazamiento+=tam;
 }
 
-void* serializar_tamanio_proceso(t_tamanio_proceso* tamanio_proceso,int* size){
+void* serializar_pid_value(t_pid_valor* pid_value,int* size){
 	*size = sizeof(uint32_t) *2 ;
 	t_buffer* buffer = crear_buffer(*size);
-	agregar_a_buffer(buffer, &tamanio_proceso->PID, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &tamanio_proceso->tamanio, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pid_value->PID, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &pid_value->valor, sizeof(uint32_t));
 	
 	void * stream = buffer->stream;
 	free(buffer);
@@ -263,9 +263,9 @@ void enviar_pcb(t_pcb* pcb,op_code operacion,int socket){
 }
 
 															
-void enviar_tamanio_proceso(t_tamanio_proceso* tamanio_proceso,op_code operacion,int socket){
+void enviar_pid_value(t_pid_valor* pid_value,op_code operacion,int socket){
 	int size;
-	void* stream = serializar_tamanio_proceso(tamanio_proceso,&size);									
+	void* stream = serializar_pid_value(pid_value,&size);									
 					 
 	enviar_stream(stream,size,socket,operacion);
 	free(stream);

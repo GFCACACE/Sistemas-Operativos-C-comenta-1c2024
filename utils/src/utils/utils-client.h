@@ -21,6 +21,6 @@ void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete*);
 void enviar_pcb(t_pcb* pcb,op_code operacion,int socket);
 void enviar_texto(char*texto,op_code codigo_operacion,int socket);
-void enviar_tamanio_proceso(t_tamanio_proceso* tamanio_proceso,op_code operacion,int socket);
+void enviar_pid_value(t_pid_valor* tamanio_proceso,op_code operacion,int socket);
 
 #endif /* utils_client_h */

@@ -105,8 +105,8 @@ typedef struct
 typedef struct
 {
 	uint32_t PID;
-	uint32_t tamanio;
-} t_tamanio_proceso;
+	uint32_t valor;
+} t_pid_valor;
 
 typedef struct t_validacion
 {
@@ -129,7 +129,25 @@ char* get_linea_archivo(char* directorio,char* nombre_archivo,int posicion);
 bool es_exit(void *comando);
 t_registros_cpu* inicializar_registros();
 void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen);
-void loguear_tamanio_proceso(t_tamanio_proceso* tamanio_proceso);
-t_tamanio_proceso* tamanio_proceso_create(uint32_t pid, uint32_t tamanio);
+void loguear_pid_value(t_pid_valor* tamanio_proceso);
+t_pid_valor* pid_value_create(uint32_t pid, uint32_t valor);
+/**
+ * @fn    list_find_index
+ * @brief Retorna el índice del primer valor encontrado que haga que condition devuelva != 0
+ * @param self La lista
+ * @param condition Función que recibe un elemento y devuelve true si se cumple la condición
+ * @return El índice del primer elemento que cumple la condición o -1 si ninguno lo cumple
+ */
+int list_find_index(t_list* self, bool(*condition)(void*));
+
+
+/**
+ * @fn    is_true
+ * @brief Retorna el valor booleano del valor al que apunta el elemento del parámetro. Si es NULL retorna false.
+ * @param element Un puntero a un valor que debería ser booleano.
+ * @return El valor booleano al que apunta el elemento del parámetro
+ */
+bool is_true(void* element);
+
 
 #endif /* utils_commons_h */

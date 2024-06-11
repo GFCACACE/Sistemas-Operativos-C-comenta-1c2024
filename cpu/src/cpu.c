@@ -469,9 +469,9 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 //	enviar_texto(tamanio.string_valor,RESIZE,conexion_memoria);
 	uint32_t tamanio = atoi(p_tamanio.string_valor);
-	t_tamanio_proceso* tamanio_proceso= tamanio_proceso_create(pcb->PID,tamanio);
-    enviar_tamanio_proceso(tamanio_proceso,RESIZE,conexion_memoria);
-    loguear_tamanio_proceso(tamanio_proceso);
+	t_pid_valor* tamanio_proceso= pid_value_create(pcb->PID,tamanio);
+    enviar_pid_value(tamanio_proceso,RESIZE,conexion_memoria);
+    loguear_pid_value(tamanio_proceso);
     free(tamanio_proceso);
 
 
@@ -501,10 +501,10 @@ uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica){
 	char* nro_frame = string_new();
 	sprintf(nro_pagina,"%d",numero_pagina);
 	// Agrego el pcb y ple paso un proceso a la memoria para que pueda encontrar que proceso le está pidiendo la CPU
-	t_tamanio_proceso* tamanio_proceso= tamanio_proceso_create(pcb->PID,(u_int32_t)nro_pagina); //Vamos con esta conversion?
+	t_pid_valor* tamanio_proceso= pid_value_create(pcb->PID,(u_int32_t)nro_pagina); //Vamos con esta conversion?
 	// FALTA LOGICA SEGUIR PIDIENDO FRAMES HASTA TENER UN FIN DE CADENA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	//Haciendo esta reutilización, capaz hay que cambiar el nombre de tamanio. Acá en tamanio le estamos pasando una página
-	enviar_tamanio_proceso(tamanio_proceso,ACCESO_TABLA_PAGINAS,conexion_memoria);
+	enviar_pid_value(tamanio_proceso,ACCESO_TABLA_PAGINAS,conexion_memoria);
 	//enviar_texto(nro_pagina,ACCESO_TABLA_PAGINAS,conexion_memoria);
 	free(nro_pagina);
 	int response = recibir_operacion(conexion_memoria);
