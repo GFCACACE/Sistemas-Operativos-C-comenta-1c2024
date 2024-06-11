@@ -784,8 +784,10 @@ bool iniciar_planificacion(char** substrings){
 	return true;
 }
 bool detener_planificacion(char** substrings){
-	sem_wait(&sem_bin_recibir_pcb);
-	detener_planificacion_bool = true;
+	if(!detener_planificacion){
+		sem_wait(&sem_bin_recibir_pcb);
+		detener_planificacion_bool = true;
+	}
 	return true;
 }
 
