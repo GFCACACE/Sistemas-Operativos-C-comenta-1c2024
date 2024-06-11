@@ -94,7 +94,7 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 
 bool iniciar_logger_config(char* path_config){
 	decir_hola(MODULO);
-    logger = iniciar_logger__(MODULO,0,0);
+    logger = iniciar_logger_(MODULO,0);
 	if(logger == NULL) printf("EL LOGGER NO PUDO SER INICIADO.\n");
 	config = iniciar_config_kernel(path_config);
 	if(config == NULL) {
@@ -800,7 +800,7 @@ bool iniciar_planificacion(char** substrings){
 	return true;
 }
 bool detener_planificacion(char** substrings){
-	if(!detener_planificacion){
+	if(!detener_planificacion_bool){
 		sem_wait(&sem_bin_recibir_pcb);
 		detener_planificacion_bool = true;
 	}
@@ -880,7 +880,6 @@ bool finalizar_consola(char** parametros){
 void iniciar_consola(){
 	char *cadenaLeida;
 	int comando = -1;
-	int comando2;
 	 while (comando == -1 || comando != EXIT) {
 		listar_comandos();
         cadenaLeida =  leer_texto_consola();

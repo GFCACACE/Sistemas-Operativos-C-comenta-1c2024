@@ -26,7 +26,7 @@ t_log* iniciar_logger_(char* nombre_archivo, int mostrar_consola)
     char *titulo = string_duplicate(nombre_archivo);
     string_to_upper(titulo);
     char* path = construir_path_log(nombre_archivo);
-	t_log* nuevo_logger =log_create(path,titulo,mostrar_cola,LOG_LEVEL_INFO);
+	t_log* nuevo_logger =log_create(path,titulo,mostrar_consola,LOG_LEVEL_INFO);
     free(path);
     free(titulo);
 
