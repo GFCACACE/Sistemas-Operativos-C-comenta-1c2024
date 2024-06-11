@@ -92,7 +92,7 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 
 bool iniciar_logger_config(char* path_config){
 	decir_hola(MODULO);
-    logger = iniciar_logger(MODULO);
+    logger = iniciar_logger_(MODULO,0);
 	if(logger == NULL) printf("EL LOGGER NO PUDO SER INICIADO.\n");
 	config = iniciar_config_kernel(path_config);
 	if(config == NULL) {
@@ -198,18 +198,6 @@ bool iniciar_semaforos(){
 	return true;
 }
 
-// bool iniciar_conexion_io(){
-// 	pthread_t thread_io;
-
-// 	pthread_create(&thread_io,NULL, (void*)io_handler,NULL);
-
-// 	pthread_detach(thread_io);
-// 	if(thread_io == -1){
-// 		loguear_error("No se pudo iniciar la I/O.");
-// 		return false;
-// 	}
-// 	return true;
-// }
 bool inicializar_dictionario_mutex_colas(){
 
  estados_dictionary = dictionary_create();
@@ -651,6 +639,16 @@ int ejecutar_comando_consola(char*params){
 		comando_consola = dictionary_get(comandos_consola,comando);
 		numero_comando = comando_consola->comando;
 		if(comando_consola->comando != EXIT){
+			// TODO
+		
+			// pthread_t thread_instruccion;
+
+			// pthread_create(&thread_instruccion,NULL,(bool*)comando_consola->funcion,parametros);
+			
+			// pthread_detach(thread_instruccion);
+			// if (thread_instruccion == -1)
+			// 	loguear_error("No se pudo iniciar el hilo de la instruccion %s", parametros[0]);
+			
        		comando_consola->funcion(parametros);
 		}
 	}
@@ -1331,7 +1329,7 @@ void iniciar_conexion_io(){
 }
 
 bool existe_interfaz(char* nombre_interfaz){
-	return dictionary_has_key(diccionario_nombre_conexion,nombre_interfaz);
+	return (!dictionary_is_empty(diccionario_nombre_conexion) && dictionary_has_key(diccionario_nombre_conexion,nombre_interfaz));
 }
 
 char *recibir_nombre(int conexion){

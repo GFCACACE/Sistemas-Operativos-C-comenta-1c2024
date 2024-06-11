@@ -21,7 +21,7 @@ char* construir_path_log(char* nombre_archivo){
     return construir_path(nombre_archivo,".log");
 }
 
-t_log* iniciar_logger(char* nombre_archivo)
+t_log* iniciar_logger_(char* nombre_archivo, int mostrar_consola)
 {
     char *titulo = string_duplicate(nombre_archivo);
     string_to_upper(titulo);
@@ -32,6 +32,13 @@ t_log* iniciar_logger(char* nombre_archivo)
 
 	return nuevo_logger;
 }
+
+t_log* iniciar_logger(char* nombre_archivo)
+{
+   return iniciar_logger_(nombre_archivo,1);
+}
+
+
 
 void loguear(const char* message_template, ...) {
 	

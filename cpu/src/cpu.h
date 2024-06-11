@@ -67,7 +67,7 @@ bool devolver_contexto(t_pcb *pcb,op_code codigo_operacion);
 bool actualizar_contexto(t_pcb*);
 bool actualizar_registros(t_pcb*);
 bool exe_set(t_param,t_param);
-bool exe_mov_in(t_param,t_param);
+bool exe_mov_in(t_pcb*,t_param,t_param);
 bool exe_mov_out(t_param,t_param);
 bool exe_sum(t_param,t_param);
 bool exe_sub(t_param,t_param);
@@ -81,7 +81,7 @@ bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 /*MMU*/
-uint32_t mmu(uint32_t);
+uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica);
 //////////////////////////////////
 extern int tamanio_pagina;
 extern t_log* logger;
