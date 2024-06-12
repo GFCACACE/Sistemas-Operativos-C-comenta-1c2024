@@ -4,6 +4,7 @@
 #include<commons/config.h>
 #include<commons/log.h>
 #include<commons/string.h>
+#include<math.h>
 #include<commons/collections/dictionary.h>
 #include "utils/utils-server.h"
 #include "utils/utils-client.h"
@@ -68,7 +69,7 @@ bool actualizar_contexto(t_pcb*);
 bool actualizar_registros(t_pcb*);
 bool exe_set(t_param,t_param);
 bool exe_mov_in(t_pcb*,t_param,t_param);
-bool exe_mov_out(t_param,t_param);
+bool exe_mov_out(t_pcb*,t_param,t_param);
 bool exe_sum(t_param,t_param);
 bool exe_sub(t_param,t_param);
 bool exe_jnz(t_param,t_param);

@@ -484,7 +484,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	//pthread_mutex_lock(&interfaz->mx_blocked);
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, &interfaz->mx_blocked);
 	//pthread_mutex_unlock(&interfaz->mx_blocked);
-	loguear_warning("Paso los mutex");
+	//loguear_warning("Paso los mutex");
 
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
@@ -788,9 +788,9 @@ void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado){
 
 bool finalizar_proceso(char** substrings){	
 		imprimir_valores_leidos(substrings);
-		
-		loguear("Finaliza el proceso <PID> - Motivo: Finalizado por consola");
-
+		uint32_t pid = atoi(substrings[1]);
+		eliminar_proceso(pid);
+		loguear("Finaliza el proceso <%s> - Motivo: Finalizado por consola",substrings[1]);
 		return true;
 }
 
@@ -1288,6 +1288,8 @@ bool iniciar_servidor_kernel(){
 
 
 
+
+
 bool eliminar_proceso(uint32_t pid){ // Al implementar en consola, hay q parsear el char* a uint32_t
 	
 	bool _eliminar_proceso_en_lista(t_queue* estado, pthread_mutex_t* mutex_estado){
@@ -1301,12 +1303,24 @@ bool eliminar_proceso(uint32_t pid){ // Al implementar en consola, hay q parsear
 		return (_eliminar_proceso_en_lista(estado_new, &mx_new) || 
 	_eliminar_proceso_en_lista(estado_ready, &mx_ready) ||
 	eliminar_proceso_en_blocked(pid) ||   
-	_eliminar_proceso_en_lista(estado_ready_plus, &mx_ready_plus) );
+	_eliminar_proceso_en_lista(estado_ready_plus, &mx_ready_plus) ||
+	eliminar_proceso_en_exec(pid));
 	}
 	return (_eliminar_proceso_en_lista(estado_new, &mx_new) || 
 	_eliminar_proceso_en_lista(estado_ready, &mx_ready) || 
-	eliminar_proceso_en_blocked(pid)   
-	);
+	eliminar_proceso_en_blocked(pid) ||
+	eliminar_proceso_en_exec(pid));
+}
+
+bool eliminar_proceso_en_exec(uint32_t pid){
+	pthread_mutex_lock(&mx_pcb_exec);
+	if(pcb_exec->PID == pid){
+		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
+		pthread_mutex_unlock(&mx_pcb_exec);
+		return true;
+	}
+	pthread_mutex_unlock(&mx_pcb_exec);
+	return false;
 }
 
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
@@ -1389,7 +1403,6 @@ void iniciar_conexion_io(){
 			loguear_warning("No se puso establecer la conexion con el cliente(I/O).");
 			// JUmp al principio?
 		}
-		//char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
 		char* nombre_interfaz = malloc(16);
 		nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
 		//
@@ -1417,9 +1430,10 @@ bool existe_interfaz(char* nombre_interfaz){
 }
 
 char *recibir_nombre(int conexion){
-	char* nombre = string_new();
+	char* nombre = malloc(15);
 	if(recibir_operacion(conexion) == NUEVA_IO)
 	nombre = recibir_mensaje(conexion);
+	else loguear_error("RECIBÍ VACÍO");
 	return nombre;
 }
 
