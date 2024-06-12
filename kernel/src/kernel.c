@@ -768,8 +768,7 @@ void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado){
 
 bool finalizar_proceso(char** substrings){	
 		imprimir_valores_leidos(substrings);
-		enviar_texto(" ",CPU_EXIT,cpu_interrupt);
-		loguear("Finaliza el proceso <PID> - Motivo: Finalizado por consola");
+		loguear("Finaliza el proceso <%s> - Motivo: Finalizado por consola",substrings[1]);
 
 		return true;
 }
@@ -1330,9 +1329,10 @@ bool existe_interfaz(char* nombre_interfaz){
 }
 
 char *recibir_nombre(int conexion){
-	char* nombre = string_new();
+	char* nombre = malloc(15);
 	if(recibir_operacion(conexion) == NUEVA_IO)
 	nombre = recibir_mensaje(conexion);
+	else loguear_error("RECIBÍ VACÍO");
 	return nombre;
 }
 

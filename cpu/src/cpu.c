@@ -355,7 +355,7 @@ bool execute(t_pcb *pcb)
 	}
 	if (!strcmp(INSTID, "IO_GEN_SLEEP"))
 	{
-		
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_io_gen_sleep(pcb,PARAM1, PARAM2);
 
 		
