@@ -58,6 +58,7 @@ t_dictionary *iniciar_diccionario_cpu()
 	dictionary_put(diccionario, "EDX", &registros_cpu->EDX);
 	dictionary_put(diccionario, "DI", &registros_cpu->DI);
 	dictionary_put(diccionario, "SI", &registros_cpu->SI);
+	dictionary_put(diccionario, "PC",&registros_cpu->PC);
 
 	return diccionario;
 }
@@ -465,6 +466,20 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	free(direccion_enviar);
 	free(valor_memoria);
 	return true;
+}
+bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registro_datos){
+	char* direccion_enviar = string_new();
+	char* valor_memoria = string_new();
+	uint32_t direccion_fisica = mmu(pcb_recibido,(uint32_t*)registro_direccion.puntero);
+	sprintf(direccion_enviar,"%d %d %s",pcb_recibido->PID,direccion_fisica, registro_datos.string_valor);
+	enviar_texto(direccion_enviar,ESCRITURA_MEMORIA,conexion_memoria);
+	int operacion_ok = recibir_operacion(conexion_memoria);
+	if(operacion_ok== MOV_OUT_OK){
+		valor_memoria=recibir_mensaje(conexion_memoria);
+		loguear(valor_memoria);
+		return true;
+	}
+	return false;
 }
 bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 //	enviar_texto(tamanio.string_valor,RESIZE,conexion_memoria);

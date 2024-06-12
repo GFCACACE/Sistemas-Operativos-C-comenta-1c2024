@@ -768,7 +768,7 @@ void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado){
 
 bool finalizar_proceso(char** substrings){	
 		imprimir_valores_leidos(substrings);
-		
+		enviar_texto(" ",CPU_EXIT,cpu_interrupt);
 		loguear("Finaliza el proceso <PID> - Motivo: Finalizado por consola");
 
 		return true;
