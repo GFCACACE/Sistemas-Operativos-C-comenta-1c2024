@@ -364,26 +364,45 @@ bool execute(t_pcb *pcb)
 		return true;
 	}
 	if(!strcmp(INSTID, "COPY_STRING")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s>", pcb->PID, INSTID, PARAM1.string_valor);
 		exe_copy_string(PARAM1);
 		actualizar_contexto(pcb);
 		liberar_param(PARAM1);
 		return true;
 	}
 	if(!strcmp(INSTID, "RESIZE")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s>", pcb->PID, INSTID, PARAM1.string_valor);
 		bool flag_resize=exe_resize(pcb,PARAM1);
 		
 		liberar_param(PARAM1);
 		return flag_resize;
 	}
+	if(!strcmp(INSTID, "MOV_IN")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
+		exe_mov_in(pcb,PARAM1,PARAM2);
+
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
+		return true;
+	}
+	if(!strcmp(INSTID, "MOV_OUT")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
+		exe_mov_out(pcb,PARAM1,PARAM2);
+
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
+		return true;
+	}
 	if (es_exit(INSTID))
-	{
+	{	
+
 		loguear("PID: <%d> - Ejecutando: <%s>", pcb->PID, INSTID);
 		exe_exit(pcb);
 		loguear("Saliendo...");
 		return true;
 	}
 
-
+	loguear_error("INSTRUCCION NO ENCONTRADA");
 	return false;
 }
 
@@ -449,7 +468,7 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_direccion){
 	char* direccion_enviar = string_new();
 	char* valor_memoria = string_new();
-	uint32_t direccion_fisica = mmu(pcb_recibido,(uint32_t*)registro_direccion.puntero);
+	uint32_t direccion_fisica = mmu(pcb_recibido,*(uint32_t*)registro_direccion.puntero);
 	sprintf(direccion_enviar,"%d",direccion_fisica);
 	enviar_texto(direccion_enviar,LECTURA_MEMORIA,conexion_memoria);
 	
@@ -470,7 +489,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registro_datos){
 	char* direccion_enviar = string_new();
 	char* valor_memoria = string_new();
-	uint32_t direccion_fisica = mmu(pcb_recibido,(uint32_t*)registro_direccion.puntero);
+	uint32_t direccion_fisica = mmu(pcb_recibido,*(uint32_t*)registro_direccion.puntero);
 	sprintf(direccion_enviar,"%d %d %s",pcb_recibido->PID,direccion_fisica, registro_datos.string_valor);
 	enviar_texto(direccion_enviar,ESCRITURA_MEMORIA,conexion_memoria);
 	int operacion_ok = recibir_operacion(conexion_memoria);
@@ -512,16 +531,15 @@ bool exe_exit(t_pcb *pcb)
 uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica){
 	uint32_t direccion_fisica;
 	uint32_t numero_pagina = floor(direccion_logica/tamanio_pagina);
-	char* nro_pagina = string_new();
 	char* nro_frame = string_new();
-	sprintf(nro_pagina,"%d",numero_pagina);
+
 	// Agrego el pcb y ple paso un proceso a la memoria para que pueda encontrar que proceso le está pidiendo la CPU
-	t_pid_valor* tamanio_proceso= pid_value_create(pcb->PID,(u_int32_t)nro_pagina); //Vamos con esta conversion?
+	t_pid_valor* tamanio_proceso= pid_value_create(pcb->PID,numero_pagina); //Vamos con esta conversion?
 	// FALTA LOGICA SEGUIR PIDIENDO FRAMES HASTA TENER UN FIN DE CADENA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	//Haciendo esta reutilización, capaz hay que cambiar el nombre de tamanio. Acá en tamanio le estamos pasando una página
 	enviar_pid_value(tamanio_proceso,ACCESO_TABLA_PAGINAS,conexion_memoria);
 	//enviar_texto(nro_pagina,ACCESO_TABLA_PAGINAS,conexion_memoria);
-	free(nro_pagina);
+
 	int response = recibir_operacion(conexion_memoria);
 	if(response == RESPUESTA_NRO_FRAME)
 		nro_frame = recibir_mensaje(conexion_memoria);

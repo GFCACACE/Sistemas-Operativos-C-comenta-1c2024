@@ -1321,7 +1321,8 @@ void iniciar_conexion_io(){
 			loguear_warning("No se puso establecer la conexion con el cliente(I/O).");
 			// JUmp al principio?
 		}
-		char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
+		char* nombre_interfaz = malloc(16);
+		nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
 		//
 		char* string_conexion = string_itoa(*fd_conexion_ptr);
 		loguear("bienvenido %s",nombre_interfaz);

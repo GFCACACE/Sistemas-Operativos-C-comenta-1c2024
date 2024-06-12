@@ -4,6 +4,7 @@
 #include<commons/config.h>
 #include<commons/log.h>
 #include<commons/string.h>
+#include<math.h>
 #include<commons/collections/dictionary.h>
 #include "utils/utils-server.h"
 #include "utils/utils-client.h"
