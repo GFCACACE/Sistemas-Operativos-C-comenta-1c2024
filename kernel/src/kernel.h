@@ -146,6 +146,7 @@ void ejecutar_proceso();
 bool crear_proceso_en_memoria(t_pcb*);
 bool eliminar_proceso_en_memoria(t_pcb*);
 bool eliminar_proceso_en_blocked(uint32_t pid_buscado);
+bool eliminar_proceso_en_exec(uint32_t pid);
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
 
 
