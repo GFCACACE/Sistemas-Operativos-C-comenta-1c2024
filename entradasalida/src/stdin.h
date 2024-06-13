@@ -3,7 +3,7 @@
 #include "entradasalida.h"
 
 
-void io_stdin_read(char* direccion_pedida, int tamanio);
+void io_stdin_read(/*registro direccion*/);
 char* leer_texto_consola();
 
 #endif
