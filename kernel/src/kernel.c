@@ -819,9 +819,6 @@ void* _detener(){
 		hilo_detencion(&detener_plani_nuevos);
 		hilo_detencion(&detener_plani_finalizados);
 		hilo_detencion(&detener_plani_corto);
-		// hilo_detencion(&detener_ready_a_exec);
-		// hilo_detencion(&detener_readyplus_a_exec);	
-
 		hilo_detencion(&detener_recibir_pcb);	
 
 		return NULL;
