@@ -89,7 +89,9 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 	config_kernel->PATH_SCRIPTS = config_get_string_value(_config,"PATH_SCRIPTS");
 	config_kernel->config = _config;
 	if(config_kernel->ALGORITMO_PLANIFICACION.planificar ==NULL)
+	{	config_kernel_destroy(config_kernel);
 		return NULL;
+	}
 	return config_kernel;
 }
 
@@ -560,7 +562,11 @@ void loguear_config(){
 
 char* leer_texto_consola(){
 	
-	return readline(">");
+	char* input = readline(">");
+	 if (input != NULL && *input != '\0')
+        add_history(input); // Agrega la entrada al historial de readline
+    
+    return input;
 
 }
 
@@ -871,11 +877,15 @@ void imprimir_cola(t_queue *cola, const char *estado) {
     printf("|------------|----------------------|-----------------|\n");
 }
 
+bool es_planificacion(t_alg_planificador algoritmo){
+	return config->ALGORITMO_PLANIFICACION.id == algoritmo;
+}
+
 bool es_rr(){
-	return config->ALGORITMO_PLANIFICACION.id == RR;
+	return es_planificacion(RR);
 }
 bool es_vrr(){
-	return config->ALGORITMO_PLANIFICACION.id == VRR;
+	return es_planificacion(VRR);
 }
 
 bool proceso_estado(){
@@ -905,6 +915,7 @@ bool finalizar_consola(char** parametros){
 
 
 void iniciar_consola(){
+	 using_history(); // Activa la funcionalidad de historial de readline
 	char *cadenaLeida;
 	int comando = -1;
 	 while (comando == -1 || comando != EXIT) {
@@ -913,6 +924,7 @@ void iniciar_consola(){
 		comando = ejecutar_comando_consola(cadenaLeida);
 		free(cadenaLeida);
     }
+	 rl_clear_history(); // Limpia el historial de readline después de usar la interfaz de línea de comandos
 }
 
 void ejecutar_planificacion(){
@@ -1135,12 +1147,12 @@ void finalizar_kernel(){
 	if (conexion_memoria != -1) liberar_conexion(conexion_memoria);
 	if (cpu_dispatch != -1) liberar_conexion(cpu_dispatch);
 	if (cpu_interrupt != -1) liberar_conexion(cpu_interrupt);
-	if(config!=NULL) config_destroy_kernel(config);
 	if(logger!=NULL) log_destroy(logger);
 	liberar_comandos();
 	liberar_colas();
 	liberar_semaforos();	
 	liberar_diccionario_colas();
+	if(config!=NULL) config_destroy_kernel(config);
 }
 
 

@@ -9,10 +9,11 @@
 #include <utils/utils-commons.h>
 #include <utils/utils-config.h>
 #include <readline/readline.h>
+#include <readline/history.h>
 #include <time.h>
 #define MODULO "kernel"
 
-typedef enum
+typedef enum t_alg_planificador
 {
 	FIFO,
 	RR,
