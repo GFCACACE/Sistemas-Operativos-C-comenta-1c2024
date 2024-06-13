@@ -12,8 +12,8 @@ workspace_basename=$(basename "$workspace_path")
 FILE=$workspace_basename
 BIN=./bin/$FILE
 config_file="./$FILE.config"
-log_file = "v$workspace_path.log"
-valgrind_comando = " valgrind --tool=memcheck --leak-check=yes --show-possibly-lost=no --show-reachable=no --num-callers=20 --track-origins=yes --log-file=$log_file -s"
+log_file="v$workspace_basename.log"
+valgrind_comando="valgrind --tool=memcheck --leak-check=yes --show-possibly-lost=no --show-reachable=no --num-callers=20 --track-origins=yes --log-file=$log_file -s"
 make $BIN
 
 # Verificar si el binario fue creado y ejecutar
