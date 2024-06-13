@@ -157,15 +157,25 @@ int ejecutar_op_io()
         switch (cod_op) {
 			//BRAND NEW
             case IO_GEN_SLEEP:
-				char mensaje[50];
+				char mensaje[60];
 				sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
-				loguear(mensaje);
+				//loguear(mensaje);
+				loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
 				io_gen_sleep(atoi(splitter[1]));
 				//loguear_warning("Ya termino de dormir zzzzz");
 				enviar_texto(mensaje,TERMINO_IO_GEN_SLEEP,conexion_kernel);
 				loguear_warning("Termino el io_gen_sleep");
                 break;			
-			//BRAND NEW	
+			// case IO_STDIN_READ:
+			// 	char mensaje[60];
+			// 	sprintf(mensaje,"PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
+			// 	loguear(mensaje);
+			// 	loguear("PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
+			// 	io_stdin_read(splitter[1], atoi(splitter[2]));
+			// 	loguear_warning("Ya termino de dormir zzzzz");
+			// 	enviar_texto(mensaje,TERMINO_STDIN,conexion_kernel);
+			// 	loguear_warning("Termino el io_stdin_read");
+            //     break;	
             case -1:
 			loguear_error("Problemas en la comunicacion con el servidor. Cerrando conexion...");
 			//paquete_destroy(paquete);

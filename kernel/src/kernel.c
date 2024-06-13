@@ -443,6 +443,27 @@ void io_gen_sleep(int pid,char** splitter){
 				conexion_io);
 	loguear_warning("Peticion a IO enviada");
 }
+// void io_stdin(int pid, char** splitter){
+// 	loguear_warning("Entra al case");
+// 	char pid_direccion_tamanio [30];
+// 	sprintf(pid_direccion_tamanio,"%u",pid);
+// 	loguear_warning("El pid es %s", pid_direccion_tamanio);
+// 	strcat(pid_direccion_tamanio," ");
+// 	strcat(pid_direccion_tamanio, splitter[1]);
+// 	strcat(pid_direccion_tamanio," ");
+// 	strcat(pid_direccion_tamanio,splitter[2]);
+// 	loguear_warning("El mensaje es %s", pid_direccion_tamanio);
+
+// 	loguear_warning("IO_STDIN_READ -> Interfaz:%s Direccion:%s Tamanio:%s", splitter[0], splitter[1], splitter[2]);
+// 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, splitter[0]);
+// 	int conexion_io = *(int *)ptr_conexion;
+
+// 	enviar_texto(pid_direccion_tamanio,
+// 				IO_STDIN_READ,
+// 				conexion_io);
+// 	loguear_warning("Peticion a IO enviada");
+// }
+
 void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);
 	char* peticion;
@@ -463,7 +484,8 @@ void io_handler_exec(t_pcb* pcb_recibido){
 				io_gen_sleep(pcb_recibido->PID,splitter);
 			break;
 		case IO_STDIN_READ:
-			break;
+			// io_stdin(pcb_recibido->PID, splitter);
+			// break;
 		case IO_STDOUT_WRITE:
 			break;
 

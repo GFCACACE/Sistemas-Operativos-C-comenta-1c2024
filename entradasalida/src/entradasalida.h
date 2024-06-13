@@ -55,5 +55,6 @@ void loguear_config_generica();
 void loguear_config_stdin();
 void loguear_config_stdout();
 void loguear_config_dialfs();
+int ejecutar_op_io();
 void finalizar_io();
 #endif

@@ -159,12 +159,15 @@ bool iniciar_threads_io();
 void iniciar_conexion_io();
 
 void io_handler(int* conexion);
+void io_gen_sleep(int pid,char** splitter);
+//void io_stdin(int pid,char** splitter);
 bool le_queda_quantum(t_pcb* pcb);
 bool iniciar_servidor_kernel();
 bool existe_interfaz(char*);
 bool eliminar_proceso(uint32_t);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
+
 
 t_queue* buscar_cola_de_pcb(uint32_t pid);
 t_pcb* buscar_pcb_en_cola(t_queue* cola,uint32_t pid);
