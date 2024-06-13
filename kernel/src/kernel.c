@@ -150,13 +150,13 @@ bool iniciar_interrupt(){
 	return true;
 }
 
-bool iniciar_colas_entrada_salida(){
-	io_stdin = queue_create();
-	io_stdout = queue_create();
-	io_generica = queue_create();
-	io_dialfs = queue_create();
-	return true;
-}
+// bool iniciar_colas_entrada_salida(){
+// 	io_stdin = queue_create();
+// 	io_stdout = queue_create();
+// 	io_generica = queue_create();
+// 	io_dialfs = queue_create();
+// 	return true;
+// }
 
 bool iniciar_estados_planificacion(){
 
@@ -182,7 +182,7 @@ bool iniciar_kernel(char* path_config){
 	iniciar_dispatch()&&
 	iniciar_interrupt()&&
 	iniciar_estados_planificacion()&&
-	iniciar_colas_entrada_salida()&&
+	//iniciar_colas_entrada_salida()&&
 	iniciar_semaforos()&&
 	inicializar_dictionario_mutex_colas()&&
 	iniciar_threads_io();
@@ -268,12 +268,12 @@ t_queue* buscar_cola_de_pcb(uint32_t pid){
 
 	bool _es_id (void* elem){
 		return pcb_es_id(elem,pid);
-	}
+	};
 
 	bool _es_del_pcb(void* elem){
 		t_queue* cola = (t_queue*)elem;
 		return list_any_satisfy(cola->elements,_es_id);
-	}
+	};
 
 	return list_find(get_estados(),_es_del_pcb);
 }
@@ -465,6 +465,8 @@ void io_gen_sleep(int pid,char** splitter){
 // 	loguear_warning("Peticion a IO enviada");
 // }
 
+
+
 void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);
 	char* peticion;
@@ -486,8 +488,9 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			break;
 		case IO_STDIN_READ:
 			// io_stdin(pcb_recibido->PID, splitter);
-			// break;
+			break;
 		case IO_STDOUT_WRITE:
+		//  io_stdout(pcb_recibido->PID, splitter);
 			break;
 
 		default:
@@ -1322,6 +1325,18 @@ bool le_queda_quantum(t_pcb* pcb){
 	//VERIFICAR DESPUES DE HACER VIRTUAL ROUND ROBIN
 }
 
+void a_ready(t_pcb* pcb){
+	if(es_vrr()){
+		if(le_queda_quantum(pcb))
+			push_proceso_a_estado(pcb,estado_ready_plus,&mx_ready_plus);
+		else
+			push_proceso_a_estado(pcb,estado_ready,&mx_ready);
+	}
+	else
+		push_proceso_a_estado(pcb,estado_ready,&mx_ready);
+	sem_post(&sem_bin_ready);
+}
+
 void io_handler(int *ptr_conexion){
 	while(1){
 		int conexion = *ptr_conexion;
@@ -1336,6 +1351,9 @@ void io_handler(int *ptr_conexion){
 		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
 		free(string_conexion);
 		switch (cod_operacion){
+			// SI LA RESPONSABILIDAD DE LEER/ESCRIBIR MEMORIA PARA LAS STD LE CABE A LAS INTERFACES,
+			// NO SERÍA NECESARIO DIVIDIR POR CASES ENTRE GENERICA, STDIN Y STDOUT
+			// TODAS HARÍAN LO MISMO
 			case TERMINO_IO_GEN_SLEEP:
 				//mensaje = recibir_mensaje(conexion);
 				pthread_mutex_lock(&interfaz -> mx_blocked);
@@ -1344,21 +1362,24 @@ void io_handler(int *ptr_conexion){
 				// pop_estado_get_pcb()
 				loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
 
-				if(es_vrr()){
-					if(le_queda_quantum(pcb))
-						push_proceso_a_estado(pcb,estado_ready_plus,&mx_ready_plus);
-				}
-				push_proceso_a_estado(pcb,estado_ready,&mx_ready);
-				sem_post(&sem_bin_ready);
+				// if(es_vrr()){
+				// 	if(le_queda_quantum(pcb))
+				// 		push_proceso_a_estado(pcb,estado_ready_plus,&mx_ready_plus);
+				// }
+				// 
+				// 	push_proceso_a_estado(pcb,estado_ready,&mx_ready);
+				a_ready(pcb);
+				//sem_post(&sem_bin_ready);
+				
 
 				break;
 			case TERMINO_STDIN:
 				//mensaje = recibir_mensaje(conexion);
-				//enviar mensaje recibido a memoria para que lo almacene en 
+				//enviar mensaje recibido a memoria para que lo almacene // ¿ESTO LO HACE LA PROPIA INTERFAZ?
 				// pthread_mutex_lock(&blocked_interfaz -> mx_blocked);
 				// pcb = queue_pop(blocked_interfaz-> estado_blocked);
 				// pthread_mutex_unlock(&blocked_interfaz -> mx_blocked);
-
+				//a_ready(pcb);
 
 				default:
 					return;
