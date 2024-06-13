@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Nombre del archivo log
+LOGFILE="kernel.log"
+
+# Comando para colorear y mostrar el log en tiempo real
+tail -f "$LOGFILE" | sed -u \
+    -e 's/^\[INFO\].*/\x1b[0m&\x1b[0m/' \
+    -e 's/^\[WARNING\].*/\x1b[33m&\x1b[0m/' \
+    -e 's/^\[ERROR\].*/\x1b[31m&\x1b[0m/'
