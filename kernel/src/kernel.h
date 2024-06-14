@@ -180,6 +180,7 @@ void bloquear_mutex_colas();
 void desbloquear_mutex_colas();
 
 void modificar_quantum_restante(t_pcb* pcb);
+void blocked_interfaz_destroy(void* elemento );
 
 #endif /* kernel.h*/
 
