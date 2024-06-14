@@ -65,9 +65,13 @@ void ampliar_proceso(t_list* ,int );
 void reducir_proceso(t_list* ,int);
 t_pid_valor* recibir_pid_value(t_paquete*);
 void liberar_frame(int nro_frame);
-char* obtener_frame(t_list* tabla_de_paginas,int nro_pagina);
-
-
+int obtener_frame(t_list* tabla_de_paginas,int nro_pagina);
+void ejecutar_resize(t_pid_valor* tamanio_proceso);
+void acceder_tabla_de_paginas(t_pid_valor* pid_pagina);
+void acceder_a_espacio_usuario(op_code,t_acceso_espacio_usuario*);
+void liberar_proceso_de_memoria(uint32_t pid);
+int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,int tamanio_proceso);
 void efectuar_retardo();
+
 
 #endif /* memoria.h*/

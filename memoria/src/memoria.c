@@ -149,6 +149,16 @@ bool inicializar_memoria(){
 }
 bool iniciar_paginacion(){
 	
+	t_list* mi_lista = list_create();
+     list_add(mi_lista,98);
+     list_add(mi_lista,12);
+     list_add(mi_lista,212);
+    
+    printf("\n %d \n",obtener_frame(mi_lista,2));  
+
+
+
+
 	memoriaPrincipal = malloc(config_memoria->TAM_MEMORIA);
 	
 	tamanio_pagina = config_memoria-> TAM_PAGINA;
@@ -159,7 +169,7 @@ bool iniciar_paginacion(){
 	
 	
 	crear_frames_memoria_principal(cantidadFrames);
-	//imprimir_uso_frames();
+	imprimir_uso_frames();
 	loguear("Espacio memoria total: %d",config_memoria->TAM_MEMORIA);
 	loguear("Espacio memoria total: %d",config_memoria->TAM_MEMORIA);
 	loguear("El tamanio de pagina es: %d",tamanio_pagina);
@@ -287,9 +297,10 @@ void acceder_tabla_de_paginas(t_pid_valor* pid_pagina){
 		proceso_en_memoria = dictionary_get(procesos,string_itoa(pid_pagina->PID));
 		t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
 		int nro_pagina = pid_pagina->valor;
-		char* frame = obtener_frame(tabla_de_paginas_proceso, nro_pagina);
-		enviar_texto(frame,RESPUESTA_NRO_FRAME,conexion_cpu);
-		free(frame);
+		int frame = obtener_frame(tabla_de_paginas_proceso, nro_pagina);
+		char* frame_str =  string_itoa(frame);
+		enviar_texto(frame_str,RESPUESTA_NRO_FRAME,conexion_cpu);
+		free(frame_str);
 }
 
 void ejecutar_resize(t_pid_valor* tamanio_proceso){
@@ -313,13 +324,13 @@ void ejecutar_resize(t_pid_valor* tamanio_proceso){
 
 }
 
-void acceder_a_espacio_usuario(int tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
-	int* direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
+void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
+	int direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
 	int bytes_restantes_en_frame = acceso_espacio_usuario->bytes_restantes_en_frame;
 
 	if (tipo_acceso == LECTURA_MEMORIA){
 		char* dato_consultado;		
-		memcpy(&dato_consultado,direccion_real,bytes_restantes_en_frame);
+		memcpy(&dato_consultado,&direccion_real,bytes_restantes_en_frame);
 		enviar_texto(dato_consultado,VALOR_LECTURA_MEMORIA,conexion_cpu);
 		}
 	if (tipo_acceso==ESCRITURA_MEMORIA){
@@ -363,9 +374,11 @@ t_validacion* eliminar_proceso( t_pcb *pcb ){
 	t_proceso* proceso = (t_proceso*)dictionary_get(procesos, string_itoa(pcb->PID));
 	t_validacion* validacion = validacion_new();
 	if(proceso){
-		dictionary_remove_and_destroy(procesos,string_itoa(pcb->PID),proceso_destroy);
+		liberar_proceso_de_memoria(pcb->PID);
+		
 		validacion->descripcion = "Programa removido de memoria";
 		validacion->resultado = true;
+		
 	}
 	else
 	{	
@@ -425,8 +438,8 @@ int recibir_procesos(){
 			 	recibir_pcb_y_aplicar(paquete,crear_proceso,notificar_proceso_creado); 
 			break;
 			case ELIMINACION_PROCESO:
+				
 				recibir_pcb_y_aplicar(paquete,eliminar_proceso,notificar_proceso_eliminado); 
-				liberar_proceso_de_memoria(paquete); //Esta liberación no debe afectar la memoriaPrincipal. Sino poner en 0 los bits de uso
 			break;
 			case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");
@@ -446,7 +459,7 @@ void imprimir_uso_frames(){
 	printf("|  Indice  |   Uso   |");
 	printf("                                           \n");
 	for (int i=0;i<list_size(frames);i++){
-	int uso = list_get(frames,i);
+	int uso =  obtener_frame(frames,i);
 	
 	if(i>=10){
 		if(i>=100){
@@ -496,7 +509,8 @@ void ampliar_proceso(t_list* tabla_paginas,int cantidad_paginas_ampliar){
 
 for (int i = 0;i < cantidad_paginas_ampliar;i++){
 	int frame_asignado = asignar_frame();
-	list_add(tabla_paginas,frame_asignado);
+	int* frame = (int*) frame_asignado;
+	list_add(tabla_paginas, frame);
 }
 
 }
@@ -506,7 +520,8 @@ int ultimo_indice_actual = list_size(tabla_paginas)-1;
 int ultimo_indice_nuevo = ultimo_indice_actual - cantidad_paginas_reducir;
 
 for (int i = ultimo_indice_actual;i > ultimo_indice_nuevo;i--){
-	remover_proceso_del_frame(list_get(tabla_paginas,i)); //Cambia el bit de uso a false
+	int indice =  obtener_frame(tabla_paginas,i);
+	remover_proceso_del_frame(indice); //Cambia el bit de uso a false
 	list_remove(tabla_paginas,i);
 }
 
@@ -516,20 +531,20 @@ int convertir_bytes_a_paginas(int tamanio_bytes){
 	return tamanio_bytes / config_memoria->TAM_PAGINA; //Debería siempre devolver un entero no? Son múltiplos del tamanio memoria
 }
 
-char* obtener_frame(t_list* tabla_de_paginas,int nro_pagina){
-	return string_itoa(list_get(tabla_de_paginas,nro_pagina)); //Tengo que convertir en int?
+int obtener_frame(t_list* tabla_de_paginas,int nro_pagina){
+	return list_get(tabla_de_paginas,nro_pagina);
+	
 }
 
-void liberar_proceso_de_memoria(paquete){
-	t_pid_valor* pid_pagina =  recibir_pid_value(paquete);
-	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(pid_pagina->PID));
+void liberar_proceso_de_memoria(uint32_t PID){
+	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(PID));
 	t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
-	 
-	for (int i=0;i=list_size(tabla_de_paginas_proceso)-1;i++){
-	int nro_frame = list_get(tabla_de_paginas_proceso,i);
+	
+	for (int i=0;i < list_size(tabla_de_paginas_proceso) ;i++){
+	int nro_frame = obtener_frame(tabla_de_paginas_proceso,i);
 	liberar_frame(nro_frame);
 	}
-
+	dictionary_remove_and_destroy(procesos,string_itoa(PID),proceso_destroy);
 }
 
 void liberar_frame(int nro_frame){
@@ -550,3 +565,4 @@ void crear_frames_memoria_principal(int cantidadFrames){
 		list_add(frames,false);
 	} 
 }
+
