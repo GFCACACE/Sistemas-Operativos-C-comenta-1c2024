@@ -300,3 +300,7 @@ int list_find_index(t_list* self, bool(*condition)(void*)) {
 bool is_true(void* element){
    return element!=NULL && *(bool*)element;
 }
+
+bool is_false(void* element){
+   return !is_true(element);
+}

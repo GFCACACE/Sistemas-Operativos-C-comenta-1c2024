@@ -161,6 +161,6 @@ int list_find_index(t_list* self, bool(*condition)(void*));
  * @return El valor booleano al que apunta el elemento del parámetro
  */
 bool is_true(void* element);
-
+bool is_false(void* element);
 
 #endif /* utils_commons_h */

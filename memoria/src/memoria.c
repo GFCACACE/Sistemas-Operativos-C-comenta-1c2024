@@ -1,5 +1,6 @@
 #include "memoria.h"
 
+
 /* Cuando tengamos que recorrer la memoria, o hacer algo,
 nos paramos en memoriaPrincipal + nroMarco * tam_marco + offset 
 */
@@ -148,16 +149,6 @@ bool inicializar_memoria(){
 	return true;
 }
 bool iniciar_paginacion(){
-	
-	t_list* mi_lista = list_create();
-     list_add(mi_lista,98);
-     list_add(mi_lista,12);
-     list_add(mi_lista,212);
-    
-    printf("\n %d \n",obtener_frame(mi_lista,2));  
-
-
-
 
 	memoriaPrincipal = malloc(config_memoria->TAM_MEMORIA);
 	
@@ -195,6 +186,7 @@ void proceso_destroy(void* elemento){
 	if(proceso){
 		list_destroy(proceso->instrucciones);
 		pcb_destroy(proceso->pcb);
+		list_destroy_and_destroy_elements(proceso->tabla_paginas,free);
 		free(proceso);
 	}
 
@@ -207,6 +199,9 @@ void finalizar_memoria()
 		log_destroy(logger);
 	if(procesos)
 		dictionary_destroy_and_destroy_elements(procesos,proceso_destroy);
+	free(memoriaPrincipal);
+	
+	list_destroy_and_destroy_elements(frames,free);
 }
 
 
@@ -253,12 +248,14 @@ int buscar_instrucciones(){
 			case RESIZE:
 				t_pid_valor* tamanio_proceso =  recibir_pid_value(paquete);
 				ejecutar_resize(tamanio_proceso);
+				imprimir_uso_frames();				
 				paquete_destroy(paquete);
 				break;
 			case ACCESO_TABLA_PAGINAS:
 				t_pid_valor* pid_pagina =  recibir_pid_value(paquete);	
 				acceder_tabla_de_paginas(pid_pagina);
 				paquete_destroy(paquete);
+				
 				break;
 				
 			case LECTURA_MEMORIA:
@@ -320,6 +317,7 @@ void ejecutar_resize(t_pid_valor* tamanio_proceso){
 			int paginas_a_reducir = abs(pag_solictadas_respecto_actual);
 			reducir_proceso(tabla_de_paginas_proceso,paginas_a_reducir);
 		}
+	loguear("Resize efectuado. Cantidad de paginas respecto a actual: %d",pag_solictadas_respecto_actual);
 	enviar_texto("Resize efectuado",cod_op_a_devolver,conexion_cpu); 
 
 }
@@ -348,7 +346,7 @@ t_validacion* crear_proceso( t_pcb *pcb ){
 	t_proceso* proceso = malloc(sizeof(t_proceso));
 	proceso->pcb=pcb;
 	proceso->instrucciones = get_instrucciones_memoria(pcb->path);
-
+	proceso->tabla_paginas = list_create();
 	t_validacion* validacion = validacion_new();
 	
 	if(proceso->instrucciones==NULL){
@@ -459,7 +457,7 @@ void imprimir_uso_frames(){
 	printf("|  Indice  |   Uso   |");
 	printf("                                           \n");
 	for (int i=0;i<list_size(frames);i++){
-	int uso =  obtener_frame(frames,i);
+	bool uso =  *(bool*) list_get(frames,i);
 	
 	if(i>=10){
 		if(i>=100){
@@ -484,18 +482,19 @@ void imprimir_uso_frames(){
 int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,int tamanio_proceso){
 
 int cantidad_paginas_solicitadas = convertir_bytes_a_paginas(tamanio_proceso);
-
+	loguear("Cantidad paginas solicitadas: %d",cantidad_paginas_solicitadas);
 if (list_is_empty(tabla_paginas)){
 	return cantidad_paginas_solicitadas;
 }else{
 	int cantidad_paginas_actual = list_size(tabla_paginas);
+	loguear("PAGINAS actual:%d",cantidad_paginas_actual);
 	return cantidad_paginas_solicitadas - cantidad_paginas_actual;
 }
 }
 
 bool esIgualA0(void* elemento){
-	int* valor = (int*) elemento;
-	return *valor ==false;
+	bool* valor = (bool*) elemento;
+	return !*valor;
 }
 
 bool validar_ampliacion_proceso(int cantidad_frames_a_agregar){
@@ -509,8 +508,13 @@ void ampliar_proceso(t_list* tabla_paginas,int cantidad_paginas_ampliar){
 
 for (int i = 0;i < cantidad_paginas_ampliar;i++){
 	int frame_asignado = asignar_frame();
-	int* frame = (int*) frame_asignado;
-	list_add(tabla_paginas, frame);
+	bool* frame = (bool*) list_get(frames,frame_asignado);
+	*frame = true;
+
+	int* frame_asignado_a_pagina = malloc(sizeof(int));
+	*frame_asignado_a_pagina = frame_asignado;
+	
+	list_add(tabla_paginas, frame_asignado_a_pagina);
 }
 
 }
@@ -528,11 +532,14 @@ for (int i = ultimo_indice_actual;i > ultimo_indice_nuevo;i--){
 }
 
 int convertir_bytes_a_paginas(int tamanio_bytes){
-	return tamanio_bytes / config_memoria->TAM_PAGINA; //Debería siempre devolver un entero no? Son múltiplos del tamanio memoria
+	loguear("Tamanio en bytes %d",tamanio_bytes);
+	loguear("Tamanio en en pag %d",config_memoria->TAM_PAGINA);
+	//return ceil((double) (tamanio_bytes / config_memoria->TAM_PAGINA)); //Debería siempre devolver un entero no? Son múltiplos del tamanio memoria
+	return 2;
 }
 
 int obtener_frame(t_list* tabla_de_paginas,int nro_pagina){
-	return list_get(tabla_de_paginas,nro_pagina);
+	return *(int*) list_get(tabla_de_paginas,nro_pagina);
 	
 }
 void quitar_paginas_de_frame(uint32_t PID){
@@ -555,20 +562,24 @@ void liberar_proceso_de_memoria(uint32_t PID){
 
 void liberar_frame(int nro_frame){
 	list_add_in_index(frames,nro_frame,false); 
+
 }
 
 int asignar_frame(){
 	return list_find_index(frames,&is_true);
 }
 void remover_proceso_del_frame(int frame){
-	list_add_in_index(frames,frame,false);
+	bool* dir_frame = list_get(frames,frame);
+	*dir_frame = false;
 }
 
 void crear_frames_memoria_principal(int cantidadFrames){
 	frames = list_create();
 	
 	for (int i = 0;i<cantidadFrames;i++){
-		list_add(frames,false);
+		bool * uso = malloc(sizeof(bool));
+		*uso = false;
+		list_add(frames,uso);
 	} 
 }
 

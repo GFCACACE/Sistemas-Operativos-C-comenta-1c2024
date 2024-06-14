@@ -292,11 +292,8 @@ bool fetch(t_pcb *pcb)
 
 bool decode()
 {
-	
-	char **sep_instruction = string_array_new();
-	char *registros = string_new();
-	registros = string_duplicate(IR);
-	sep_instruction = string_split(registros, " ");
+	char *registros = string_duplicate(IR);	
+	char **sep_instruction = string_split(registros, " ");
 	INSTID = string_duplicate(sep_instruction[0]);
 	if (sep_instruction == NULL || registros_cpu == NULL)
 		return false;
@@ -307,8 +304,8 @@ bool decode()
 		PARAM1 = interpretar_valor_instruccion(sep_instruction[1]);
 	if (sep_instruction[2])
 		PARAM2 = interpretar_valor_instruccion(sep_instruction[2]); // esta de acá
-	if (sep_instruction[3])
-		PARAM3 = interpretar_valor_instruccion(sep_instruction[3]);
+	//if (sep_instruction[3])
+	//	PARAM3 = interpretar_valor_instruccion(sep_instruction[3]);
 	string_array_destroy(sep_instruction);
 	free(registros);
 	return true;
