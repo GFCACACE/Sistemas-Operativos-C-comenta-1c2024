@@ -189,7 +189,6 @@ void proceso_destroy(void* elemento){
 	}
 
 }
-
 void finalizar_memoria()
 {
 	if (config_memoria)
@@ -242,51 +241,26 @@ int buscar_instrucciones(){
 				paquete_destroy(paquete);
                 break;
 			case RESIZE:
-				int cod_op_a_devolver = RESIZE_OK;
 				t_pid_valor* tamanio_proceso =  recibir_pid_value(paquete);
-				t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(tamanio_proceso->PID));
-				t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
-				int pag_solictadas_respecto_actual = diferencia_tamaño_nuevo_y_actual(tabla_de_paginas_proceso,tamanio_proceso);   // Devuelve la diferencia entre la cantidad de paginas solicitadas y las que actualmente tiene el proceso
-				
-					if(pag_solictadas_respecto_actual>0){ //AMPLIACION_PROCESO
-						if(validar_ampliacion_proceso(pag_solictadas_respecto_actual)){
-							ampliar_proceso(tabla_de_paginas_proceso,pag_solictadas_respecto_actual);
-						}else{
-							cod_op_a_devolver = OUT_OF_MEMORY;
-						}
-					}
-					if(pag_solictadas_respecto_actual<0){ //REDUCCION_PROCESO
-						int paginas_a_reducir = abs(pag_solictadas_respecto_actual);
-						reducir_proceso(tabla_de_paginas_proceso,paginas_a_reducir);
-					}
-				enviar_texto("Resize efectuado",cod_op_a_devolver,conexion_cpu);
+				ejecutar_resize(tamanio_proceso);
 				paquete_destroy(paquete);
 				break;
 			case ACCESO_TABLA_PAGINAS:
-				t_pid_valor* pid_pagina =  recibir_pid_value(paquete);
-				proceso_en_memoria = dictionary_get(procesos,string_itoa(pid_pagina->PID));
-				tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
-				int nro_pagina = pid_pagina->valor;
-				char* frame = obtener_frame(tabla_de_paginas_proceso, nro_pagina);
-				enviar_texto(frame,RESPUESTA_NRO_FRAME,conexion_cpu);
-				free(frame);
-				break;
-			case LECTURA_MEMORIA:
-				int direccion_fisica = atoi(recibir_mensaje(paquete));
-				// nos paramos en memoriaPrincipal + nroMarco * tam_marco + offset 
-				char* dato_consultado;	
-				int bytes_restantes_en_frame = calcular_bytes_restantes(direccion_fisica);
-				memcpy(dato_consultado, (&memoriaPrincipal + direccion_fisica) , bytes_restantes_en_frame);
-				enviar_texto(dato_consultado,VALOR_CONSULTA_CPU,conexion_cpu);
-	
-				//nos paramos en memoriaPrincipal + nroMarco * tam_marco + offset 
+				t_pid_valor* pid_pagina =  recibir_pid_value(paquete);	
+				acceder_tabla_de_paginas(pid_pagina);
+				paquete_destroy(paquete);
 				break;
 				
-
+			case LECTURA_MEMORIA:
+				t_acceso_espacio_usuario* acceso_espacio_usuario_lectura = recibir_acceso_espacio_usuario(paquete);		
+				acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_lectura);
+				paquete_destroy(paquete);
+				break;
 			case ESCRITURA_MEMORIA:
-			//TODO
-
-
+				t_acceso_espacio_usuario* acceso_espacio_usuario_escritura = recibir_acceso_espacio_usuario(paquete);		
+				acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_escritura);
+				paquete_destroy(paquete);
+				break;
             case FIN_PROGRAMA:
 			    loguear("Fin programa");
 				paquete_destroy(paquete);				
@@ -308,17 +282,53 @@ int buscar_instrucciones(){
 // cantFRames= 128
 // result= 8.2
 // 8*cantFRames = 1024
-
-int calcular_bytes_restantes(int direcc_fisica){
-	int inicio_pagina = direcc_fisica/tamanio_pagina;
-	if (inicio_pagina == 0){  // Si estamos en la pagina 0, la cuenta debe ser distinta
-		return tamanio_pagina - direcc_fisica;
-	}
-	// Si no es la primera, debemos ubicarnos en la pagina siguiente a la que debemos leer
-	// Entonces la direccion de la pagina siguiente menos la direccion desde donde arrancamos a leer nos va a dar 
-	// la cantidad de bytes que debemos leer a partir de esa direccion fisica
-	return (inicio_pagina+1)*tamanio_pagina - direcc_fisica;
+void acceder_tabla_de_paginas(t_pid_valor* pid_pagina){
+		t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(pid_pagina->PID));
+		proceso_en_memoria = dictionary_get(procesos,string_itoa(pid_pagina->PID));
+		t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
+		int nro_pagina = pid_pagina->valor;
+		char* frame = obtener_frame(tabla_de_paginas_proceso, nro_pagina);
+		enviar_texto(frame,RESPUESTA_NRO_FRAME,conexion_cpu);
+		free(frame);
 }
+
+void ejecutar_resize(t_pid_valor* tamanio_proceso){
+	int cod_op_a_devolver = RESIZE_OK;
+	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(tamanio_proceso->PID));
+	t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
+	int pag_solictadas_respecto_actual = diferencia_tamaño_nuevo_y_actual(tabla_de_paginas_proceso,tamanio_proceso->valor);   // Devuelve la diferencia entre la cantidad de paginas solicitadas y las que actualmente tiene el proceso
+
+	if(pag_solictadas_respecto_actual>0){ //AMPLIACION_PROCESO
+			if(validar_ampliacion_proceso(pag_solictadas_respecto_actual)){
+				ampliar_proceso(tabla_de_paginas_proceso,pag_solictadas_respecto_actual);
+			}else{
+				cod_op_a_devolver = OUT_OF_MEMORY;
+			}
+		}
+		if(pag_solictadas_respecto_actual<0){ //REDUCCION_PROCESO
+			int paginas_a_reducir = abs(pag_solictadas_respecto_actual);
+			reducir_proceso(tabla_de_paginas_proceso,paginas_a_reducir);
+		}
+	enviar_texto("Resize efectuado",cod_op_a_devolver,conexion_cpu); 
+
+}
+
+void acceder_a_espacio_usuario(int tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
+	int* direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
+	int bytes_restantes_en_frame = acceso_espacio_usuario->bytes_restantes_en_frame;
+
+	if (tipo_acceso == LECTURA_MEMORIA){
+		char* dato_consultado;		
+		memcpy(&dato_consultado,direccion_real,bytes_restantes_en_frame);
+		enviar_texto(dato_consultado,VALOR_LECTURA_MEMORIA,conexion_cpu);
+		}
+	if (tipo_acceso==ESCRITURA_MEMORIA){
+		memcpy(&direccion_real,acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
+		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
+	}
+}
+	
+	
 bool tiene_exit(t_list* instrucciones){
 	return list_any_satisfy(instrucciones,es_exit);
 }
@@ -416,6 +426,7 @@ int recibir_procesos(){
 			break;
 			case ELIMINACION_PROCESO:
 				recibir_pcb_y_aplicar(paquete,eliminar_proceso,notificar_proceso_eliminado); 
+				liberar_proceso_de_memoria(paquete); //Esta liberación no debe afectar la memoriaPrincipal. Sino poner en 0 los bits de uso
 			break;
 			case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");
@@ -457,9 +468,9 @@ void imprimir_uso_frames(){
 //  -> 2. Quiere decir que es ampliación y se están pidiendo dos paginas mas de las que ya tiene
 //  -> -4. Quiere decir que es reducción y deben sacar las últimas 4 páginas del proceso
 //  -> 0 (No se si se va a dar este caso, lo contemplo. No hay resize. Mismo tamanio)
-int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,t_pid_valor* tamanio_proceso){
+int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,int tamanio_proceso){
 
-int cantidad_paginas_solicitadas = convertir_bytes_a_paginas(tamanio_proceso->valor);
+int cantidad_paginas_solicitadas = convertir_bytes_a_paginas(tamanio_proceso);
 
 if (list_is_empty(tabla_paginas)){
 	return cantidad_paginas_solicitadas;
@@ -509,16 +520,24 @@ char* obtener_frame(t_list* tabla_de_paginas,int nro_pagina){
 	return string_itoa(list_get(tabla_de_paginas,nro_pagina)); //Tengo que convertir en int?
 }
 
+void liberar_proceso_de_memoria(paquete){
+	t_pid_valor* pid_pagina =  recibir_pid_value(paquete);
+	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(pid_pagina->PID));
+	t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
+	 
+	for (int i=0;i=list_size(tabla_de_paginas_proceso)-1;i++){
+	int nro_frame = list_get(tabla_de_paginas_proceso,i);
+	liberar_frame(nro_frame);
+	}
+
+}
+
+void liberar_frame(int nro_frame){
+	list_add_in_index(frames,nro_frame,false); 
+}
 
 int asignar_frame(){
-	int indice = 0;
-	bool uso = list_get(frames,indice);
-	while(uso){
-	uso = list_get(frames,indice);
-	indice++;
-	}
-	list_add_in_index(frames,indice,true);
-	return indice;
+	return list_find_index(frames,&is_true);
 }
 void remover_proceso_del_frame(int frame){
 	list_add_in_index(frames,frame,false);

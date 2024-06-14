@@ -67,6 +67,7 @@ bool check_interrupt();
 bool devolver_contexto(t_pcb *pcb,op_code codigo_operacion);
 bool actualizar_contexto(t_pcb*);
 bool actualizar_registros(t_pcb*);
+u_int32_t calcular_bytes_restantes(uint32_t valor);
 bool exe_set(t_param,t_param);
 bool exe_mov_in(t_pcb*,t_param,t_param);
 bool exe_mov_out(t_pcb*,t_param,t_param);

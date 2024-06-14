@@ -37,8 +37,8 @@ typedef enum
 	INICIAR_PROCESO,
 	FINALIZAR_PROCESO,
 	//ACCESO_TABLA_PAGINAS,
-	AJUSTAR_TAMANIO_PROCESO,
-	ACCESO_ESPACIO_USUARIO
+	AJUSTAR_TAMANIO_PROCESO
+	
 }op_code_memoria;
 
 t_config_memoria* iniciar_config_memoria(char*);
@@ -64,9 +64,9 @@ bool validar_ampliacion_proceso(int);
 void ampliar_proceso(t_list* ,int );
 void reducir_proceso(t_list* ,int);
 t_pid_valor* recibir_pid_value(t_paquete*);
-
+void liberar_frame(int nro_frame);
 char* obtener_frame(t_list* tabla_de_paginas,int nro_pagina);
-int calcular_bytes_restantes(int valor);
+
 
 void efectuar_retardo();
 

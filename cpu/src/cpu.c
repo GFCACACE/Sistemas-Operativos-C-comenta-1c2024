@@ -103,7 +103,7 @@ bool iniciar_conexion_memoria()
 		return false;
 	}
 	int codigo_operacion = recibir_operacion(conexion_memoria);
-	if(codigo_operacion = TAMANIO_PAGINA){
+	if(codigo_operacion == TAMANIO_PAGINA){
 		tamanio_pagina=atoi(recibir_mensaje(conexion_memoria));
 		loguear("TAM_PAGINA: %d B");
 	}
@@ -468,12 +468,18 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_direccion){
 	char* direccion_enviar = string_new();
 	char* valor_memoria = string_new();
-	uint32_t direccion_fisica = mmu(pcb_recibido,*(uint32_t*)registro_direccion.puntero);
-	sprintf(direccion_enviar,"%d",direccion_fisica);
-	enviar_texto(direccion_enviar,LECTURA_MEMORIA,conexion_memoria);
 	
+	uint32_t direccion_fisica = mmu(pcb_recibido,*(uint32_t*)registro_direccion.puntero);
+	uint32_t bytes_restantes_frame = calcular_bytes_restantes(direccion_fisica);
+
+	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(direccion_fisica,bytes_restantes_frame,NULL);
+
+	sprintf(direccion_enviar,"%d",acceso_espacio_usuario->direccion_fisica);
+	enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion_memoria);
+	free(acceso_espacio_usuario);
+
 	int response = recibir_operacion(conexion_memoria);
-	if(response == VALOR_CONSULTA_CPU){
+	if(response == VALOR_LECTURA_MEMORIA){
 		valor_memoria = recibir_mensaje(conexion_memoria);
 		registro_datos.string_valor =string_duplicate(valor_memoria);
 		registro_datos.size = sizeof(uint32_t);
@@ -491,7 +497,14 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	char* valor_memoria = string_new();
 	uint32_t direccion_fisica = mmu(pcb_recibido,*(uint32_t*)registro_direccion.puntero);
 	sprintf(direccion_enviar,"%d %d %s",pcb_recibido->PID,direccion_fisica, registro_datos.string_valor);
-	enviar_texto(direccion_enviar,ESCRITURA_MEMORIA,conexion_memoria);
+	u_int32_t bytes_restantes_frame = calcular_bytes_restantes(direccion_fisica);
+	char* registro_dato = (char*)registro_datos.string_valor;
+	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(direccion_fisica,bytes_restantes_frame,registro_dato);
+
+	enviar_acceso_espacio_usuario(acceso_espacio_usuario,ESCRITURA_MEMORIA,conexion_memoria);
+	//enviar_texto(direccion_fisica,ESCRITURA_MEMORIA,conexion_memoria);
+	
+	free(acceso_espacio_usuario);
 	int operacion_ok = recibir_operacion(conexion_memoria);
 	if(operacion_ok== MOV_OUT_OK){
 		valor_memoria=recibir_mensaje(conexion_memoria);
@@ -546,7 +559,22 @@ uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica){
 
 	uint32_t desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
 	direccion_fisica = tamanio_pagina * (uint32_t)atoi(nro_frame) + desplazamiento;
+	
+
 	return direccion_fisica;
+}
+
+
+
+uint32_t calcular_bytes_restantes(uint32_t direcc_fisica){
+	int inicio_pagina = direcc_fisica/tamanio_pagina;
+	if (inicio_pagina == 0){  // Si estamos en la pagina 0, la cuenta debe ser distinta
+		return tamanio_pagina - direcc_fisica;
+	}
+	// Si no es la primera, debemos ubicarnos en la pagina siguiente a la que debemos leer
+	// Entonces la direccion de la pagina siguiente menos la direccion desde donde arrancamos a leer nos va a dar 
+	// la cantidad de bytes que debemos leer a partir de esa direccion fisica
+	return (inicio_pagina+1)*tamanio_pagina - direcc_fisica;
 }
 
 bool devolver_contexto(t_pcb *pcb,op_code codigo_operacion)

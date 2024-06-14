@@ -29,7 +29,9 @@ typedef enum
 	RESPUESTA_NRO_FRAME,
 	LECTURA_MEMORIA,
 	ESCRITURA_MEMORIA,
-	VALOR_CONSULTA_CPU,
+	ACCESO_ESPACIO_USUARIO,
+	VALOR_LECTURA_MEMORIA,
+	VALOR_ESCRITURA_MEMORIA,
 	RESIZE,
 	OUT_OF_MEMORY,
 	RESIZE_OK,
@@ -116,6 +118,14 @@ typedef struct t_validacion
 	char* descripcion;
 }t_validacion;
 
+typedef struct
+{
+	uint32_t direccion_fisica;
+	uint32_t bytes_restantes_en_frame;
+	char* registro_dato;
+	uint32_t size_registro;
+}t_acceso_espacio_usuario;
+
 t_validacion* validacion_new();
 t_pcb* pcb_create(char*);
 t_pcb* pcb_create_copy(char*);
@@ -133,6 +143,7 @@ t_registros_cpu* inicializar_registros();
 void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen);
 void loguear_pid_value(t_pid_valor* tamanio_proceso);
 t_pid_valor* pid_value_create(uint32_t pid, uint32_t valor);
+t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t direccion, uint32_t bytes_restantes,char* valor);
 /**
  * @fn    list_find_index
  * @brief Retorna el índice del primer valor encontrado que haga que condition devuelva != 0
