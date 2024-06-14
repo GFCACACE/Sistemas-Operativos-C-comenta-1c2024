@@ -26,8 +26,7 @@ int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
 t_config_kernel* config;
 t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked;
-t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp,
-		*io_stdin, *io_stdout, *io_generica, *io_dialfs;
+t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp;
 //
 t_blocked_interfaz* blocked_interfaz;
 //
@@ -150,13 +149,6 @@ bool iniciar_interrupt(){
 	return true;
 }
 
-// bool iniciar_colas_entrada_salida(){
-// 	io_stdin = queue_create();
-// 	io_stdout = queue_create();
-// 	io_generica = queue_create();
-// 	io_dialfs = queue_create();
-// 	return true;
-// }
 
 bool iniciar_estados_planificacion(){
 
@@ -459,27 +451,48 @@ void io_gen_sleep(int pid,char** splitter){
 				conexion_io);
 	loguear_warning("Peticion a IO enviada");
 }
-// void io_stdin(int pid, char** splitter){
-// 	loguear_warning("Entra al case");
-// 	char pid_direccion_tamanio [30];
-// 	sprintf(pid_direccion_tamanio,"%u",pid);
-// 	loguear_warning("El pid es %s", pid_direccion_tamanio);
-// 	strcat(pid_direccion_tamanio," ");
-// 	strcat(pid_direccion_tamanio, splitter[1]);
-// 	strcat(pid_direccion_tamanio," ");
-// 	strcat(pid_direccion_tamanio,splitter[2]);
-// 	loguear_warning("El mensaje es %s", pid_direccion_tamanio);
 
-// 	loguear_warning("IO_STDIN_READ -> Interfaz:%s Direccion:%s Tamanio:%s", splitter[0], splitter[1], splitter[2]);
-// 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, splitter[0]);
-// 	int conexion_io = *(int *)ptr_conexion;
+void io_stdin(int pid, char** splitter){
+	loguear_warning("Entra al case");
+	char pid_direccion_tamanio [30];
+	sprintf(pid_direccion_tamanio,"%u",pid);
+	loguear_warning("El pid es %s", pid_direccion_tamanio);
+	strcat(pid_direccion_tamanio," ");
+	strcat(pid_direccion_tamanio, splitter[1]);
+	strcat(pid_direccion_tamanio," ");
+	strcat(pid_direccion_tamanio,splitter[2]);
+	loguear_warning("El mensaje es %s", pid_direccion_tamanio);
 
-// 	enviar_texto(pid_direccion_tamanio,
-// 				IO_STDIN_READ,
-// 				conexion_io);
-// 	loguear_warning("Peticion a IO enviada");
-// }
+	loguear_warning("IO_STDIN_READ -> Interfaz:%s Direccion:%s Tamanio:%s", splitter[0], splitter[1], splitter[2]);
+	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, splitter[0]);
+	int conexion_io = *(int *)ptr_conexion;
 
+	enviar_texto(pid_direccion_tamanio,
+				IO_STDIN_READ,
+				conexion_io);
+	loguear_warning("Peticion a IO enviada");
+}
+
+void io_stdout(int pid, char** splitter){
+	loguear_warning("Entra al case");
+	char pid_direccion_tamanio [30];
+	sprintf(pid_direccion_tamanio,"%u",pid);
+	loguear_warning("El pid es %s", pid_direccion_tamanio);
+	strcat(pid_direccion_tamanio," ");
+	strcat(pid_direccion_tamanio, splitter[1]);
+	strcat(pid_direccion_tamanio," ");
+	strcat(pid_direccion_tamanio,splitter[2]);
+	loguear_warning("El mensaje es %s", pid_direccion_tamanio);
+
+	loguear_warning("IO_STDOUT_WRITE -> Interfaz:%s Direccion:%s Tamanio:%s", splitter[0], splitter[1], splitter[2]);
+	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, splitter[0]);
+	int conexion_io = *(int *)ptr_conexion;
+
+	enviar_texto(pid_direccion_tamanio,
+				IO_STDOUT_WRITE,
+				conexion_io);
+	loguear_warning("Peticion a IO enviada");
+}
 
 
 void io_handler_exec(t_pcb* pcb_recibido){
@@ -500,7 +513,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 				io_gen_sleep(pcb_recibido->PID,splitter);
 			break;
 		case IO_STDIN_READ:
-			// io_stdin(pcb_recibido->PID, splitter);
+				io_stdin(pcb_recibido->PID, splitter);
 			break;
 		case IO_STDOUT_WRITE:
 		//  io_stdout(pcb_recibido->PID, splitter);
@@ -1116,10 +1129,6 @@ void liberar_colas(){
 		liberar_cola(estado_ready_plus);
 	}
 	liberar_cola(estado_temp);
-	liberar_cola(io_stdin);
-	liberar_cola(io_stdout);
-	liberar_cola(io_generica);
-	liberar_cola(io_dialfs);
 	if(pcb_exec!=NULL)
 		pcb_destroy(pcb_exec);
 	
@@ -1387,10 +1396,7 @@ void io_handler(int *ptr_conexion){
 		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
 		free(string_conexion);
 		switch (cod_operacion){
-			// SI LA RESPONSABILIDAD DE LEER/ESCRIBIR MEMORIA PARA LAS STD LE CABE A LAS INTERFACES,
-			// NO SERÍA NECESARIO DIVIDIR POR CASES ENTRE GENERICA, STDIN Y STDOUT
-			// TODAS HARÍAN LO MISMO
-			case TERMINO_IO_GEN_SLEEP:
+			case TERMINO_IO:
 				//mensaje = recibir_mensaje(conexion);
 				pthread_mutex_lock(&interfaz -> mx_blocked);
 				pcb = queue_pop(interfaz -> estado_blocked);
@@ -1398,24 +1404,32 @@ void io_handler(int *ptr_conexion){
 				// pop_estado_get_pcb()
 				loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
 
-				// if(es_vrr()){
-				// 	if(le_queda_quantum(pcb))
-				// 		push_proceso_a_estado(pcb,estado_ready_plus,&mx_ready_plus);
-				// }
-				// 
-				// 	push_proceso_a_estado(pcb,estado_ready,&mx_ready);
 				a_ready(pcb);
-				//sem_post(&sem_bin_ready);
-				
 
 				break;
-			case TERMINO_STDIN:
-				//mensaje = recibir_mensaje(conexion);
-				//enviar mensaje recibido a memoria para que lo almacene // ¿ESTO LO HACE LA PROPIA INTERFAZ?
-				// pthread_mutex_lock(&blocked_interfaz -> mx_blocked);
-				// pcb = queue_pop(blocked_interfaz-> estado_blocked);
-				// pthread_mutex_unlock(&blocked_interfaz -> mx_blocked);
-				//a_ready(pcb);
+			
+			// NO BORRAR POR SI ACASO, COMO ES INDIFERENTE CUAL FUE, Y LAS RESPONSABILIDADES ESTAN EN LA I/O,
+			// ACA SE LAS PUEDE TRATAR DE IGUAL FORMA
+
+			// case TERMINO_STDIN:
+			// 	pthread_mutex_lock(&interfaz -> mx_blocked);
+			// 	pcb = queue_pop(interfaz -> estado_blocked);
+			// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
+			// 	// pop_estado_get_pcb()
+			// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+			// 	a_ready(pcb);
+				
+			// 	break;
+			
+			// case TERMINO_STDOUT:
+			// 	pthread_mutex_lock(&interfaz -> mx_blocked);
+			// 	pcb = queue_pop(interfaz -> estado_blocked);
+			// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
+			// 	// pop_estado_get_pcb()
+			// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+			// 	a_ready(pcb);
+				
+			// 	break;
 
 				default:
 					return;

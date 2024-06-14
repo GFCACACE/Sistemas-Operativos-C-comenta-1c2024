@@ -11,6 +11,8 @@
 #include <utils/utils-config.h>
 #include <readline/readline.h>
 #include "generica.h"
+#include "stdin.h"
+#include "stdout.h"
 #define MODULO "entradasalida"
 
 typedef struct

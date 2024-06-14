@@ -3,11 +3,11 @@
 
 char* leer_texto_consola(){return readline(">");}
 
-void io_stdin_read(/*registro direccion*/){
+void io_stdin_read(uint32_t direccion_fisica, uint32_t tamanio){
     leer_texto_consola();
-    char* entrada = leer_texto_consola();
-    // validación cantidad de caracteres
-    //enviar_a_memoria(entrada almacenada en registro_direccion, PEDIDO_DE_ESCRITURA , conexion_memoria);
-    enviar_texto("Listo", TERMINO_STDIN, conexion_kernel);
+    char* entrada = malloc(tamanio);
+    entrada = leer_texto_consola();
+    //enviar_a_memoria(direccion_fisica, entrada, PEDIDO_DE_ESCRITURA , conexion_memoria);
+    // TODO
 }
 

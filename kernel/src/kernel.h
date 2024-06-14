@@ -162,7 +162,8 @@ void iniciar_conexion_io();
 
 void io_handler(int* conexion);
 void io_gen_sleep(int pid,char** splitter);
-//void io_stdin(int pid,char** splitter);
+void io_stdin(int pid,char** splitter);
+void io_stdout(int pid, char** splitter);
 bool le_queda_quantum(t_pcb* pcb);
 bool iniciar_servidor_kernel();
 bool existe_interfaz(char*);
