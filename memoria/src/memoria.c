@@ -479,17 +479,18 @@ void imprimir_uso_frames(){
 //  -> 2. Quiere decir que es ampliación y se están pidiendo dos paginas mas de las que ya tiene
 //  -> -4. Quiere decir que es reducción y deben sacar las últimas 4 páginas del proceso
 //  -> 0 (No se si se va a dar este caso, lo contemplo. No hay resize. Mismo tamanio)
-int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,int tamanio_proceso){
+int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas, int tamanio_proceso){
 
 int cantidad_paginas_solicitadas = convertir_bytes_a_paginas(tamanio_proceso);
 	loguear("Cantidad paginas solicitadas: %d",cantidad_paginas_solicitadas);
-if (list_is_empty(tabla_paginas)){
-	return cantidad_paginas_solicitadas;
-}else{
-	int cantidad_paginas_actual = list_size(tabla_paginas);
-	loguear("PAGINAS actual:%d",cantidad_paginas_actual);
-	return cantidad_paginas_solicitadas - cantidad_paginas_actual;
-}
+	if (list_is_empty(tabla_paginas)){
+		return cantidad_paginas_solicitadas;
+	}
+	else{
+		int cantidad_paginas_actual = list_size(tabla_paginas);
+		loguear("PAGINAS actual:%d",cantidad_paginas_actual);
+		return cantidad_paginas_solicitadas - cantidad_paginas_actual;
+	}
 }
 
 bool esIgualA0(void* elemento){
@@ -535,7 +536,7 @@ int convertir_bytes_a_paginas(int tamanio_bytes){
 	loguear("Tamanio en bytes %d",tamanio_bytes);
 	loguear("Tamanio en en pag %d",config_memoria->TAM_PAGINA);
 	//return ceil((double) (tamanio_bytes / config_memoria->TAM_PAGINA)); //Debería siempre devolver un entero no? Son múltiplos del tamanio memoria
-	return 2;
+	return (int)ceil((double) tamanio_bytes / config_memoria->TAM_PAGINA);
 }
 
 int obtener_frame(t_list* tabla_de_paginas,int nro_pagina){
