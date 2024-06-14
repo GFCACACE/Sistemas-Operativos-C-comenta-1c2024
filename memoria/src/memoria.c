@@ -535,8 +535,8 @@ int obtener_frame(t_list* tabla_de_paginas,int nro_pagina){
 	return list_get(tabla_de_paginas,nro_pagina);
 	
 }
-
-void liberar_proceso_de_memoria(uint32_t PID){
+void quitar_paginas_de_frame(uint32_t PID){
+		
 	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(PID));
 	t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
 	
@@ -544,8 +544,14 @@ void liberar_proceso_de_memoria(uint32_t PID){
 	int nro_frame = obtener_frame(tabla_de_paginas_proceso,i);
 	liberar_frame(nro_frame);
 	}
+	
+}
+
+void liberar_proceso_de_memoria(uint32_t PID){
+	//quitar_paginas_de_frame(PID);
 	dictionary_remove_and_destroy(procesos,string_itoa(PID),proceso_destroy);
 }
+
 
 void liberar_frame(int nro_frame){
 	list_add_in_index(frames,nro_frame,false); 
