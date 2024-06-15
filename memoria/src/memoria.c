@@ -161,6 +161,8 @@ bool iniciar_paginacion(){
 	
 	crear_frames_memoria_principal(cantidadFrames);
 	imprimir_uso_frames();
+
+
 	loguear("Espacio memoria total: %d",config_memoria->TAM_MEMORIA);
 	loguear("Espacio memoria total: %d",config_memoria->TAM_MEMORIA);
 	loguear("El tamanio de pagina es: %d",tamanio_pagina);
@@ -248,7 +250,7 @@ int buscar_instrucciones(){
 			case RESIZE:
 				t_pid_valor* tamanio_proceso =  recibir_pid_value(paquete);
 				ejecutar_resize(tamanio_proceso);
-				imprimir_uso_frames();				
+								
 				paquete_destroy(paquete);
 				break;
 			case ACCESO_TABLA_PAGINAS:
@@ -504,18 +506,26 @@ int cant_paginas_disponibles = list_size(list_filter(frames,esIgualA0));
 
 return cant_paginas_disponibles > cantidad_frames_a_agregar;
 }
+int asignar_frame(){
+	
+	int frame_asignado = list_find_index(frames,&is_false);
 
+	loguear("frame asignado %d \n",frame_asignado);
+	bool* frame = (bool*) list_get(frames,frame_asignado);
+	*frame = true;
+	imprimir_uso_frames();
+	return frame_asignado;
+
+}
 void ampliar_proceso(t_list* tabla_paginas,int cantidad_paginas_ampliar){
 
 for (int i = 0;i < cantidad_paginas_ampliar;i++){
-	int frame_asignado = asignar_frame();
-	bool* frame = (bool*) list_get(frames,frame_asignado);
-	*frame = true;
-
-	int* frame_asignado_a_pagina = malloc(sizeof(int));
-	*frame_asignado_a_pagina = frame_asignado;
 	
+	int frame_asignado = asignar_frame();
+	int* frame_asignado_a_pagina = malloc(sizeof(int));
+	*frame_asignado_a_pagina = frame_asignado;	
 	list_add(tabla_paginas, frame_asignado_a_pagina);
+	
 }
 
 }
@@ -566,9 +576,7 @@ void liberar_frame(int nro_frame){
 
 }
 
-int asignar_frame(){
-	return list_find_index(frames,&is_true);
-}
+
 void remover_proceso_del_frame(int frame){
 	bool* dir_frame = list_get(frames,frame);
 	*dir_frame = false;

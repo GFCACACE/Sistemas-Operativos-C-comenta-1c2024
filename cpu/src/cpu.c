@@ -300,12 +300,14 @@ bool decode()
 	if (es_exit(INSTID))
 		return true;
 	// Acá están las funciones
+
+	// LOS IF HACEN LO MISMO. PODRIAMOS PASARLO CON UNA FUNCION (5 PARAM MAX)
 	if (sep_instruction[1])
 		PARAM1 = interpretar_valor_instruccion(sep_instruction[1]);
 	if (sep_instruction[2])
 		PARAM2 = interpretar_valor_instruccion(sep_instruction[2]); // esta de acá
-	//if (sep_instruction[3])
-	//	PARAM3 = interpretar_valor_instruccion(sep_instruction[3]);
+	if (sep_instruction[3])
+		PARAM3 = interpretar_valor_instruccion(sep_instruction[3]);
 	string_array_destroy(sep_instruction);
 	free(registros);
 	return true;
