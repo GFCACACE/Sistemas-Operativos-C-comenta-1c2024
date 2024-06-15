@@ -60,6 +60,7 @@ void crear_frames_memoria_principal(int);
 int asignar_frame();
 void remover_proceso_del_frame(int);
 void imprimir_uso_frames();
+void imprimir_tabla_paginas_proceso(int PID);
 int convertir_bytes_a_paginas(int);
 bool validar_ampliacion_proceso(int);
 void ampliar_proceso(t_list* ,int );

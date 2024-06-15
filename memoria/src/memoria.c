@@ -161,6 +161,11 @@ bool iniciar_paginacion(){
 	
 	crear_frames_memoria_principal(cantidadFrames);
 	imprimir_uso_frames();
+	
+	
+	
+
+
 
 
 	loguear("Espacio memoria total: %d",config_memoria->TAM_MEMORIA);
@@ -250,7 +255,8 @@ int buscar_instrucciones(){
 			case RESIZE:
 				t_pid_valor* tamanio_proceso =  recibir_pid_value(paquete);
 				ejecutar_resize(tamanio_proceso);
-								
+				imprimir_uso_frames();
+				imprimir_tabla_paginas_proceso(tamanio_proceso->PID);
 				paquete_destroy(paquete);
 				break;
 			case ACCESO_TABLA_PAGINAS:
@@ -321,7 +327,6 @@ void ejecutar_resize(t_pid_valor* tamanio_proceso){
 		}
 	loguear("Resize efectuado. Cantidad de paginas respecto a actual: %d",pag_solictadas_respecto_actual);
 	enviar_texto("Resize efectuado",cod_op_a_devolver,conexion_cpu); 
-
 }
 
 void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
@@ -338,7 +343,6 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
 	}
 }
-	
 	
 bool tiene_exit(t_list* instrucciones){
 	return list_any_satisfy(instrucciones,es_exit);
@@ -456,25 +460,51 @@ int recibir_procesos(){
 
 void imprimir_uso_frames(){
 	printf("Uso de frames\n");
-	printf("|  Indice  |   Uso   |");
+	printf("|   Indice   |    Uso    |");
 	printf("                                           \n");
 	for (int i=0;i<list_size(frames);i++){
 	bool uso =  *(bool*) list_get(frames,i);
 	
 	if(i>=10){
 		if(i>=100){
-			printf("|    %d   |    %d    |",i,uso);
+			printf("|     %d   |     %d    |",i,uso);
 		}
 		else{
-			printf("|    %d    |    %d    |",i,uso);
+			printf("|     %d     |     %d     |",i,uso);
 		}
 	
 	}else{
-	printf("|    %d     |    %d    |",i,uso);
+	printf("|     %d      |     %d     |",i,uso);
 	}
 	printf("                                           \n");
 	}
 }
+
+void imprimir_tabla_paginas_proceso(int PID){
+	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(PID));
+	t_list* tabla_paginas =  proceso_en_memoria->tabla_paginas;
+	printf("Tabla de paginas del proceso %d\n", PID);
+	printf("| nro_pagina |   frame   |");
+	printf("                                           \n");
+	for (int i=0;i<list_size(tabla_paginas);i++){
+	int uso =  *(int*) list_get(tabla_paginas,i);
+	
+	if(i>=10){
+		if(i>=100){
+			printf("|     %d    |     %d     |",i,uso);
+		}
+		else{
+			printf("|      %d    |     %d     |",i,uso);
+		}
+	
+	}else{
+	printf("|     %d      |     %d     |",i,uso);
+	}
+	printf("                                           \n");
+	}
+}
+
+
 
 
 //Compara el tamaño nuevo con el acutal en numero de paginas.
@@ -513,7 +543,6 @@ int asignar_frame(){
 	loguear("frame asignado %d \n",frame_asignado);
 	bool* frame = (bool*) list_get(frames,frame_asignado);
 	*frame = true;
-	imprimir_uso_frames();
 	return frame_asignado;
 
 }
@@ -527,6 +556,7 @@ for (int i = 0;i < cantidad_paginas_ampliar;i++){
 	list_add(tabla_paginas, frame_asignado_a_pagina);
 	
 }
+
 
 }
 
