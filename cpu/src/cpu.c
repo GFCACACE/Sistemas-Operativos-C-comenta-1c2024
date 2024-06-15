@@ -304,10 +304,11 @@ bool decode()
 	// LOS IF HACEN LO MISMO. PODRIAMOS PASARLO CON UNA FUNCION (5 PARAM MAX)
 	if (sep_instruction[1])
 		PARAM1 = interpretar_valor_instruccion(sep_instruction[1]);
-	if (sep_instruction[2])
+	if (sep_instruction[2]){
 		PARAM2 = interpretar_valor_instruccion(sep_instruction[2]); // esta de acá
-	if (sep_instruction[3])
-		PARAM3 = interpretar_valor_instruccion(sep_instruction[3]);
+		if (sep_instruction[3])
+			PARAM3 = interpretar_valor_instruccion(sep_instruction[3]);
+	}
 	string_array_destroy(sep_instruction);
 	free(registros);
 	return true;
@@ -487,6 +488,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 		registro_datos.puntero = &valor;
 	}
 	registros_cpu->PC++;
+	actualizar_contexto(pcb_recibido);
 	free(direccion_enviar);
 	free(valor_memoria);
 	return true;
@@ -510,6 +512,8 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	if(operacion_ok== MOV_OUT_OK){
 		valor_memoria=recibir_mensaje(conexion_memoria);
 		loguear(valor_memoria);
+		registros_cpu->PC++;
+		actualizar_contexto(pcb_recibido);
 		return true;
 	}
 	return false;
@@ -529,6 +533,9 @@ bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 		devolver_contexto(pcb, OUT_OF_MEMORY);
 		return false;
 	}
+
+	registros_cpu->PC++;
+	actualizar_contexto(pcb);
 	return true;
 }
 bool exe_copy_string(t_param tamanio){
