@@ -36,8 +36,9 @@ t_pid_valor* pid_value_create(uint32_t pid, uint32_t valor){
 	return pid_atributo;
 }
 
-t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t direccion, uint32_t bytes_restantes,char* valor){
+t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t bytes_restantes,char* valor){
 	t_acceso_espacio_usuario* acceso_espacio_usuario = malloc(sizeof(t_acceso_espacio_usuario));
+	acceso_espacio_usuario->PID = PID;
 	acceso_espacio_usuario->direccion_fisica = direccion;
 	acceso_espacio_usuario->bytes_restantes_en_frame = bytes_restantes;
 	acceso_espacio_usuario->registro_dato = valor;

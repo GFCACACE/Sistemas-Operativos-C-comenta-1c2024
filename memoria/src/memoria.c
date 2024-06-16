@@ -255,8 +255,14 @@ int buscar_instrucciones(){
 			case RESIZE:
 				t_pid_valor* tamanio_proceso =  recibir_pid_value(paquete);
 				ejecutar_resize(tamanio_proceso);
-				imprimir_uso_frames();
-				imprimir_tabla_paginas_proceso(tamanio_proceso->PID);
+				//imprimir_uso_frames();
+				//imprimir_tabla_paginas_proceso(tamanio_proceso->PID);
+				paquete_destroy(paquete);
+				
+				//break;
+			case ESCRITURA_MEMORIA:
+				t_acceso_espacio_usuario* acceso_espacio_usuario_escritura = recibir_acceso_espacio_usuario(paquete);		
+				acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_escritura);
 				paquete_destroy(paquete);
 				break;
 			case ACCESO_TABLA_PAGINAS:
@@ -271,11 +277,7 @@ int buscar_instrucciones(){
 				acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_lectura);
 				paquete_destroy(paquete);
 				break;
-			case ESCRITURA_MEMORIA:
-				t_acceso_espacio_usuario* acceso_espacio_usuario_escritura = recibir_acceso_espacio_usuario(paquete);		
-				acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_escritura);
-				paquete_destroy(paquete);
-				break;
+
             case FIN_PROGRAMA:
 			    loguear("Fin programa");
 				paquete_destroy(paquete);				
@@ -304,6 +306,7 @@ void acceder_tabla_de_paginas(t_pid_valor* pid_pagina){
 		int nro_pagina = pid_pagina->valor;
 		int frame = obtener_frame(tabla_de_paginas_proceso, nro_pagina);
 		char* frame_str =  string_itoa(frame);
+		loguear("PID: %d - Pagina: %d - Marco: %d",pid_pagina->PID,nro_pagina,frame);
 		enviar_texto(frame_str,RESPUESTA_NRO_FRAME,conexion_cpu);
 		free(frame_str);
 }
@@ -313,19 +316,23 @@ void ejecutar_resize(t_pid_valor* tamanio_proceso){
 	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(tamanio_proceso->PID));
 	t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
 	int pag_solictadas_respecto_actual = diferencia_tamaño_nuevo_y_actual(tabla_de_paginas_proceso,tamanio_proceso->valor);   // Devuelve la diferencia entre la cantidad de paginas solicitadas y las que actualmente tiene el proceso
-
+	
 	if(pag_solictadas_respecto_actual>0){ //AMPLIACION_PROCESO
-			if(validar_ampliacion_proceso(pag_solictadas_respecto_actual)){
+		loguear("PID: %d - Tamaño Actual: %d - Tamaño a Ampliar: %d",tamanio_proceso->PID, list_size(tabla_de_paginas_proceso),tamanio_proceso->valor);			//En bytes se loguea no?
+		if(validar_ampliacion_proceso(pag_solictadas_respecto_actual)){
 				ampliar_proceso(tabla_de_paginas_proceso,pag_solictadas_respecto_actual);
-			}else{
+
+		}else{
+				loguear_error("No hay suficiente espacio en memoria");		
 				cod_op_a_devolver = OUT_OF_MEMORY;
 			}
 		}
-		if(pag_solictadas_respecto_actual<0){ //REDUCCION_PROCESO
-			int paginas_a_reducir = abs(pag_solictadas_respecto_actual);
-			reducir_proceso(tabla_de_paginas_proceso,paginas_a_reducir);
+	if(pag_solictadas_respecto_actual<0){ //REDUCCION_PROCESO
+		loguear("PID: %d - Tamaño Actual: %d - Tamaño a Reducir: %d",tamanio_proceso->PID, list_size(tabla_de_paginas_proceso),tamanio_proceso->valor);			
+		int paginas_a_reducir = abs(pag_solictadas_respecto_actual);
+		reducir_proceso(tabla_de_paginas_proceso,paginas_a_reducir);
 		}
-	loguear("Resize efectuado. Cantidad de paginas respecto a actual: %d",pag_solictadas_respecto_actual);
+	
 	enviar_texto("Resize efectuado",cod_op_a_devolver,conexion_cpu); 
 }
 
@@ -334,11 +341,13 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	int bytes_restantes_en_frame = acceso_espacio_usuario->bytes_restantes_en_frame;
 
 	if (tipo_acceso == LECTURA_MEMORIA){
+		loguear("PID: %d - Accion: LEER - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
 		char* dato_consultado;		
 		memcpy(&dato_consultado,&direccion_real,bytes_restantes_en_frame);
 		enviar_texto(dato_consultado,VALOR_LECTURA_MEMORIA,conexion_cpu);
 		}
 	if (tipo_acceso==ESCRITURA_MEMORIA){
+		loguear("PID: %d - Accion: LEER - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
 		memcpy(&direccion_real,acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
 		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
 	}
@@ -353,6 +362,7 @@ t_validacion* crear_proceso( t_pcb *pcb ){
 	proceso->pcb=pcb;
 	proceso->instrucciones = get_instrucciones_memoria(pcb->path);
 	proceso->tabla_paginas = list_create();
+	loguear("PID: %d - Tamaño: %d", pcb->PID,list_size(proceso->tabla_paginas));
 	t_validacion* validacion = validacion_new();
 	
 	if(proceso->instrucciones==NULL){
@@ -539,8 +549,7 @@ return cant_paginas_disponibles > cantidad_frames_a_agregar;
 int asignar_frame(){
 	
 	int frame_asignado = list_find_index(frames,&is_false);
-
-	loguear("frame asignado %d \n",frame_asignado);
+	//loguear("frame asignado %d \n",frame_asignado);
 	bool* frame = (bool*) list_get(frames,frame_asignado);
 	*frame = true;
 	return frame_asignado;
@@ -592,11 +601,11 @@ void quitar_paginas_de_frame(uint32_t PID){
 	int nro_frame = obtener_frame(tabla_de_paginas_proceso,i);
 	liberar_frame(nro_frame);
 	}
-	
+	loguear("PID: %d - Tamaño: %d", PID,list_size(tabla_de_paginas_proceso));
 }
 
 void liberar_proceso_de_memoria(uint32_t PID){
-	//quitar_paginas_de_frame(PID);
+	quitar_paginas_de_frame(PID);
 	dictionary_remove_and_destroy(procesos,string_itoa(PID),proceso_destroy);
 }
 

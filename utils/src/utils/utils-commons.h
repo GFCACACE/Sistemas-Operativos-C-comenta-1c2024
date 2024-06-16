@@ -121,6 +121,7 @@ typedef struct t_validacion
 
 typedef struct
 {
+	uint32_t PID;
 	uint32_t direccion_fisica;
 	uint32_t bytes_restantes_en_frame;
 	char* registro_dato;
@@ -144,7 +145,7 @@ t_registros_cpu* inicializar_registros();
 void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen);
 void loguear_pid_value(t_pid_valor* tamanio_proceso);
 t_pid_valor* pid_value_create(uint32_t pid, uint32_t valor);
-t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t direccion, uint32_t bytes_restantes,char* valor);
+t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t bytes_restantes,char* valor);
 /**
  * @fn    list_find_index
  * @brief Retorna el índice del primer valor encontrado que haga que condition devuelva != 0

@@ -472,7 +472,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	uint32_t direccion_fisica = mmu(pcb_recibido,*(uint32_t*)registro_direccion.puntero);
 	uint32_t bytes_restantes_frame = calcular_bytes_restantes(direccion_fisica);
 
-	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(direccion_fisica,bytes_restantes_frame,NULL);
+	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb_recibido->PID, direccion_fisica,bytes_restantes_frame,NULL);
 
 	sprintf(direccion_enviar,"%d",acceso_espacio_usuario->direccion_fisica);
 	enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion_memoria);
@@ -501,7 +501,7 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	u_int32_t bytes_restantes_frame = calcular_bytes_restantes(direccion_fisica);
 
 	char* registro_dato = (char*)registro_datos.string_valor;
-	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(direccion_fisica,bytes_restantes_frame,registro_dato);
+	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb_recibido->PID, direccion_fisica,bytes_restantes_frame,registro_dato);
 	
 	sprintf(direccion_enviar,"%d %d %s",pcb_recibido->PID,direccion_fisica, registro_datos.string_valor);
 	enviar_acceso_espacio_usuario(acceso_espacio_usuario,ESCRITURA_MEMORIA,conexion_memoria);

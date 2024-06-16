@@ -171,6 +171,7 @@ t_acceso_espacio_usuario* recibir_acceso_espacio_usuario(t_paquete* paquete)
 	t_buffer* buffer = paquete->buffer;
 	buffer->desplazamiento = sizeof(uint32_t);
 	int tamanio;
+	recibir_de_buffer(&acceso_espacio_usuario->PID,buffer,sizeof(uint32_t));
 	recibir_de_buffer(&acceso_espacio_usuario->direccion_fisica,buffer,sizeof(uint32_t));
 	recibir_de_buffer(&acceso_espacio_usuario->bytes_restantes_en_frame,buffer,sizeof(uint32_t));
 	recibir_de_buffer(&tamanio,buffer,sizeof(uint32_t));
