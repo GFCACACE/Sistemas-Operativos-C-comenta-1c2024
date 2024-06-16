@@ -31,6 +31,10 @@ typedef struct
 	t_config* config;
 } t_config_io;
 
+typedef struct{
+    int cod_op;
+    char* peticion;
+}t_peticion_io;
 
 
 typedef enum
@@ -46,17 +50,21 @@ void config_io_destroy(t_config_io*);
 bool iniciar_log_config(char*, char*);
 extern t_log* logger;
 extern t_config_io* config;
+extern t_queue* cola_peticiones_io;
 extern int conexion_memoria, conexion_kernel;
 extern int cod_op_kernel,cod_op_memoria;
+extern sem_t sem_bin_cola_peticiones; 
 
 
 bool iniciar_io(char*,char*);
+bool iniciar_semaforo_y_cola();
 void config_io_destroy(t_config_io*);
 void loguear_config();
 void loguear_config_generica();
 void loguear_config_stdin();
 void loguear_config_stdout();
 void loguear_config_dialfs();
+void recibir_io();
 int ejecutar_op_io();
 void finalizar_io();
 #endif

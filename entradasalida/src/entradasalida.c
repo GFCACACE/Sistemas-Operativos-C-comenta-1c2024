@@ -4,6 +4,9 @@
 int conexion_memoria, conexion_kernel;
 int cod_op_kernel,cod_op_memoria;
 t_config_io* config;
+t_queue* cola_peticiones_io;
+pthread_mutex_t mx_peticion = PTHREAD_MUTEX_INITIALIZER; 
+sem_t sem_bin_cola_peticiones; 
 
 t_config_io* iniciar_config_io(char* path_config,char* nombre){
 	t_config* _config = config_create(path_config);
@@ -121,11 +124,29 @@ bool iniciar_conexion_memoria(){
 	} 
     return true;
 }
+bool iniciar_semaforo_y_cola(){
+	sem_init(&sem_bin_cola_peticiones, 0, 0);
+	cola_peticiones_io = queue_create();
+	return true;
+}
 
+bool iniciar_hilo_ejecutar_io(){
+	pthread_t thread_io;
+	pthread_create(&thread_io,NULL, (void*) ejecutar_op_io, NULL);							
+	pthread_detach(thread_io);
+
+	if (thread_io == -1){
+		loguear_error("No se pudo iniciar el hilo de ejecucion de la interfaz.");
+		return false;
+	}
+	return true;
+}
 
 bool iniciar_io(char* path_config, char* nombre){
     return iniciar_log_config(path_config, nombre)
     // && iniciar_conexion_memoria()
+	&& iniciar_hilo_ejecutar_io()
+	&& iniciar_semaforo_y_cola()
     && iniciar_conexion_kernel();
 }
 
@@ -140,23 +161,53 @@ void config_io_destroy(t_config_io* config){
 void finalizar_io(){
 	if(config != NULL) config_io_destroy(config);
 	if(logger != NULL) log_destroy(logger);
+	sem_destroy(&sem_bin_cola_peticiones);
+	pthread_mutex_destroy(&mx_peticion);
 }
 
+void recibir_io(){
+	loguear("IO conectada: Esperando ordenes");
+	
+	while(1){
+		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		int cod_op_io = recibir_operacion(conexion_kernel);
+		peticion_io->cod_op = cod_op_io;
+		char* _peticion;
+		_peticion = recibir_mensaje(conexion_kernel);
+		peticion_io->peticion = strdup(_peticion);
+		loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
+		pthread_mutex_lock(&mx_peticion);
+		queue_push(cola_peticiones_io, peticion_io);
+		pthread_mutex_unlock(&mx_peticion);
+		sem_post(&sem_bin_cola_peticiones);
+
+
+		free(_peticion);
+		
+	}
+
+}
 int ejecutar_op_io()
 {
-	loguear("IO conectada: Esperando ordenes");
+
+	loguear("Ejecuta operacion de entrada salida");
 	while (1)
 	{
-		//t_paquete *paquete = recibir_paquete(conexion_kernel);
-		int cod_op = recibir_operacion(conexion_kernel);
-		char* peticion;
+		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		sem_wait(&sem_bin_cola_peticiones);
+		pthread_mutex_lock(&mx_peticion);
+		peticion_io = queue_pop(cola_peticiones_io);
+		pthread_mutex_unlock(&mx_peticion);
+		int cod_op = peticion_io->cod_op;
+		char* _peticion;
+		_peticion = peticion_io->peticion;
 		char** splitter = string_array_new();
-		peticion = recibir_mensaje(conexion_kernel);
-		splitter = string_split(peticion," ");
+		splitter = string_split(_peticion," ");
 		loguear("Cod op: %d", cod_op);
+		// ESTAMOS BIEN
 		char mensaje[70];
+
         switch (cod_op) {
-			//BRAND NEW
             case IO_GEN_SLEEP:
 				
 				sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
@@ -186,13 +237,12 @@ int ejecutar_op_io()
 				loguear_warning("Termino el io_stdin_read");
                 break;	
             case -1:
-			loguear_error("Problemas en la comunicacion con el servidor. Cerrando conexion...");
-			//paquete_destroy(paquete);
-			return EXIT_FAILURE;
-		default:
-			log_warning(logger, "Operacion desconocida. No quieras meter la pata");
-			//paquete_destroy(paquete);
-			return EXIT_FAILURE;
+				loguear_error("Problemas en la comunicacion con el servidor. Cerrando conexion...");
+				return EXIT_FAILURE;
+			default:
+				log_warning(logger, "Operacion desconocida. No quieras meter la pata");
+				return EXIT_FAILURE;
 		}
+		free(peticion_io);
 	}
 }

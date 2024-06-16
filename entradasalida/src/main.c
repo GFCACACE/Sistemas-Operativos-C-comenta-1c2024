@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
         finalizar_io();
         return EXIT_FAILURE;
     }
-    ejecutar_op_io();
+    recibir_io();
 
     //Si llega hasta acá es porque ya se ejecutó todo lo necesario
     //Finalizamos memoria y salimos del programa
