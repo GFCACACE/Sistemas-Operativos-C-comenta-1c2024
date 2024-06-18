@@ -24,6 +24,7 @@ time_t tiempo_inicial, tiempo_final;
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
+bool poronga = false;
 t_config_kernel* config;
 t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked;
 t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp;
@@ -535,8 +536,9 @@ void recibir_pcb_de_cpu(){
 	loguear("Cod op CPU: %d", cod_op);
 	t_pcb_query* pcb_query = recibir_pcb_y_actualizar(paquete);
 	t_pcb* pcb_recibido = pcb_query->pcb;
+	//pcb_exec = pcb_recibido;
 	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
-	liberar_pcb_exec();
+	//liberar_pcb_exec();
 	paquete_destroy(paquete);
 	// PAUSAR POR DETENER PLANI
 	
@@ -550,9 +552,15 @@ void recibir_pcb_de_cpu(){
 			pasar_a_exit(pcb_recibido);			 
 			break;
 		case FIN_QUANTUM:
+			if(poronga){
+				pasar_a_exit(pcb_recibido);
+				poronga = false;
+			}
+			else{
 			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
 			if (es_vrr()){
 				pcb_recibido->quantum = config->QUANTUM;
+			}
 			}
 			sem_post(&sem_bin_ready);
 			break;
@@ -563,6 +571,7 @@ void recibir_pcb_de_cpu(){
 			
 			break;
 	}
+	liberar_pcb_exec();
 	sem_post(&sem_bin_cpu_libre);
 	sem_post(&sem_bin_recibir_pcb);
 	free(pcb_query);
@@ -1220,6 +1229,11 @@ bool eliminar_proceso(uint32_t pid){ // Al implementar en consola, hay q parsear
 bool eliminar_proceso_en_exec(uint32_t pid){
 	pthread_mutex_lock(&mx_pcb_exec);
 	if(pcb_exec->PID == pid){
+		if(planificacion_detenida){
+			poronga = true;
+			pthread_mutex_unlock(&mx_pcb_exec);
+			return true;
+		}
 		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
 		pthread_mutex_unlock(&mx_pcb_exec);
 		return true;
