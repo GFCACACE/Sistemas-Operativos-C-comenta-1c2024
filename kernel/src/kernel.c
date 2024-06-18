@@ -24,7 +24,7 @@ time_t tiempo_inicial, tiempo_final;
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
-bool poronga = false;
+bool a_exit_por_fin_quantum = false;
 t_config_kernel* config;
 t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked;
 t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp;
@@ -175,7 +175,6 @@ bool iniciar_kernel(char* path_config){
 	iniciar_dispatch()&&
 	iniciar_interrupt()&&
 	iniciar_estados_planificacion()&&
-	//iniciar_colas_entrada_salida()&&
 	iniciar_semaforos()&&
 	inicializar_dictionario_mutex_colas()&&
 	iniciar_threads_io();
@@ -538,7 +537,6 @@ void recibir_pcb_de_cpu(){
 	t_pcb* pcb_recibido = pcb_query->pcb;
 	//pcb_exec = pcb_recibido;
 	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
-	//liberar_pcb_exec();
 	paquete_destroy(paquete);
 	// PAUSAR POR DETENER PLANI
 	
@@ -552,15 +550,14 @@ void recibir_pcb_de_cpu(){
 			pasar_a_exit(pcb_recibido);			 
 			break;
 		case FIN_QUANTUM:
-			if(poronga){
+			if(a_exit_por_fin_quantum ){
 				pasar_a_exit(pcb_recibido);
-				poronga = false;
+				a_exit_por_fin_quantum  = false;
 			}
 			else{
-			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
-			if (es_vrr()){
-				pcb_recibido->quantum = config->QUANTUM;
-			}
+				proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
+				if (es_vrr())
+					pcb_recibido->quantum = config->QUANTUM;	
 			}
 			sem_post(&sem_bin_ready);
 			break;
@@ -963,7 +960,7 @@ void iniciar_consola(){
 		comando = ejecutar_comando_consola(cadenaLeida);
 		free(cadenaLeida);
     }
-	 rl_clear_history(); // Limpia el historial de readline después de usar la interfaz de línea de comandos
+	rl_clear_history(); // Limpia el historial de readline después de usar la interfaz de línea de comandos
 }
 
 void ejecutar_planificacion(){
@@ -1230,7 +1227,7 @@ bool eliminar_proceso_en_exec(uint32_t pid){
 	pthread_mutex_lock(&mx_pcb_exec);
 	if(pcb_exec->PID == pid){
 		if(planificacion_detenida){
-			poronga = true;
+			a_exit_por_fin_quantum  = true;
 			pthread_mutex_unlock(&mx_pcb_exec);
 			return true;
 		}
