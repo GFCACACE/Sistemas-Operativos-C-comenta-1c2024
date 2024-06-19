@@ -21,6 +21,8 @@ void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete*);
 void enviar_pcb(t_pcb* pcb,op_code operacion,int socket);
 void enviar_texto(char*texto,op_code codigo_operacion,int socket);
-void enviar_pid_value(t_pid_valor* tamanio_proceso,op_code operacion,int socket);
+void enviar_id_value(t_id_valor* id_value,op_code operacion,int socket);
+void enviar_id_value_string(t_id_valor_string* id_value,op_code operacion,int socket);
+void enviar_pid_value(t_pid_valor* pid_value,op_code operacion,int socket);
 void enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,op_code operacion,int socket);
 #endif /* utils_client_h */

@@ -152,14 +152,45 @@ t_pcb* recibir_pcb(t_paquete* paquete)
 	return pcb;
 }
 
-t_pid_valor* recibir_pid_value(t_paquete* paquete)
+
+t_id_valor* recibir_id_value(t_paquete* paquete)
 {
-	t_pid_valor* pid_value = malloc(sizeof(t_pid_valor));
+	t_id_valor* id_value = malloc(sizeof(t_id_valor));
 	t_buffer* buffer = paquete->buffer;
 	buffer->desplazamiento = sizeof(uint32_t);
 	
-	recibir_de_buffer(&pid_value->PID,buffer,sizeof(uint32_t));
-	recibir_de_buffer(&pid_value->valor,buffer,sizeof(uint32_t));
+	recibir_de_buffer(&id_value->id,buffer,sizeof(uint32_t));
+	recibir_de_buffer(&id_value->valor,buffer,sizeof(uint32_t));
+
+	return id_value;
+
+}
+
+t_id_valor_string* recibir_id_value(t_paquete* paquete)
+{
+	t_id_valor_string* id_value = malloc(sizeof(t_id_valor_string));
+	t_buffer* buffer = paquete->buffer;
+	buffer->desplazamiento = sizeof(uint32_t);
+
+	int string_size;
+	
+	recibir_de_buffer(&id_value->id,buffer,sizeof(uint32_t));
+	recibir_de_buffer(&string_size,buffer,sizeof(uint32_t));
+	recibir_de_buffer(&id_value->valor,buffer,string_size);
+
+	return id_value;
+
+}
+
+
+
+t_pid_valor* recibir_pid_value(t_paquete* paquete)
+{
+	t_id_valor* id_value = recibir_id_value(paquete);
+	t_pid_valor* pid_value = malloc(sizeof(t_pid_valor));
+	pid_value->PID = id_value->id;
+	pid_value->valor = id_value->valor;
+	free(id_value);
 
 	return pid_value;
 
