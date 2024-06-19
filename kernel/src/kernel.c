@@ -1391,12 +1391,18 @@ void io_handler(int *ptr_conexion){
 		char* mensaje = recibir_mensaje(conexion);
 		loguear_warning("Llego el mensaje %s", mensaje);
 		t_pcb* pcb;
+		char** splitter = string_array_new();
+		splitter = string_split(mensaje," ");
+		int pid_a_manejar = atoi(splitter[0]);
 		char* string_conexion = string_itoa(conexion);
 		loguear_warning("Antes del get del diccionario");
 		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
 		free(string_conexion);
 		switch (cod_operacion){
 			case TERMINO_IO:
+				if( encontrar_en_lista(pid_a_manejar,estado_temp, &mx_temp) ||  encontrar_en_lista(pid_a_manejar,estado_exit, &mx_exit)){
+					break;
+				}
 				//mensaje = recibir_mensaje(conexion);
 				pthread_mutex_lock(&interfaz -> mx_blocked);
 				pcb = queue_pop(interfaz -> estado_blocked);
