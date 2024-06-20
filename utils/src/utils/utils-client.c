@@ -283,7 +283,7 @@ void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio
 	agregar_a_buffer(buffer, &acceso_espacio_usuario->bytes_restantes_en_frame, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &acceso_espacio_usuario->size_registro, sizeof(uint32_t));
 	// if(tamanio_dato)
-	agregar_a_buffer(buffer, &acceso_espacio_usuario->registro_dato, acceso_espacio_usuario->size_registro);
+	agregar_a_buffer(buffer, acceso_espacio_usuario->registro_dato, acceso_espacio_usuario->size_registro);
 	void * stream = buffer->stream;
 	free(buffer);
 	

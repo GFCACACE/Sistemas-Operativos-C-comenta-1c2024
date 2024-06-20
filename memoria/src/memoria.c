@@ -351,6 +351,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 
 		memcpy(direccion_real,&acceso_espacio_usuario->registro_dato,(uint32_t)acceso_espacio_usuario->size_registro);
 		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
+		loguear_warning("Se escribió: <%s>",acceso_espacio_usuario->registro_dato);
 	}
 }
 	
