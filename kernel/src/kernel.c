@@ -25,6 +25,8 @@ time_t tiempo_inicial, tiempo_final;
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
+bool eliminar_proceso_en_FIN_QUANTUM = false;
+
 t_config_kernel* config;
 t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked,*nombres_colas_dictionary;
 t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp;
@@ -329,9 +331,12 @@ t_pcb_query* buscar_pcb_sin_bloqueo(uint32_t pid){
 		cola = buscar_cola_de_pcb(pid);
 	t_pcb_query* pcb_query = malloc(sizeof(t_pcb_query));
 	pcb_query->estado = cola;
-	pcb_query->pcb = cola!=NULL? buscar_pcb_en_cola(cola,pid):pcb_exec;	
+	if(cola == NULL)
+		pcb_query->pcb = pcb_exec;
+	else
+		pcb_query->pcb = buscar_pcb_en_cola(cola, pid);
+	//pcb_query->pcb = cola!=NULL? buscar_pcb_en_cola(cola,pid):pcb_exec;	
 	return pcb_query;
-
 }
 
 t_pcb_query* buscar_pcb(uint32_t pid){
@@ -586,18 +591,24 @@ void recibir_pcb_de_cpu(){
 	{
 		case FINALIZAR_PROCESO_POR_CONSOLA:
 			pasar_a_exit(pcb_recibido);	
-			sem_post(&sem_bin_controlar_quantum);
+			//sem_post(&sem_bin_controlar_quantum);
 			break;
 		case CPU_EXIT:
 			pasar_a_exit(pcb_recibido);			 
 			break;
 		case FIN_QUANTUM:
-			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
-			if (es_vrr()){
-				pcb_recibido->quantum = config->QUANTUM;
+			if(eliminar_proceso_en_FIN_QUANTUM){
+				proceso_a_estado(pcb_recibido, estado_temp, &mx_temp);
 			}
+			else if (es_vrr()){
+				pcb_recibido->quantum = config->QUANTUM;
+				proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
+			}
+			else
+				proceso_a_estado(pcb_recibido, estado_ready,&mx_ready);
+			eliminar_proceso_en_FIN_QUANTUM = false; 
 			sem_post(&sem_bin_ready);
-			sem_post(&sem_bin_controlar_quantum);
+			//sem_post(&sem_bin_controlar_quantum);
 			break;
 		case IO_HANDLER:
             io_handler_exec(pcb_recibido);
@@ -844,6 +855,7 @@ bool finalizar_proceso(char** substrings){
 		imprimir_valores_leidos(substrings);
 		uint32_t pid = atoi(substrings[1]);
 		eliminar_proceso(pid);
+		//crear_hilo_eliminar_proceso(pid);
 		loguear("Finaliza el proceso <%s> - Motivo: Finalizado por consola",substrings[1]);
 		return true;
 }
@@ -1077,7 +1089,7 @@ void controlar_quantum (t_pcb* pcb_enviado){
 	memcpy(&pcb,pcb_enviado,sizeof(t_pcb));
 	if(config->QUANTUM)
 	{	usleep(pcb.quantum *1000);	
-		sem_wait(&sem_bin_controlar_quantum);	
+	//	sem_wait(&sem_bin_controlar_quantum);	
 		pthread_mutex_lock(&mx_pcb_exec);
 		if(pcb_exec != NULL && pcb_exec->PID==pcb.PID){
 			enviar_texto("FIN_QUANTUM",FIN_QUANTUM,cpu_interrupt);
@@ -1101,6 +1113,18 @@ void crear_hilo_quantum(t_pcb* pcb){
 		loguear_error("No se pudo iniciar el hilo de quantum para el PID: %d",pcb->PID);	
 	
 }
+
+// void crear_hilo_eliminar_proceso(uint32_t pid){
+// 	pthread_t thread_eliminar;
+
+// 	pthread_create(&thread_eliminar,NULL, (void*)eliminar_proceso,pid);
+	
+// 	pthread_detach(thread_eliminar);
+// 	if (thread_eliminar == -1)
+// 		loguear_error("No se pudo iniciar el hilo de eliminar proceso: %d",pid);	
+	
+// }
+
 
 
 /*
@@ -1308,14 +1332,16 @@ void pasar_a_temp_sin_bloqueo(t_pcb_query* pcb_query){
 }
 
 void eliminar_proceso(uint32_t pid){
+
 	bloquear_mutex_colas();
+
 	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
 	if((pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)){		
 			desbloquear_mutex_colas();
 			free(pcb_query);			
 	}
 	else if(pcb_query!=NULL && pcb_query->estado==NULL){
-		sem_wait(&sem_bin_controlar_quantum);
+		//sem_wait(&sem_bin_controlar_quantum);
 		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
 		free(pcb_query);
 		
@@ -1327,6 +1353,7 @@ void eliminar_proceso(uint32_t pid){
 		desbloquear_mutex_colas();
 		sem_post(&sem_bin_exit);	
 	}
+	eliminar_proceso_en_FIN_QUANTUM = true;
 
 }
 

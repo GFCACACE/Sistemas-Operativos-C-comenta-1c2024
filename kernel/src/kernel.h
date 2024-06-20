@@ -93,11 +93,8 @@ extern t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus,*est
 extern t_pcb* pcb_exec;
 extern t_list* lista_interfaces_blocked;
 extern bool planificacion_detenida;
-/*
-extern t_queue* io_stdin;
-extern t_queue* io_stdout;
-extern t_queue* io_generica;
-extern t_queue* io_dialfs;*/
+
+
 
 bool iniciar_interrupt();
 bool iniciar_dispatch();
@@ -150,6 +147,7 @@ bool eliminar_proceso_en_memoria(t_pcb*);
 bool eliminar_proceso_en_blocked(uint32_t pid_buscado);
 bool eliminar_proceso_en_exec(uint32_t pid);
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
+//void crear_hilo_eliminar_proceso(uint32_t pid);
 
 
 void recibir_pcb_de_cpu();
