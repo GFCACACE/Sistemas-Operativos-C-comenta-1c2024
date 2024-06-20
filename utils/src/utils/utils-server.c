@@ -166,7 +166,7 @@ t_id_valor* recibir_id_value(t_paquete* paquete)
 
 }
 
-t_id_valor_string* recibir_id_value(t_paquete* paquete)
+t_id_valor_string* recibir_id_value_string(t_paquete* paquete)
 {
 	t_id_valor_string* id_value = malloc(sizeof(t_id_valor_string));
 	t_buffer* buffer = paquete->buffer;

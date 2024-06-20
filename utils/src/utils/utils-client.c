@@ -290,7 +290,7 @@ void enviar_id_value(t_id_valor* id_value,op_code operacion,int socket){
 
 void enviar_id_value_string(t_id_valor_string* id_value,op_code operacion,int socket){
 	int size;
-	void* stream = serializar_id_value_string(id_value,&size);						
+	void* stream = serializar_id_string_value(id_value,&size);						
 					 
 	enviar_stream(stream,size,socket,operacion);
 	free(stream);

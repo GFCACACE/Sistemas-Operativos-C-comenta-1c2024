@@ -26,7 +26,7 @@ char* recibir_mensaje(int);
 int recibir_operacion(int);
 t_pcb* recibir_pcb(t_paquete*);
 t_id_valor* recibir_id_value(t_paquete* paquete);
-t_id_valor_string* recibir_id_value(t_paquete* paquete);
+t_id_valor_string* recibir_id_value_string(t_paquete* paquete);
 t_pid_valor* recibir_pid_value(t_paquete* paquete);
 t_acceso_espacio_usuario* recibir_acceso_espacio_usuario(t_paquete* paquete);
 

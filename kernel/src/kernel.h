@@ -59,9 +59,9 @@ typedef enum
 {
 	NEW,
 	READY,
-	BLOCKED,
 	EXEC,
-	EXIT_STATE
+	EXIT_STATE,
+	TEMP
 }t_codigo_estado;
 
 typedef struct t_comando_consola {
@@ -78,7 +78,7 @@ typedef struct t_pcb_query {
 
 typedef struct{
 	t_queue* estado_blocked;
-	pthread_mutex_t mx_blocked;
+	pthread_mutex_t* mx_blocked;
 }t_blocked_interfaz;
 
 t_config_kernel* iniciar_config_kernel(char*);
@@ -167,7 +167,7 @@ void io_stdout(int pid, char** splitter);
 bool le_queda_quantum(t_pcb* pcb);
 bool iniciar_servidor_kernel();
 bool existe_interfaz(char*);
-bool eliminar_proceso(uint32_t);
+void eliminar_proceso(uint32_t);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 
