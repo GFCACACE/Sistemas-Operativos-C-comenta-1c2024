@@ -25,7 +25,7 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
 t_config_kernel* config;
-t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked;
+t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked,*nombres_colas_dictionary;
 t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp;
 //
 t_blocked_interfaz* blocked_interfaz;
@@ -167,6 +167,8 @@ bool iniciar_estados_planificacion(){
 
 bool iniciar_kernel(char* path_config){
 	return
+
+
 	iniciar_logger_config(path_config)&&
 	inicializar_comandos() &&
 	iniciar_servidor_kernel()&&
@@ -194,6 +196,22 @@ bool iniciar_semaforos(){
 	return true;
 }
 
+void inicializar_nombres_colas(){
+	nombres_colas_dictionary = dictionary_create();
+
+	void _agregar(t_codigo_estado codigo,char* nombre){
+		char* key = string_itoa(codigo);
+		dictionary_put(nombres_colas_dictionary,key,nombre);
+		free(key);
+	};
+
+	
+	_agregar(NEW,"NUEVO");
+	_agregar(READY,"READY");
+	_agregar(EXEC,"EXEC");
+	_agregar(EXIT_STATE,"FINALIZADO");
+	_agregar(TEMP,"TEMPORAL");
+}
 
 bool inicializar_dictionario_mutex_colas(){
 	estados_dictionary = dictionary_create();
@@ -226,6 +244,9 @@ bool inicializar_dictionario_mutex_colas(){
 	_agregar_mx(EXEC,&mx_pcb_exec);
 	_agregar_mx(EXIT_STATE,&mx_exit);
 	_agregar_mx(TEMP,&mx_temp);
+
+	inicializar_nombres_colas();
+
 	return true;
 }
 
@@ -239,6 +260,7 @@ void liberar_diccionario_colas(){
 	
 	liberar_diccionario(estados_dictionary);
 	liberar_diccionario(estados_mutexes_dictionary);
+	liberar_diccionario(nombres_colas_dictionary);
 	
 }
 
@@ -284,7 +306,7 @@ t_queue* buscar_cola_de_pcb(uint32_t pid){
 		return (!list_is_empty(cola->elements)) && list_any_satisfy(cola->elements,_es_id);
 	};
 
-	return list_find(get_estados(),_es_del_pcb);
+	return list_find(get_estados_inicializados(),_es_del_pcb);
 }
 
 t_pcb* buscar_pcb_en_cola(t_queue* cola,uint32_t pid){
@@ -318,10 +340,17 @@ t_pcb_query* buscar_pcb(uint32_t pid){
 	return pcb_query;
 }
 
+bool estado_inicializado(void* elem){
+	t_queue* cola = (t_queue*)elem;
+	return cola!= NULL;
+}
+
 /// @brief 
 	//Retorna una lista de t_queue* con las colas de estados
 /// @return 
 t_list* get_estados(){return dictionary_elements(estados_dictionary);}
+
+t_list* get_estados_inicializados(){return list_filter(dictionary_elements(estados_dictionary),&estado_inicializado);}
 
 
 bool iniciar_planificadores(){
@@ -515,7 +544,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked, splitter[0]);
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
 
-	proceso_estado();
+	//proceso_estado();
 
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
@@ -928,48 +957,35 @@ bool es_vrr(){
 }
 
 char* get_nombre_estado(char* clave){
-	t_dictionary* nombre_colas = dictionary_create();
 	char* nombre;
-
-	void _agregar(t_codigo_estado codigo,char* nombre){
-		char* clave = string_itoa(codigo);
-		dictionary_put(nombre_colas,clave,nombre);
-		free(clave);
-	};
-
-	
-	_agregar(NEW,"NUEVO");
-	_agregar(READY,"READY");
-	_agregar(EXEC,"EXEC");
-	_agregar(EXIT_STATE,"FINALIZADO");
-	_agregar(TEMP,"TEMPORAL");
-
-	if(dictionary_has_key(nombre_colas,clave))
-		nombre = string_duplicate(dictionary_get(nombre_colas,clave));
+	if(dictionary_has_key(nombres_colas_dictionary,clave))
+		nombre = string_duplicate(dictionary_get(nombres_colas_dictionary,clave));
 	else nombre = string_duplicate(clave);
-
-	dictionary_destroy(nombre_colas);
 
 	return nombre;
 
 }
 
-void imprimir_estado(char* nombre,void* element){
-	t_queue* estado;
-	t_queue* estado_exec = queue_create();
-	if(element!=pcb_exec){
+void imprimir_estado(char* clave,void* element){
+	t_queue* estado;	
+	char* nombre_estado = get_nombre_estado(clave);
+	
+	if(element!=NULL && element!=pcb_exec){	
 		estado = (t_queue*)element;
+		imprimir_cola(estado,nombre_estado);		
 	}
 	else
 	{		
+		t_queue* estado_exec = queue_create();
 		pthread_mutex_lock(&mx_pcb_exec);
 		if(pcb_exec!=NULL)
 			queue_push(estado_exec,pcb_exec);
 		pthread_mutex_unlock(&mx_pcb_exec);
-		estado = estado_exec;
+		imprimir_cola(estado_exec,nombre_estado);
+		queue_destroy(estado_exec);
 	}
-	imprimir_cola(estado,get_nombre_estado(nombre));
-	queue_destroy(estado_exec);
+	
+	free(nombre_estado);
 
 }
 
@@ -1273,8 +1289,12 @@ bool eliminar_proceso_(uint32_t pid){ // Al implementar en consola, hay q parsea
 }*/
 
 void pasar_a_exit_sin_bloqueo(t_pcb_query* pcb_query){
+	if(pcb_query->estado){
 	list_remove_element (pcb_query->estado->elements,pcb_query->pcb);
 	queue_push(estado_temp,pcb_query->pcb);
+	}
+	else
+		pasar_a_exit(pcb_query->pcb);
 }
 
 void eliminar_proceso(uint32_t pid){
@@ -1477,24 +1497,26 @@ void io_handler(int *ptr_conexion){
 		free(string_conexion);
 		switch (cod_operacion){
 			case TERMINO_IO:
-			/*	t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
+				t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
 				if(pcb_query->estado==NULL||pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)
 					break;
-					*/
-				if( encontrar_en_lista(pid_a_manejar,estado_temp, &mx_temp) ||  encontrar_en_lista(pid_a_manejar,estado_exit, &mx_exit)){
-					break;
-				}
+					
+				pcb = pcb_query->pcb;
+				// if( encontrar_en_lista(pid_a_manejar,estado_temp, &mx_temp) ||  encontrar_en_lista(pid_a_manejar,estado_exit, &mx_exit)){
+				// 	break;
+				// }
 
 				//mensaje = recibir_mensaje(conexion);
 				
-				pthread_mutex_lock(interfaz -> mx_blocked);
-			//	list_remove_element(interfaz -> estado_blocked->elements,pcb);
-				pcb = queue_pop(interfaz -> estado_blocked);
-				pthread_mutex_unlock(interfaz -> mx_blocked);
+			//	pthread_mutex_lock(interfaz -> mx_blocked);
+				list_remove_element(interfaz -> estado_blocked->elements,pcb);
+			//	pcb = queue_pop(interfaz -> estado_blocked);
+			//	pthread_mutex_unlock(interfaz -> mx_blocked);
 				// pop_estado_get_pcb()
 				loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
 
 				a_ready(pcb);
+				free(pcb_query);
 
 				break;
 			
