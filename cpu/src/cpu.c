@@ -481,6 +481,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	int response = recibir_operacion(conexion_memoria);
 	if(response == VALOR_LECTURA_MEMORIA){
 		valor_memoria = recibir_mensaje(conexion_memoria);
+		loguear("MOV_IN: Recibo <%s>",valor_memoria);
 		registro_datos.string_valor =string_duplicate(valor_memoria);
 		registro_datos.size = sizeof(uint32_t);
 		uint32_t* valor = malloc(registro_datos.size);
