@@ -183,6 +183,8 @@ void desbloquear_mutex_colas();
 
 void modificar_quantum_restante(t_pcb* pcb);
 void blocked_interfaz_destroy(void* elemento );
+bool maneja_quantum();
+bool es_rr();
 
 #endif /* kernel.h*/
 

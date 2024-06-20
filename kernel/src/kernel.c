@@ -7,6 +7,7 @@ sem_t sem_bin_new; //Sincroniza que plp (hilo new) no actúe hasta que haya un n
 sem_t sem_bin_ready; //Sincroniza que pcp no actúe hasta que haya un nuevo elemento en ready
 sem_t sem_bin_exit; //Sincroniza que plp (hilo exit) no actúe hasta que haya un nuevo elemento en exit
 sem_t sem_bin_cpu_libre; // Sincroniza que no haya ningun PCB ejecutando en CPU
+sem_t sem_bin_controlar_quantum;
 
 sem_t sem_bin_recibir_pcb;
 sem_t sem_bin_plp_procesos_nuevos_iniciado,sem_bin_plp_procesos_finalizados_iniciado,sem_bin_planificador_corto_iniciado;
@@ -188,6 +189,7 @@ bool iniciar_semaforos(){
 	sem_init(&sem_bin_exit,0,0);
 	sem_init(&sem_bin_cpu_libre,0,1);
 	sem_init(&sem_bin_recibir_pcb,0,1);
+	sem_init(&sem_bin_controlar_quantum,0,1);
 
 	sem_init(&sem_bin_plp_procesos_nuevos_iniciado,0,1);
 	sem_init(&sem_bin_plp_procesos_finalizados_iniciado,0,1);
@@ -584,6 +586,7 @@ void recibir_pcb_de_cpu(){
 	{
 		case FINALIZAR_PROCESO_POR_CONSOLA:
 			pasar_a_exit(pcb_recibido);	
+			sem_post(&sem_bin_controlar_quantum);
 			break;
 		case CPU_EXIT:
 			pasar_a_exit(pcb_recibido);			 
@@ -594,6 +597,7 @@ void recibir_pcb_de_cpu(){
 				pcb_recibido->quantum = config->QUANTUM;
 			}
 			sem_post(&sem_bin_ready);
+			sem_post(&sem_bin_controlar_quantum);
 			break;
 		case IO_HANDLER:
             io_handler_exec(pcb_recibido);
@@ -787,6 +791,7 @@ bool eliminar_proceso_en_memoria(t_pcb* pcb){
 	return true;
 }
 
+bool maneja_quantum(){return (es_rr()||es_vrr());}
 
 bool iniciar_proceso(char** parametros){
 	
@@ -810,6 +815,8 @@ bool iniciar_proceso(char** parametros){
 		char *path = string_duplicate(parametros[1]);
 		loguear("PATH: %s",path);
 		t_pcb* pcb = pcb_create(path);   // Se crea el PCB
+		if(maneja_quantum())
+			pcb->quantum = config->QUANTUM;
 		
 		bool proceso_creado = crear_proceso_en_memoria(pcb);
 		if(proceso_creado){
@@ -1069,7 +1076,8 @@ void controlar_quantum (t_pcb* pcb_enviado){
 	t_pcb pcb;
 	memcpy(&pcb,pcb_enviado,sizeof(t_pcb));
 	if(config->QUANTUM)
-	{	usleep(config->QUANTUM*1000);		
+	{	usleep(pcb.quantum *1000);	
+		sem_wait(&sem_bin_controlar_quantum);	
 		pthread_mutex_lock(&mx_pcb_exec);
 		if(pcb_exec != NULL && pcb_exec->PID==pcb.PID){
 			enviar_texto("FIN_QUANTUM",FIN_QUANTUM,cpu_interrupt);
@@ -1095,7 +1103,7 @@ void crear_hilo_quantum(t_pcb* pcb){
 }
 
 
-
+/*
 void interrumpir_por_fin_quantum(){
 	loguear("FIN DE QUANTUM: Se debe pasar el pcb a ready y notificar a la cpu");
 	t_pcb* pcb;
@@ -1105,7 +1113,7 @@ void interrumpir_por_fin_quantum(){
 	pthread_mutex_unlock(&mx_pcb_exec);
 	push_proceso_a_estado(pcb,estado_ready,&mx_ready); // Thread safe
 	sem_post(&sem_bin_ready); //Se le avisa a pcp que un nuevo proceso ingresó a esa lista
-}
+}*/
 
 
 void planificacion_RR(){
@@ -1304,17 +1312,25 @@ void eliminar_proceso(uint32_t pid){
 	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
 	if((pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)){		
 			desbloquear_mutex_colas();
-			free(pcb_query);
-			return;
+			free(pcb_query);			
 	}
-	pasar_a_temp_sin_bloqueo(pcb_query);
-	free(pcb_query);
-	desbloquear_mutex_colas();
-	sem_post(&sem_bin_exit);	
+	else if(pcb_query!=NULL && pcb_query->estado==NULL){
+		sem_wait(&sem_bin_controlar_quantum);
+		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
+		free(pcb_query);
+		
+		desbloquear_mutex_colas();
+		
+	}else{	
+		pasar_a_temp_sin_bloqueo(pcb_query);
+		free(pcb_query);
+		desbloquear_mutex_colas();
+		sem_post(&sem_bin_exit);	
+	}
 
 }
 
-
+/*
 bool eliminar_proceso_en_exec(uint32_t pid){
 	pthread_mutex_lock(&mx_pcb_exec);
 	if(pcb_exec->PID == pid){
@@ -1325,7 +1341,7 @@ bool eliminar_proceso_en_exec(uint32_t pid){
 	pthread_mutex_unlock(&mx_pcb_exec);
 	return false;
 }
-
+*/
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
 	t_pcb* pcb_buscado;
 	/////// la función que evalua el condicional devuelve un pcb... en este caso, se toma como un true?
