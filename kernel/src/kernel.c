@@ -456,6 +456,7 @@ t_pcb_query * recibir_pcb_y_actualizar(t_paquete* paquete){
 	t_pcb* pcb_recibido = recibir_pcb(paquete);  
 	t_pcb_query* pcb_query = buscar_pcb(pcb_recibido->PID);
 	reemplazar_pcb_con(pcb_query->pcb,pcb_recibido);
+
 	pcb_destroy(pcb_recibido);
 	return pcb_query;
 }
@@ -825,6 +826,7 @@ bool iniciar_proceso(char** parametros){
 
 
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado){
+
 	pthread_mutex_lock(mx_estado);
 	queue_push(estado,pcb);
 	pthread_mutex_unlock(mx_estado);
@@ -1288,22 +1290,28 @@ bool eliminar_proceso_(uint32_t pid){ // Al implementar en consola, hay q parsea
 	eliminar_proceso_en_exec(pid));
 }*/
 
-void pasar_a_exit_sin_bloqueo(t_pcb_query* pcb_query){
-	if(pcb_query->estado){
-	list_remove_element (pcb_query->estado->elements,pcb_query->pcb);
-	queue_push(estado_temp,pcb_query->pcb);
-	}
+void pasar_a_temp_sin_bloqueo(t_pcb_query* pcb_query){
+	if(pcb_query->estado)
+		list_remove_element(pcb_query->estado->elements,pcb_query->pcb);
 	else
-		pasar_a_exit(pcb_query->pcb);
+		pcb_exec = NULL;
+	
+	queue_push(estado_temp,pcb_query->pcb);
 }
 
 void eliminar_proceso(uint32_t pid){
 	bloquear_mutex_colas();
 	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
-	pasar_a_exit_sin_bloqueo(pcb_query);
-	desbloquear_mutex_colas();
-	sem_post(&sem_bin_exit);
+	if((pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)){		
+			desbloquear_mutex_colas();
+			free(pcb_query);
+			return;
+	}
+	pasar_a_temp_sin_bloqueo(pcb_query);
 	free(pcb_query);
+	desbloquear_mutex_colas();
+	sem_post(&sem_bin_exit);	
+
 }
 
 
