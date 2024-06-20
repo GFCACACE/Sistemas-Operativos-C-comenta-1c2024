@@ -41,9 +41,10 @@ t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t d
 	acceso_espacio_usuario->PID = PID;
 	acceso_espacio_usuario->direccion_fisica = direccion;
 	acceso_espacio_usuario->bytes_restantes_en_frame = bytes_restantes;
+	acceso_espacio_usuario->size_registro = (valor!=NULL) ? (uint32_t)(strlen(valor)+1) : (uint32_t)0;
 	acceso_espacio_usuario->registro_dato = valor;
 	
-	acceso_espacio_usuario->size_registro = valor!=NULL ? strlen(valor)+1 : 0;
+	
 	
 
 	return acceso_espacio_usuario;

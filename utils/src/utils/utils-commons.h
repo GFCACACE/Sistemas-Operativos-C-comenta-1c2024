@@ -124,8 +124,9 @@ typedef struct
 	uint32_t PID;
 	uint32_t direccion_fisica;
 	uint32_t bytes_restantes_en_frame;
-	char* registro_dato;
 	uint32_t size_registro;
+	char* registro_dato;
+	
 }t_acceso_espacio_usuario;
 
 t_validacion* validacion_new();

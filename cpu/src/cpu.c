@@ -528,6 +528,7 @@ bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 
 
 	int response = recibir_operacion(conexion_memoria);
+	recibir_paquete(conexion_memoria);
 	if(response == OUT_OF_MEMORY){
 		actualizar_contexto(pcb);
 		devolver_contexto(pcb, OUT_OF_MEMORY);

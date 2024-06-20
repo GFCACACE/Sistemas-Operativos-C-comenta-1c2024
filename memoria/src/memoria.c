@@ -259,7 +259,7 @@ int buscar_instrucciones(){
 				//imprimir_tabla_paginas_proceso(tamanio_proceso->PID);
 				paquete_destroy(paquete);
 				
-				//break;
+				break;
 			case ESCRITURA_MEMORIA:
 				t_acceso_espacio_usuario* acceso_espacio_usuario_escritura = recibir_acceso_espacio_usuario(paquete);		
 				acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_escritura);
@@ -269,7 +269,7 @@ int buscar_instrucciones(){
 				t_pid_valor* pid_pagina =  recibir_pid_value(paquete);	
 				acceder_tabla_de_paginas(pid_pagina);
 				paquete_destroy(paquete);
-				
+				free(pid_pagina);
 				break;
 				
 			case LECTURA_MEMORIA:
@@ -337,18 +337,19 @@ void ejecutar_resize(t_pid_valor* tamanio_proceso){
 }
 
 void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
-	int direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
-	int bytes_restantes_en_frame = acceso_espacio_usuario->bytes_restantes_en_frame;
-
+	uint32_t direccion_real = (uint32_t)&memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
+	uint32_t bytes_restantes_en_frame = acceso_espacio_usuario->bytes_restantes_en_frame;
 	if (tipo_acceso == LECTURA_MEMORIA){
 		loguear("PID: %d - Accion: LEER - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
 		char* dato_consultado;		
 		memcpy(&dato_consultado,&direccion_real,bytes_restantes_en_frame);
 		enviar_texto(dato_consultado,VALOR_LECTURA_MEMORIA,conexion_cpu);
+		free(dato_consultado);
 		}
 	if (tipo_acceso==ESCRITURA_MEMORIA){
-		loguear("PID: %d - Accion: LEER - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
-		memcpy(&direccion_real,acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
+		loguear("PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
+
+		memcpy(direccion_real,(uint32_t)&acceso_espacio_usuario->registro_dato,(uint32_t)acceso_espacio_usuario->size_registro);
 		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
 	}
 }
