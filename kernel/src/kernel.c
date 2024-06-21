@@ -560,9 +560,8 @@ void recibir_pcb_de_cpu(){
             io_handler_exec(pcb_recibido);
 			break;
 		case OUT_OF_MEMORY:
-			pasar_a_exit(pcb_recibido);			 
-			break;
-
+			loguear_error("PID <%d> - OUT OF MEMORY",pcb_recibido->PID);
+			pasar_a_exit(pcb_recibido);
 		default:
 			
 			break;
