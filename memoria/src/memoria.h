@@ -68,7 +68,7 @@ void reducir_proceso(t_list* ,int);
 t_pid_valor* recibir_pid_value(t_paquete*);
 void liberar_frame(int nro_frame);
 int obtener_frame(t_list* tabla_de_paginas,int nro_pagina);
-void ejecutar_resize(t_pid_valor* tamanio_proceso);
+uint32_t ejecutar_resize(t_pid_valor* tamanio_proceso);
 void acceder_tabla_de_paginas(t_pid_valor* pid_pagina);
 void acceder_a_espacio_usuario(op_code,t_acceso_espacio_usuario*);
 void liberar_proceso_de_memoria(uint32_t pid);

@@ -255,10 +255,11 @@ int buscar_instrucciones(){
 			case RESIZE:
 				
 				t_pid_valor* tamanio_proceso =  recibir_pid_value(paquete);
-				ejecutar_resize(tamanio_proceso);
-				imprimir_uso_frames();			
-				
-				imprimir_tabla_paginas_proceso(tamanio_proceso->PID);
+				if(ejecutar_resize(tamanio_proceso)!=OUT_OF_MEMORY){
+					imprimir_uso_frames();			
+					imprimir_tabla_paginas_proceso(tamanio_proceso->PID);
+				};
+			
 				paquete_destroy(paquete);
 				
 				break;
@@ -321,7 +322,7 @@ void acceder_tabla_de_paginas(t_pid_valor* pid_pagina){
 		free(frame_str);
 }
 
-void ejecutar_resize(t_pid_valor* tamanio_proceso){
+uint32_t ejecutar_resize(t_pid_valor* tamanio_proceso){
 	int cod_op_a_devolver = RESIZE_OK;
 	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(tamanio_proceso->PID));
 	t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
@@ -343,7 +344,8 @@ void ejecutar_resize(t_pid_valor* tamanio_proceso){
 		reducir_proceso(tabla_de_paginas_proceso,paginas_a_reducir);
 		}
 	
-	enviar_texto("Resize efectuado",cod_op_a_devolver,conexion_cpu); 
+	enviar_texto("Resize efectuado",cod_op_a_devolver,conexion_cpu);
+	return cod_op_a_devolver;
 }
 
 void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
@@ -352,9 +354,10 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	if (tipo_acceso == LECTURA_MEMORIA){
 		loguear("PID: %d - Accion: LEER - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
 		char* dato_consultado = malloc((int)bytes_restantes_en_frame);		
-		memcpy(&dato_consultado,direccion_real,(uint32_t)bytes_restantes_en_frame);
+		dato_consultado = "0";
+		//memcpy(&dato_consultado,direccion_real,(uint32_t)bytes_restantes_en_frame);
 		enviar_texto(dato_consultado,VALOR_LECTURA_MEMORIA,conexion_cpu);
-		free(dato_consultado);
+	//	free(dato_consultado);
 		}
 	if (tipo_acceso==ESCRITURA_MEMORIA){
 		loguear("PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
@@ -554,7 +557,7 @@ bool esIgualA0(void* elemento){
 }
 
 bool validar_ampliacion_proceso(int cantidad_frames_a_agregar){
-imprimir_uso_frames();
+
 int cant_paginas_disponibles = list_size(list_filter(frames,esIgualA0));
 
 return cant_paginas_disponibles > cantidad_frames_a_agregar;
