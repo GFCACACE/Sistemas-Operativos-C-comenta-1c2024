@@ -354,7 +354,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		char* dato_consultado = malloc((int)bytes_restantes_en_frame);		
 		memcpy(&dato_consultado,direccion_real,(uint32_t)bytes_restantes_en_frame);
 		enviar_texto(dato_consultado,VALOR_LECTURA_MEMORIA,conexion_cpu);
-		free(dato_consultado);
+		
 		}
 	if (tipo_acceso==ESCRITURA_MEMORIA){
 		loguear("PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);

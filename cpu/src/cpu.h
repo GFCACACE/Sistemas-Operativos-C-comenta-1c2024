@@ -18,6 +18,8 @@ typedef struct
 	int PUERTO_MEMORIA;
 	int PUERTO_ESCUCHA_DISPATCH;
 	int PUERTO_ESCUCHA_INTERRUPT;
+	int CANTIDAD_ENTRADAS_TLB;
+	char* ALGORITMO_TLB;
 	t_config* config;
 } t_config_cpu;
 
@@ -34,6 +36,13 @@ typedef struct
 	char* string_valor;
 }t_param;
 
+typedef struct 
+{
+	uint32_t PID;
+	uint32_t numero_pagina;
+	uint32_t numero_frame;
+	time_t timestamp; 
+}t_tlb;
 
 
 bool iniciar_log_config();
@@ -43,7 +52,7 @@ bool iniciar_conexion_memoria();
 bool iniciar_conexion_kernel();
 bool iniciar_variables();//semáforos y variables globales
 bool iniciar_gestion_interrupcion();
-
+bool iniciar_tlb();
 bool iniciar_cpu(char*);
 bool es_io_handler(char*);
 t_config_cpu* iniciar_config_cpu(char*);
@@ -84,6 +93,10 @@ bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 ///////////////////////////////////
 /*MMU*/
 uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica);
+t_tlb* crear_registro_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame);
+int tlb_hit(uint32_t pid, uint32_t numero_pagina);
+bool actualizar_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame);
+bool reemplazo_tlb(t_tlb* registro_nuevo);
 //////////////////////////////////
 extern int tamanio_pagina;
 extern t_log* logger;
@@ -100,4 +113,5 @@ extern t_param PARAM1;
 extern t_param PARAM2;
 extern t_param PARAM3;
 extern op_code cod_op_kernel_interrupt;
+extern t_list* lista_tlb;
 #endif //cpu_h
