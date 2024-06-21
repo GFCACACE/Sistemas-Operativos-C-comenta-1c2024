@@ -59,6 +59,7 @@ typedef enum
 {
 	NEW,
 	READY,
+	READY_PLUS,
 	EXEC,
 	EXIT_STATE,
 	TEMP

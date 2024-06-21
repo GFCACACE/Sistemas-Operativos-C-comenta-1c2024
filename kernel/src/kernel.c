@@ -25,7 +25,7 @@ time_t tiempo_inicial, tiempo_final;
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
-bool eliminar_proceso_en_FIN_QUANTUM = false;
+bool eliminar_proceso_en_FIN_QUANTUM = false, exec_recibido = false;
 
 t_config_kernel* config;
 t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked,*nombres_colas_dictionary;
@@ -215,6 +215,8 @@ void inicializar_nombres_colas(){
 	_agregar(EXEC,"EXEC");
 	_agregar(EXIT_STATE,"FINALIZADO");
 	_agregar(TEMP,"TEMPORAL");
+	if(es_vrr())
+		_agregar(READY_PLUS,"READY_PLUS");
 }
 
 bool inicializar_dictionario_mutex_colas(){
@@ -248,6 +250,11 @@ bool inicializar_dictionario_mutex_colas(){
 	_agregar_mx(EXEC,&mx_pcb_exec);
 	_agregar_mx(EXIT_STATE,&mx_exit);
 	_agregar_mx(TEMP,&mx_temp);
+
+	if(es_vrr()){
+		_agregar_estado(READY_PLUS,estado_ready_plus);
+		_agregar_mx(READY_PLUS,&mx_ready_plus);
+	}
 
 	inicializar_nombres_colas();
 
@@ -398,10 +405,10 @@ t_queue* get_cola_pcb(t_pcb* pcb){
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
 	while(1){		
-			
+			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
 			sem_wait(&sem_bin_plp_procesos_nuevos_iniciado); 
 			sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
-			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
+
 			bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
 			if(proceso_new_a_ready){
 				sem_post(&sem_bin_ready);
@@ -584,42 +591,53 @@ void recibir_pcb_de_cpu(){
 	loguear("Cod op CPU: %d", cod_op);
 	t_pcb_query* pcb_query = recibir_pcb_y_actualizar(paquete);
 	t_pcb* pcb_recibido = pcb_query->pcb;
-	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
-	liberar_pcb_exec();
-	paquete_destroy(paquete);
-	// PAUSAR POR DETENER PLANI
 	
+	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
+	
+	paquete_destroy(paquete);
+	// PAUSAR POR DETENER PLANI	
 	sem_wait(&sem_bin_recibir_pcb);
-	switch (cod_op)
-	{
-		case FINALIZAR_PROCESO_POR_CONSOLA:
-			pasar_a_exit(pcb_recibido);	
-			sem_post(&sem_bin_controlar_quantum);
-			break;
-		case CPU_EXIT:
-			pasar_a_exit(pcb_recibido);			 
-			break;
-		case FIN_QUANTUM:
-			if(pcb_query->estado)
+	liberar_pcb_exec();
+	
+	if((encontrar_en_lista(pcb_recibido->PID,estado_temp, &mx_temp)==NULL) && (encontrar_en_lista(pcb_recibido->PID,estado_exit, &mx_exit)==NULL))	
+		switch (cod_op)
+		{
+			case FINALIZAR_PROCESO_POR_CONSOLA:
+				pasar_a_exit(pcb_recibido);	
+				sem_post(&sem_bin_controlar_quantum);
 				break;
-			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
-			if (es_vrr()){
-				pcb_recibido->quantum = config->QUANTUM;
-			}
-			sem_post(&sem_bin_ready);
-			sem_post(&sem_bin_controlar_quantum);
-						
-			break;
-		case IO_HANDLER:
-            io_handler_exec(pcb_recibido);
-			break;
-		default:
-			
-			break;
-	}
+			case CPU_EXIT:
+				pasar_a_exit(pcb_recibido);			 
+				break;
+			case FIN_QUANTUM:
+				if(pcb_query->estado)
+					break;
+
+				if(exec_recibido)
+				{	pasar_a_exit(pcb_recibido);	
+					sem_post(&sem_bin_controlar_quantum);
+					break;
+				}
+
+				if (es_vrr()){
+					pcb_recibido->quantum = config->QUANTUM;
+				}
+				proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
+				sem_post(&sem_bin_ready);
+				sem_post(&sem_bin_controlar_quantum);
+							
+				break;
+			case IO_HANDLER:
+				io_handler_exec(pcb_recibido);
+				break;
+			default:
+				
+				break;
+		}
 	sem_post(&sem_bin_cpu_libre);
 	sem_post(&sem_bin_recibir_pcb);
 	free(pcb_query);
+	exec_recibido = false;
 	
 }
 
@@ -1354,6 +1372,7 @@ void eliminar_proceso(uint32_t pid){
 	}
 	else if(pcb_query!=NULL && pcb_query->estado==NULL){
 		sem_wait(&sem_bin_controlar_quantum);
+		exec_recibido = true;
 		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
 		free(pcb_query);
 		eliminar_proceso_en_FIN_QUANTUM = true;	
@@ -1361,6 +1380,13 @@ void eliminar_proceso(uint32_t pid){
 	}
 	else if(pcb_query->estado==estado_ready){
 		sem_wait(&sem_bin_ready);
+		pasar_a_temp_sin_bloqueo(pcb_query);
+		free(pcb_query);
+		desbloquear_mutex_colas();
+		sem_post(&sem_bin_exit);
+	}	
+	else if(pcb_query->estado==estado_ready_plus){
+		sem_wait(&sem_bin_ready);//TODO
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
