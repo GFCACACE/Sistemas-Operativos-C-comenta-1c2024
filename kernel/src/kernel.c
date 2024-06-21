@@ -602,12 +602,16 @@ void recibir_pcb_de_cpu(){
 			}
 			else if (es_vrr()){
 				pcb_recibido->quantum = config->QUANTUM;
-				proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
-			}
-			else
 				proceso_a_estado(pcb_recibido, estado_ready,&mx_ready);
+				sem_post(&sem_bin_ready);
+			}
+			else{
+				proceso_a_estado(pcb_recibido, estado_ready,&mx_ready);
+				sem_post(&sem_bin_ready);
+			}
+			
 			eliminar_proceso_en_FIN_QUANTUM = false; 
-			sem_post(&sem_bin_ready);
+			//sem_post(&sem_bin_ready);
 			//sem_post(&sem_bin_controlar_quantum);
 			break;
 		case IO_HANDLER:
@@ -1337,23 +1341,23 @@ void eliminar_proceso(uint32_t pid){
 
 	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
 	if((pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)){		
-			desbloquear_mutex_colas();
-			free(pcb_query);			
+		desbloquear_mutex_colas();
+		free(pcb_query);			
 	}
 	else if(pcb_query!=NULL && pcb_query->estado==NULL){
 		//sem_wait(&sem_bin_controlar_quantum);
 		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
 		free(pcb_query);
-		
+		eliminar_proceso_en_FIN_QUANTUM = true;	
 		desbloquear_mutex_colas();
-		
-	}else{	
+	}
+	else{	
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
 		sem_post(&sem_bin_exit);	
 	}
-	eliminar_proceso_en_FIN_QUANTUM = true;
+	
 
 }
 
@@ -1371,9 +1375,7 @@ bool eliminar_proceso_en_exec(uint32_t pid){
 */
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
 	t_pcb* pcb_buscado;
-	/////// la función que evalua el condicional devuelve un pcb... en este caso, se toma como un true?
 	if (encontrar_en_lista(pid_buscado,estado_buscado, mutex_estado_buscado)){
-	/////
 		pcb_buscado = encontrar_en_lista(pid_buscado,estado_buscado, mutex_estado_buscado);
 		pthread_mutex_lock(mutex_estado_buscado);
 		if (list_remove_element(estado_buscado->elements, pcb_buscado)) loguear("Se removio el PCB buscado");
