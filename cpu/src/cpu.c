@@ -10,6 +10,7 @@ pthread_mutex_t mutex_interrupt= PTHREAD_MUTEX_INITIALIZER;
 t_config_cpu *config;
 t_registros_cpu *registros_cpu;
 t_dictionary *diccionario_registros_cpu;
+t_list* lista_tlb;
 
 t_config_cpu *iniciar_config_cpu(char *path_config)
 {
@@ -21,6 +22,8 @@ t_config_cpu *iniciar_config_cpu(char *path_config)
 	config_cpu->PUERTO_MEMORIA = config_get_int_value(_config, "PUERTO_MEMORIA");
 	config_cpu->PUERTO_ESCUCHA_DISPATCH = config_get_int_value(_config, "PUERTO_ESCUCHA_DISPATCH");
 	config_cpu->PUERTO_ESCUCHA_INTERRUPT = config_get_int_value(_config, "PUERTO_ESCUCHA_INTERRUPT");
+	config_cpu->CANTIDAD_ENTRADAS_TLB = config_get_int_value(_config,"CANTIDAD_ENTRADAS_TLB");
+	config_cpu->ALGORITMO_TLB = config_get_string_value(_config,"ALGORITMO_TLB");
 	config_cpu->config = _config;
 
 	return config_cpu;
@@ -124,6 +127,11 @@ bool iniciar_conexion_kernel()
 	return true;
 }
 
+bool iniciar_tlb(){
+	lista_tlb=list_create();
+	return true;
+}
+
 bool iniciar_cpu(char *path_config)
 {
 	return iniciar_log_config(path_config) &&
@@ -132,7 +140,8 @@ bool iniciar_cpu(char *path_config)
 		   iniciar_conexion_memoria() &&
 		   iniciar_conexion_kernel() &&
 		   iniciar_variables()	&&
-		   iniciar_gestion_interrupcion();
+		   iniciar_gestion_interrupcion() &&
+		   iniciar_tlb();
 }
 
 
@@ -191,6 +200,9 @@ void finalizar_estructuras_cpu()
 		dictionary_clean(diccionario_registros_cpu);
 		dictionary_destroy(diccionario_registros_cpu);
 	}
+	// if(lista_tlb)
+	// 	list_destroy_and_destroy_elements(lista_tlb);
+	
 	// if (mutex_interrupt != NULL)
 	// {
 	// 	pthread_mutex_destroy(mutex_interrupt);
@@ -203,6 +215,9 @@ void loguear_config()
 	loguear("PUERTO_MEMORIA: %d", config->PUERTO_MEMORIA);
 	loguear("PUERTO_ESCUCHA_DISPATCH: %d", config->PUERTO_ESCUCHA_DISPATCH);
 	loguear("PUERTO_ESCUCHA_INTERRUPT: %d", config->PUERTO_ESCUCHA_INTERRUPT);
+	loguear("CANTIDAD_ENTRADAS_TLB: %d",config->CANTIDAD_ENTRADAS_TLB);
+	loguear("ALGORITMO_TLB: %s", config->ALGORITMO_TLB);
+
 }
 
 char *recibir_instruccion()
@@ -221,7 +236,7 @@ char *pedir_proxima_instruccion(t_pcb *pcb)
 	return recibir_instruccion();
 }
 
-bool check_interrupt(){return (cod_op_kernel_interrupt != EJECUTAR_CPU && !es_exit(IR) && !es_io_handler(INSTID));};
+bool check_interrupt(){ return (cod_op_kernel_interrupt != EJECUTAR_CPU && !es_exit(IR) && !es_io_handler(INSTID));};
 bool es_io_handler(char* INSTID){
 if(!strcmp(INSTID,"IO_GEN_SLEEP")) return true;
 return false;
@@ -481,7 +496,10 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	int response = recibir_operacion(conexion_memoria);
 	if(response == VALOR_LECTURA_MEMORIA){
 		valor_memoria = recibir_mensaje(conexion_memoria);
-		loguear("MOV_IN: Recibo <%s>",valor_memoria);
+		loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>",
+		pcb_recibido->PID,
+		direccion_fisica,
+		valor_memoria);
 		registro_datos.string_valor =string_duplicate(valor_memoria);
 		registro_datos.size = sizeof(uint32_t);
 		uint32_t* valor = malloc(registro_datos.size);
@@ -505,6 +523,10 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb_recibido->PID, direccion_fisica,bytes_restantes_frame,registro_dato);
 	
 	sprintf(direccion_enviar,"%d %d %s",pcb_recibido->PID,direccion_fisica, registro_datos.string_valor);
+	loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>",
+		pcb_recibido->PID,
+		direccion_fisica,
+		registro_dato);
 	enviar_acceso_espacio_usuario(acceso_espacio_usuario,ESCRITURA_MEMORIA,conexion_memoria);
 	//enviar_texto(direccion_fisica,ESCRITURA_MEMORIA,conexion_memoria);
 	
@@ -512,7 +534,7 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	int operacion_ok = recibir_operacion(conexion_memoria);
 	if(operacion_ok== MOV_OUT_OK){
 		valor_memoria=recibir_mensaje(conexion_memoria);
-		loguear(valor_memoria);
+		
 		registros_cpu->PC++;
 		actualizar_contexto(pcb_recibido);
 		return true;
@@ -550,12 +572,70 @@ bool exe_exit(t_pcb *pcb)
 	devolver_contexto(pcb,CPU_EXIT);
 	return true;
 }
+t_tlb* crear_registro_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame){
+	t_tlb* registro_tlb=malloc(sizeof(t_tlb));
+	registro_tlb->PID = PID;
+	registro_tlb->numero_pagina = numero_pagina;
+	registro_tlb->numero_frame = numero_frame;
+	registro_tlb->timestamp = time(NULL);
+	return registro_tlb;
+}
+
+int tlb_hit(uint32_t pid, uint32_t numero_pagina){
+	
+	t_tlb* registro;
+	for(int i=0;i<list_size(lista_tlb);i++){
+		registro = list_get(lista_tlb,i);
+		if(pid==registro->PID && numero_pagina == registro->numero_pagina){
+			if(!strcmp("LRU",config->ALGORITMO_TLB))
+				registro->timestamp = time(NULL);
+			
+			return registro->numero_frame;
+		}
+	}
+	
+
+	return -1;
+}
+bool actualizar_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame){
+	t_tlb* registro_tlb = crear_registro_tlb(PID,numero_pagina, numero_frame);
+	if(list_size(lista_tlb)< config->CANTIDAD_ENTRADAS_TLB){
+		list_add(lista_tlb,registro_tlb);
+		return true;
+	}else{
+		return reemplazo_tlb(registro_tlb);
+	}
+	return false;
+}
+bool reemplazo_tlb(t_tlb* registro_nuevo){
+	t_tlb* registro_a_comparar,*registro_menor_prioridad;
+	int i=0;
+	registro_menor_prioridad=list_get(lista_tlb,i);
+	i++;
+	while(i < list_size(lista_tlb)){
+		registro_a_comparar=list_get(lista_tlb,i);
+		if(registro_a_comparar->timestamp < registro_menor_prioridad->timestamp)
+			registro_menor_prioridad = registro_a_comparar;
+		i++;
+	}
+	list_remove_element(lista_tlb,registro_menor_prioridad);
+	list_add(lista_tlb,registro_nuevo);
+	return true;
+}
 
 uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica){
 	uint32_t direccion_fisica;
 	uint32_t numero_pagina = floor(direccion_logica/tamanio_pagina);
-	char* nro_frame = string_new();
+	int registro_tlb = tlb_hit(pcb->PID,numero_pagina);
+	uint32_t desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
 
+	if(registro_tlb != -1){
+		loguear("PID: <%d> - TLB HIT - Pagina: <%d>",pcb->PID,numero_pagina);
+		direccion_fisica = tamanio_pagina * (uint32_t)registro_tlb + desplazamiento;
+		return direccion_fisica;
+	}
+	loguear("PID: <%d> - TLB MISS - Pagina: <%d>",pcb->PID,numero_pagina);
+	char* nro_frame = string_new();
 	// Agrego el pcb y ple paso un proceso a la memoria para que pueda encontrar que proceso le está pidiendo la CPU
 	t_pid_valor* tamanio_proceso= pid_value_create(pcb->PID,numero_pagina); //Vamos con esta conversion?
 	// FALTA LOGICA SEGUIR PIDIENDO FRAMES HASTA TENER UN FIN DE CADENA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -566,10 +646,14 @@ uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica){
 	int response = recibir_operacion(conexion_memoria);
 	if(response == RESPUESTA_NRO_FRAME)
 		nro_frame = recibir_mensaje(conexion_memoria);
-
-	uint32_t desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
-	direccion_fisica = tamanio_pagina * (uint32_t)atoi(nro_frame) + desplazamiento;
+	loguear("PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%s>",
+	pcb->PID,
+	numero_pagina,
+	nro_frame
+	);
 	
+	direccion_fisica = tamanio_pagina * (uint32_t)atoi(nro_frame) + desplazamiento;
+	actualizar_tlb(pcb->PID,numero_pagina,(uint32_t)atoi(nro_frame));
 
 	return direccion_fisica;
 }
