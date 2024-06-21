@@ -332,6 +332,7 @@ t_pcb_query* buscar_pcb_sin_bloqueo(uint32_t pid){
 	t_queue* cola = NULL;
 	if(!esta_en_exec(pid))
 		cola = buscar_cola_de_pcb(pid);
+
 	t_pcb_query* pcb_query = malloc(sizeof(t_pcb_query));
 	pcb_query->estado = cola;
 	if(cola == NULL)
@@ -396,12 +397,11 @@ t_queue* get_cola_pcb(t_pcb* pcb){
 
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
-	while(1){
-		
+	while(1){		
 			
-			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
 			sem_wait(&sem_bin_plp_procesos_nuevos_iniciado); 
 			sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
+			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
 			bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
 			if(proceso_new_a_ready){
 				sem_post(&sem_bin_ready);
@@ -1359,11 +1359,27 @@ void eliminar_proceso(uint32_t pid){
 		eliminar_proceso_en_FIN_QUANTUM = true;	
 		desbloquear_mutex_colas();
 	}
-	else{	
+	else if(pcb_query->estado==estado_ready){
+		sem_wait(&sem_bin_ready);
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
-		sem_post(&sem_bin_exit);	
+		sem_post(&sem_bin_exit);
+	}	
+	else if(pcb_query->estado==estado_new){
+		list_remove_element(estado_new->elements,pcb_query->pcb);
+		queue_push(estado_exit,pcb_query->pcb);
+		free(pcb_query);
+		sem_wait(&sem_bin_new);
+		desbloquear_mutex_colas();
+		
+	}	
+	else{	
+		
+		pasar_a_temp_sin_bloqueo(pcb_query);
+		free(pcb_query);
+		desbloquear_mutex_colas();
+		sem_post(&sem_bin_exit);
 	}
 	
 
@@ -1570,13 +1586,14 @@ void io_handler(int *ptr_conexion){
 				//mensaje = recibir_mensaje(conexion);
 				
 			//	pthread_mutex_lock(interfaz -> mx_blocked);
-				list_remove_element(interfaz -> estado_blocked->elements,pcb);
+				bool removido = list_remove_element(interfaz -> estado_blocked->elements,pcb);
 			//	pcb = queue_pop(interfaz -> estado_blocked);
 			//	pthread_mutex_unlock(interfaz -> mx_blocked);
 				// pop_estado_get_pcb()
-				loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
-
-				a_ready(pcb);
+				if(removido){
+					loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+					a_ready(pcb);
+				}
 				free(pcb_query);
 
 				break;
