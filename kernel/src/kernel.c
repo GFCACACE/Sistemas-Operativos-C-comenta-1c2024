@@ -1476,6 +1476,7 @@ void pasar_a_temp_sin_bloqueo(t_pcb_query* pcb_query){
 
 bool eliminar_proceso(uint32_t pid){
 	bool eliminado = true;
+	loguear_semaforo("grade de multiprogramacion antes del if: %d\n", &sem_cont_grado_mp);
 	bloquear_mutex_colas();
 
 	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
@@ -1500,12 +1501,14 @@ bool eliminar_proceso(uint32_t pid){
 		sem_post(&sem_bin_exit);
 	}	
 	else if(pcb_query->estado==estado_new){
+		sem_post(&sem_bin_new);
 		list_remove_element(estado_new->elements,pcb_query->pcb);
 		queue_push(estado_exit,pcb_query->pcb);
 		free(pcb_query);
-	//	sem_wait(&sem_bin_new);
+		loguear_semaforo("grade de multiprogramacion en else if new: %d\n", &sem_cont_grado_mp);
+		//eliminar_proceso_en_memoria(pcb_query->pcb);
+		sem_wait(&sem_bin_new);
 		desbloquear_mutex_colas();
-		
 	}	
 	else if(pcb_query->pcb != NULL){	
 		
