@@ -174,7 +174,7 @@ t_recurso* crear_recurso(char* nombre, int instancias){
 
 
 bool iniciar_recursos(){
-
+	int cantidad_recursos = string_array_size(config->RECURSOS);
 	lista_recursos = list_create();
 	char* key = string_array_pop(config->RECURSOS);
 	int value = atoi(string_array_pop(config->INSTANCIAS_RECURSOS));	
@@ -182,7 +182,7 @@ bool iniciar_recursos(){
 	t_recurso* recurso = crear_recurso(key,value);
 	list_add(lista_recursos,recurso);
 	loguear("RECURSO: %s - INSTANCIAS: %d",key,value);
-	for(int i=0;i <= string_array_size(config->RECURSOS);i++){
+	for(int i=1;i < cantidad_recursos ;i++){
 		key = string_array_pop(config->RECURSOS);
 		value = atoi(string_array_pop(config->INSTANCIAS_RECURSOS));
 		recurso = crear_recurso(key,value);
