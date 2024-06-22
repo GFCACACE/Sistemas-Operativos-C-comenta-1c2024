@@ -888,15 +888,31 @@ void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado){
 	pthread_mutex_unlock(mx_estado);
 }
 
+t_validacion validacion_parametros_finalizar(char** parametros){
+	t_validacion validacion;
+	validacion.resultado = string_array_size(parametros)==2;
+	validacion.descripcion = NULL;
+	if(!validacion.resultado)
+		validacion.descripcion = "\tINICIAR_PROCESO debe recibir 1 parámetro:\n\tPath (string)\n";
+
+	return validacion;
+}
 
 bool finalizar_proceso(char** substrings){	
-		imprimir_valores_leidos(substrings);
-		uint32_t pid = atoi(substrings[1]);
-		bool eliminado = eliminar_proceso(pid);
-		//crear_hilo_eliminar_proceso(pid);
-		if(eliminado)
-		loguear("Finaliza el proceso <%s> - Motivo: Finalizado por consola",substrings[1]);
-		return true;
+	
+		t_validacion validacion = validacion_parametros_finalizar(substrings);
+		if(validacion.resultado){
+			imprimir_valores_leidos(substrings);
+
+			uint32_t pid = atoi(substrings[1]);
+			bool eliminado = eliminar_proceso(pid);
+			//crear_hilo_eliminar_proceso(pid);
+			if(eliminado)
+			loguear("Finaliza el proceso <%s> - Motivo: Finalizado por consola",substrings[1]);
+		}
+		else printf(validacion.descripcion,"");
+
+		return validacion.resultado;
 }
 
 
