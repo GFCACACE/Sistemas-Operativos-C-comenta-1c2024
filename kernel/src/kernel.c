@@ -26,6 +26,7 @@ int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
 t_config_kernel* config;
 t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked;
+t_list * lista_recursos;
 t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp;
 //
 t_blocked_interfaz* blocked_interfaz;
@@ -86,6 +87,7 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 	config_kernel->INSTANCIAS_RECURSOS = config_get_array_value(_config,"INSTANCIAS_RECURSOS");
 	config_kernel->GRADO_MULTIPROGRAMACION = config_get_int_value(_config,"GRADO_MULTIPROGRAMACION_INI");
 	config_kernel->PATH_SCRIPTS = config_get_string_value(_config,"PATH_SCRIPTS");
+
 	config_kernel->config = _config;
 	if(config_kernel->ALGORITMO_PLANIFICACION.planificar ==NULL)
 	{	config_kernel_destroy(config_kernel);
@@ -162,13 +164,40 @@ bool iniciar_estados_planificacion(){
 	
 	return true;
 }
+t_recurso* crear_recurso(char* nombre, int instancias){
+	t_recurso* recurso = malloc(sizeof(t_recurso));
+	recurso->recurso = nombre;
+	recurso->instancias = instancias;
+	recurso->cola_procesos_esperando = queue_create();
+	return recurso;
+}
 
 
+bool iniciar_recursos(){
+
+	lista_recursos = list_create();
+	char* key = string_array_pop(config->RECURSOS);
+	int value = atoi(string_array_pop(config->INSTANCIAS_RECURSOS));	
+	key[string_length(key)-1]='\0';
+	t_recurso* recurso = crear_recurso(key,value);
+	list_add(lista_recursos,recurso);
+	loguear("RECURSO: %s - INSTANCIAS: %d",key,value);
+	for(int i=0;i <= string_array_size(config->RECURSOS);i++){
+		key = string_array_pop(config->RECURSOS);
+		value = atoi(string_array_pop(config->INSTANCIAS_RECURSOS));
+		recurso = crear_recurso(key,value);
+		list_add(lista_recursos,recurso);
+		loguear("RECURSO: %s - INSTANCIAS: %d",key,value);
+	}
+	
+	return true;
+}
 
 bool iniciar_kernel(char* path_config){
 	return
 	iniciar_logger_config(path_config)&&
 	inicializar_comandos() &&
+	iniciar_recursos() &&
 	iniciar_servidor_kernel()&&
 	iniciar_conexion_memoria()&&
 	iniciar_dispatch()&&
@@ -494,7 +523,43 @@ void io_stdout(int pid, char** splitter){
 	loguear_warning("Peticion a IO enviada");
 }
 
+void rec_handler_exec(t_pcb* pcb_recibido){
+	int instancias_disponibles;
+	int cod_op_rec = recibir_operacion(cpu_dispatch);		
+	char* peticion = recibir_mensaje(cpu_dispatch);
+	t_recurso *recurso = obtener_recurso(peticion);
+	if(recurso == NULL){
+		pasar_a_exit(pcb_recibido);
+		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>",pcb_recibido->PID);
+		return;
+	}
+	switch(cod_op_rec){
+		case WAIT:
+		recurso->instancias--;
+		if(recurso->instancias < 0){
+			queue_push(recurso->cola_procesos_esperando, pcb_recibido);
+			loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <%s - BLOCKED>",pcb_recibido->PID,recurso->recurso);
+			//Bloquear proceso
+		}
+		else{
+			//Devolver el proceso a ejecutar
+			loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <READY>",pcb_recibido->PID);
+			a_ready(pcb_recibido);
+		}
+		break;
 
+		case SIGNAL:
+		recurso->instancias++;
+		if(!queue_is_empty(recurso->cola_procesos_esperando)){
+			loguear_warning("Falta manejo de bloqueo en SIGNAL");
+			t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
+			a_ready(pcb_liberado);
+		}
+		break;
+	}
+
+
+}
 void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);		
 	char* peticion = recibir_mensaje(cpu_dispatch);
@@ -558,6 +623,10 @@ void recibir_pcb_de_cpu(){
 			break;
 		case IO_HANDLER:
             io_handler_exec(pcb_recibido);
+			break;
+		case REC_HANDLER:
+			
+			rec_handler_exec(pcb_recibido);
 			break;
 		case OUT_OF_MEMORY:
 			loguear_error("PID <%d> - OUT OF MEMORY",pcb_recibido->PID);
@@ -909,7 +978,17 @@ void imprimir_cola(t_queue *cola, const char *estado) {
 
     printf("|------------|----------------------|-----------------|\n");
 }
-
+void imprimir_cola_recursos(){
+	char* nombre_cola=malloc(30);
+	t_recurso* recurso = malloc(sizeof(t_recurso));
+	for(int i=0;i<list_size(lista_recursos);i++){
+		recurso= list_get(lista_recursos,i);
+		sprintf(nombre_cola,"%s - BLOCKED",recurso->recurso);
+		imprimir_cola(recurso->cola_procesos_esperando,nombre_cola);
+		
+	}
+	free(nombre_cola);
+}
 bool es_planificacion(t_alg_planificador algoritmo){
 	return config->ALGORITMO_PLANIFICACION.id == algoritmo;
 }
@@ -933,6 +1012,7 @@ bool proceso_estado(){
 	imprimir_cola(estado_exec, "Ejecutando");	
 	imprimir_cola(estado_exit, "Finalizado");
 	imprimir_cola(estado_temp, "Temporal");
+	imprimir_cola_recursos();
 	if( es_vrr()) imprimir_cola(estado_ready_plus,"Listo VRR");
 
 	queue_destroy(estado_exec);
@@ -1357,6 +1437,16 @@ void iniciar_conexion_io(){
 
 bool existe_interfaz(char* nombre_interfaz){
 	return (!dictionary_is_empty(diccionario_nombre_conexion) && dictionary_has_key(diccionario_nombre_conexion,nombre_interfaz));
+}
+
+t_recurso* obtener_recurso(char* recurso/*Nombre*/){
+	t_recurso *recurso_lista;
+	for(int i=0;i< list_size(lista_recursos);i++){
+		recurso_lista = list_get(lista_recursos,i);
+		if(!strcmp(recurso,recurso_lista->recurso))
+			return recurso_lista;
+	}
+	return NULL;
 }
 
 char *recibir_nombre(int conexion){

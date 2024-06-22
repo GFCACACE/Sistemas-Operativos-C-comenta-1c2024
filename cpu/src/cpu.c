@@ -378,6 +378,18 @@ bool execute(t_pcb *pcb)
 		liberar_param(PARAM2);
 		return true;
 	}
+	if(!strcmp(INSTID,"WAIT")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s>", pcb->PID, INSTID, PARAM1.string_valor);
+		exe_wait(pcb,PARAM1);
+		liberar_param(PARAM1);
+		return false;
+	}
+	if(!strcmp(INSTID,"SIGNAL")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s>", pcb->PID, INSTID, PARAM1.string_valor);
+		exe_signal(pcb,PARAM1);
+		liberar_param(PARAM1);
+		return false;
+	}
 	if(!strcmp(INSTID, "COPY_STRING")){
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s>", pcb->PID, INSTID, PARAM1.string_valor);
 		exe_copy_string(PARAM1);
@@ -565,6 +577,22 @@ bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 bool exe_copy_string(t_param tamanio){
 	memcpy(&registros_cpu->DI,&registros_cpu->SI,atoi(tamanio.string_valor));
 	registros_cpu->PC++;
+	return true;
+}
+bool exe_wait(t_pcb* pcb,t_param recurso){
+	(uint32_t)registros_cpu->PC++;
+	actualizar_contexto(pcb);
+	enviar_pcb(pcb,REC_HANDLER,kernel_dispatch);
+	enviar_texto(recurso.string_valor,WAIT,kernel_dispatch);
+
+	return true;
+}
+bool exe_signal(t_pcb* pcb,t_param recurso){
+	(uint32_t)registros_cpu->PC++;
+	actualizar_contexto(pcb);
+	enviar_pcb(pcb,REC_HANDLER,kernel_dispatch);
+	enviar_texto(recurso.string_valor,SIGNAL,kernel_dispatch);
+
 	return true;
 }
 bool exe_exit(t_pcb *pcb)
