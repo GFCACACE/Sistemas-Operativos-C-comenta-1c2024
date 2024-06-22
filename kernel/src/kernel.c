@@ -1472,6 +1472,8 @@ void pasar_a_temp_sin_bloqueo(t_pcb_query* pcb_query){
 		pcb_exec = NULL;
 	
 	queue_push(estado_temp,pcb_query->pcb);
+
+	
 }
 
 bool eliminar_proceso(uint32_t pid){
@@ -1501,7 +1503,7 @@ bool eliminar_proceso(uint32_t pid){
 		sem_post(&sem_bin_exit);
 	}	
 	else if(pcb_query->estado==estado_new){
-		sem_post(&sem_bin_new);
+		//sem_post(&sem_bin_new);
 		list_remove_element(estado_new->elements,pcb_query->pcb);
 		queue_push(estado_exit,pcb_query->pcb);
 		free(pcb_query);
@@ -1509,6 +1511,8 @@ bool eliminar_proceso(uint32_t pid){
 		//eliminar_proceso_en_memoria(pcb_query->pcb);
 		sem_wait(&sem_bin_new);
 		desbloquear_mutex_colas();
+		
+		
 	}	
 	else if(pcb_query->pcb != NULL){	
 		
