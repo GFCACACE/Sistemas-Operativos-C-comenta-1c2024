@@ -948,26 +948,99 @@ bool detener_planificacion(char** substrings){
 }
 
 bool multiprogramacion(char** substrings){
-
 	loguear("El grado de multiprogramación anterior es: %d",config->GRADO_MULTIPROGRAMACION);
 	if(string_array_size(substrings)>0){
 		char* valor = substrings[1];
 		if(is_numeric(valor)){
 			char* endptr;
-			int number;
+			int number, number_anterior;
+			number_anterior = config->GRADO_MULTIPROGRAMACION;
 			number = strtol(valor, &endptr, 10);
 			config->GRADO_MULTIPROGRAMACION = number;
 			loguear("El nuevo grado de multiprogramación es: %d",config->GRADO_MULTIPROGRAMACION);
+			int diferencia = number - number_anterior;
+			int* valor_prt = malloc(sizeof(int));
+			*valor_prt = diferencia;
+			pthread_t thread_multiprogramacion;
+			pthread_create(&thread_multiprogramacion,NULL , hilo_multiprogramacion_wrapper,(void*)(valor_prt));
+			pthread_detach(thread_multiprogramacion);
 		}
 		else loguear("El valor: %s no es un grado de multiprogramación válido.",valor );
 	}
-	else{
-		loguear("No se especificó ningún grado de multiprogramación");
-	}
+	else loguear("No se especificó ningún grado de multiprogramación");
+
 	
 	return true;
-
 }
+
+void* hilo_multiprogramacion_wrapper(void* arg){
+	int* valor_ptr = (int*) arg;
+	int valor = *valor_ptr;
+	free(valor_ptr);
+	hilo_multiprogramacion(valor);
+	return NULL;
+}
+
+void hilo_multiprogramacion(int diferencia){
+	
+	if(diferencia == 0){
+		loguear("El nuevo grado de multiprogramacion es igual al anterior");
+	}
+	else if (diferencia > 0){
+		loguear("El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
+		for( ;diferencia != 0; diferencia--){
+			sem_post(&sem_cont_grado_mp);
+		}
+	}
+	else {
+		loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
+		for( ;diferencia != 0; diferencia++){
+			sem_wait(&sem_cont_grado_mp);
+		}
+	}
+}
+
+// bool multiprogramacion(char** substrings){
+
+// 	loguear("El grado de multiprogramación anterior es: %d",config->GRADO_MULTIPROGRAMACION);
+// 	if(string_array_size(substrings)>0){
+// 		char* valor = substrings[1];
+// 		if(is_numeric(valor)){
+// 			char* endptr;
+// 			int number, number_anterior;
+// 			number_anterior = config->GRADO_MULTIPROGRAMACION;
+// 			number = strtol(valor, &endptr, 10);
+// 			config->GRADO_MULTIPROGRAMACION = number;
+// 			loguear("El nuevo grado de multiprogramación es: %d",config->GRADO_MULTIPROGRAMACION);
+// 			// NUEVO: Agrego sem waits o post dependiendo si aumenta o disminuye el grad de multiprog
+// 			// int diferencia = number - number_anterior;
+// 			// if(diferencia == 0){
+// 			// 	loguear("El nuevo grado de multiprogramacion es igual al anterior");
+// 			// }
+// 			// else if (diferencia > 0){
+// 			// 	loguear("El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
+// 			// 	for( ;diferencia != 0; diferencia--){
+// 			// 		sem_post(&sem_cont_grado_mp);
+// 			// 	}
+// 			// }
+// 			// else {
+// 			// 	loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
+// 			// 	for( ;diferencia != 0; diferencia--){
+// 			// 		sem_wait(&sem_cont_grado_mp);
+// 			// 	}
+// 			// }
+
+// 			// FIN NUEVO
+// 		}
+// 		else loguear("El valor: %s no es un grado de multiprogramación válido.",valor );
+// 	}
+// 	else{
+// 		loguear("No se especificó ningún grado de multiprogramación");
+// 	}
+	
+// 	return true;
+
+// }
 
 void imprimir_cola(t_queue *cola, const char *estado) {
 

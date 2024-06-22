@@ -184,6 +184,8 @@ void modificar_quantum_restante(t_pcb* pcb);
 void blocked_interfaz_destroy(void* elemento );
 bool maneja_quantum();
 bool es_rr();
+void hilo_multiprogramacion(int);
+void* hilo_multiprogramacion_wrapper(void* arg);
 
 #endif /* kernel.h*/
 
