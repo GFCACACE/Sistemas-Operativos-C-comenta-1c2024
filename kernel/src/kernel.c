@@ -585,6 +585,56 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	string_array_destroy(splitter);
 }
 
+void finalizar_proceso_consola_exec(t_pcb* pcb_recibido){
+	pasar_a_exit(pcb_recibido);	
+	sem_post(&sem_bin_controlar_quantum);
+}
+
+void fin_de_quantum_exec(t_pcb* pcb_recibido,t_queue* estado){
+	if(estado)
+		return;
+
+	if(exec_recibido)
+	{	pasar_a_exit(pcb_recibido);	
+		sem_post(&sem_bin_controlar_quantum);
+		return;
+	}
+
+	if (es_vrr())
+		pcb_recibido->quantum = config->QUANTUM;
+	
+	proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
+	sem_post(&sem_bin_ready);
+	sem_post(&sem_bin_controlar_quantum);
+}
+
+void gestionar_operacion_de_cpu(op_code cod_op,t_pcb* pcb_recibido,t_queue* estado){
+	switch (cod_op)
+		{
+			case FINALIZAR_PROCESO_POR_CONSOLA:
+				finalizar_proceso_consola_exec(pcb_recibido);
+				break;
+			case CPU_EXIT:
+				pasar_a_exit(pcb_recibido);			 
+				break;
+			case FIN_QUANTUM:
+				fin_de_quantum_exec(pcb_recibido,estado);
+							
+				break;
+			case IO_HANDLER:
+				io_handler_exec(pcb_recibido);
+				break;
+			default:
+				
+				break;
+		}
+
+}
+
+bool fue_finalizado(uint32_t pid){
+	return (encontrar_en_lista(pid,estado_temp, &mx_temp)!=NULL) 
+		|| (encontrar_en_lista(pid,estado_exit, &mx_exit)!=NULL);
+}
 
 void recibir_pcb_de_cpu(){
 	loguear_warning("Intento recibir de CPU!");
@@ -601,41 +651,9 @@ void recibir_pcb_de_cpu(){
 	sem_wait(&sem_bin_recibir_pcb);
 	liberar_pcb_exec();
 	
-	if((encontrar_en_lista(pcb_recibido->PID,estado_temp, &mx_temp)==NULL) && (encontrar_en_lista(pcb_recibido->PID,estado_exit, &mx_exit)==NULL))	
-		switch (cod_op)
-		{
-			case FINALIZAR_PROCESO_POR_CONSOLA:
-				pasar_a_exit(pcb_recibido);	
-				sem_post(&sem_bin_controlar_quantum);
-				break;
-			case CPU_EXIT:
-				pasar_a_exit(pcb_recibido);			 
-				break;
-			case FIN_QUANTUM:
-				if(pcb_query->estado)
-					break;
+	if(!fue_finalizado(pcb_recibido->PID))	
+		gestionar_operacion_de_cpu(cod_op,pcb_recibido,pcb_query->estado);
 
-				if(exec_recibido)
-				{	pasar_a_exit(pcb_recibido);	
-					sem_post(&sem_bin_controlar_quantum);
-					break;
-				}
-
-				if (es_vrr()){
-					pcb_recibido->quantum = config->QUANTUM;
-				}
-				proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
-				sem_post(&sem_bin_ready);
-				sem_post(&sem_bin_controlar_quantum);
-							
-				break;
-			case IO_HANDLER:
-				io_handler_exec(pcb_recibido);
-				break;
-			default:
-				
-				break;
-		}
 	sem_post(&sem_bin_cpu_libre);
 	sem_post(&sem_bin_recibir_pcb);
 	free(pcb_query);
@@ -1453,15 +1471,8 @@ void eliminar_proceso(uint32_t pid){
 		eliminar_proceso_en_FIN_QUANTUM = true;	
 		desbloquear_mutex_colas();
 	}
-	else if(pcb_query->estado==estado_ready){
+	else if(pcb_query->estado==estado_ready||pcb_query->estado==estado_ready_plus){
 		sem_wait(&sem_bin_ready);
-		pasar_a_temp_sin_bloqueo(pcb_query);
-		free(pcb_query);
-		desbloquear_mutex_colas();
-		sem_post(&sem_bin_exit);
-	}	
-	else if(pcb_query->estado==estado_ready_plus){
-		sem_wait(&sem_bin_ready);//TODO
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
