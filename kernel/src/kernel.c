@@ -418,7 +418,7 @@ void plp_procesos_nuevos(){
 				sem_post(&sem_bin_plp_procesos_nuevos_iniciado); 
 			}
 			else {
-				loguear("Se fue todo al carajo en plp_procesos_nuevos");
+				loguear("No hay procesos en New para plp_procesos_nuevos");
 			}	
 	}
 }
@@ -624,6 +624,9 @@ void gestionar_operacion_de_cpu(op_code cod_op,t_pcb* pcb_recibido,t_queue* esta
 			case IO_HANDLER:
 				io_handler_exec(pcb_recibido);
 				break;
+			case OUT_OF_MEMORY:
+				pasar_a_exit(pcb_recibido);			 
+				break;
 			default:
 				
 				break;
@@ -649,40 +652,11 @@ void recibir_pcb_de_cpu(){
 	paquete_destroy(paquete);
 	// PAUSAR POR DETENER PLANI	
 	sem_wait(&sem_bin_recibir_pcb);
-<<<<<<< HEAD
-	switch (cod_op)
-	{
-		case FINALIZAR_PROCESO_POR_CONSOLA:
-			pasar_a_exit(pcb_recibido);	
-			break;
-		case CPU_EXIT:
-			pasar_a_exit(pcb_recibido);			 
-			break;
-		case FIN_QUANTUM:
-			proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
-			if (es_vrr()){
-				pcb_recibido->quantum = config->QUANTUM;
-			}
-			sem_post(&sem_bin_ready);
-			break;
-		case IO_HANDLER:
-            io_handler_exec(pcb_recibido);
-			break;
-		case OUT_OF_MEMORY:
-			pasar_a_exit(pcb_recibido);			 
-			break;
-
-		default:
-			
-			break;
-	}
-=======
 	liberar_pcb_exec();
 	
 	if(!fue_finalizado(pcb_recibido->PID))	
 		gestionar_operacion_de_cpu(cod_op,pcb_recibido,pcb_query->estado);
 
->>>>>>> dev_buscar_pcb
 	sem_post(&sem_bin_cpu_libre);
 	sem_post(&sem_bin_recibir_pcb);
 	free(pcb_query);
@@ -1339,7 +1313,7 @@ void planificacion_VRR(){
 ////// MODIFICACIONES DE ESTADO
 
 bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino,pthread_mutex_t* sem_origen,pthread_mutex_t* sem_destino){	
-	bool transicion = transicion_valida(estado_origen, estado_destino);
+	bool transicion = (!queue_is_empty(estado_origen)) && transicion_valida(estado_origen, estado_destino);
 	if(transicion){
 		pthread_mutex_lock(sem_origen);
 
@@ -1529,7 +1503,7 @@ bool eliminar_proceso(uint32_t pid){
 		list_remove_element(estado_new->elements,pcb_query->pcb);
 		queue_push(estado_exit,pcb_query->pcb);
 		free(pcb_query);
-		sem_wait(&sem_bin_new);
+	//	sem_wait(&sem_bin_new);
 		desbloquear_mutex_colas();
 		
 	}	
