@@ -33,7 +33,7 @@ t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_te
 //
 t_blocked_interfaz* blocked_interfaz;
 //
-t_pcb* pcb_exec;
+t_pcb* pcb_exec = NULL;
 t_list* lista_interfaces_blocked;
 
 
@@ -344,8 +344,10 @@ t_pcb_query* buscar_pcb_sin_bloqueo(uint32_t pid){
 	pcb_query->estado = cola;
 	if(cola == NULL)
 		pcb_query->pcb = pcb_exec;
-	else
+	else{
 		pcb_query->pcb = buscar_pcb_en_cola(cola, pid);
+		loguear_warning("PID ENCONTRADO: %d", pcb_query->pcb->PID);
+	}
 	//pcb_query->pcb = cola!=NULL? buscar_pcb_en_cola(cola,pid):pcb_exec;	
 	return pcb_query;
 }
@@ -1443,7 +1445,7 @@ void eliminar_proceso(uint32_t pid){
 		desbloquear_mutex_colas();
 		free(pcb_query);			
 	}
-	else if(pcb_query!=NULL && pcb_query->estado==NULL){
+	else if(pcb_exec!=NULL && pcb_query->estado==NULL){
 		sem_wait(&sem_bin_controlar_quantum);
 		exec_recibido = true;
 		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
@@ -1473,12 +1475,17 @@ void eliminar_proceso(uint32_t pid){
 		desbloquear_mutex_colas();
 		
 	}	
-	else{	
+	else if(pcb_query->pcb != NULL){	
 		
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
 		sem_post(&sem_bin_exit);
+	}
+	else{
+		free(pcb_query);
+		desbloquear_mutex_colas();
+		loguear_warning("PCB NO ENCONTRADO");
 	}
 	
 
