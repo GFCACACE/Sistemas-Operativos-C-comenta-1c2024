@@ -18,9 +18,6 @@ t_pcb* pcb_create(char* path_programa){
 t_pcb* pcb_create_copy(char* path_programa){
 
 	t_pcb* pcb = malloc(sizeof(t_pcb));
-	// pthread_mutex_lock(&mx_ultimo_pid);
-	// pcb->PID = ultimo_pid++;
-	// pthread_mutex_unlock(&mx_ultimo_pid);
 	pcb->archivos_abiertos = list_create();
 	pcb->registros_cpu = inicializar_registros();
 	pcb->program_counter = 0;    

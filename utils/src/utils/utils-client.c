@@ -206,11 +206,11 @@ void agregar_a_buffer(t_buffer* buffer,const void* lugar_origen,size_t tam){
 	buffer->desplazamiento+=tam;
 }
 
-void* serializar_pid_value(t_pid_valor* pid_value,int* size){
+void* serializar_id_value(t_id_valor* t_value,int* size){
 	*size = sizeof(uint32_t) *2 ;
 	t_buffer* buffer = crear_buffer(*size);
-	agregar_a_buffer(buffer, &pid_value->PID, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &pid_value->valor, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &t_value->id, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &t_value->valor, sizeof(uint32_t));
 	
 	void * stream = buffer->stream;
 	free(buffer);
@@ -218,6 +218,23 @@ void* serializar_pid_value(t_pid_valor* pid_value,int* size){
 	return stream;
 
 }
+
+void* serializar_id_string_value(t_id_valor_string* t_value,int* size){
+	int string_size = string_length(t_value->valor)+1;
+	*size = sizeof(uint32_t) *2 + string_size;
+	t_buffer* buffer = crear_buffer(*size);
+	agregar_a_buffer(buffer, &t_value->id, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &string_size, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &t_value->valor, string_size);
+	
+	void * stream = buffer->stream;
+	free(buffer);
+
+	return stream;
+
+}
+
+
 
 void* serializar_pcb(t_pcb* pcb,int* size)
 {	
@@ -263,13 +280,29 @@ void enviar_pcb(t_pcb* pcb,op_code operacion,int socket){
 	free(stream);
 }
 
-															
-void enviar_pid_value(t_pid_valor* pid_value,op_code operacion,int socket){
+void enviar_id_value(t_id_valor* id_value,op_code operacion,int socket){
 	int size;
-	void* stream = serializar_pid_value(pid_value,&size);									
+	void* stream = serializar_id_value(id_value,&size);									
 					 
 	enviar_stream(stream,size,socket,operacion);
 	free(stream);
+}
+
+void enviar_id_value_string(t_id_valor_string* id_value,op_code operacion,int socket){
+	int size;
+	void* stream = serializar_id_string_value(id_value,&size);						
+					 
+	enviar_stream(stream,size,socket,operacion);
+	free(stream);
+}
+
+
+void enviar_pid_value(t_pid_valor* pid_value,op_code operacion,int socket){
+	t_id_valor* id_value = malloc(sizeof(t_id_valor));
+	id_value->id = pid_value->PID;
+	id_value->valor = pid_value->valor;
+	enviar_id_value(id_value,operacion,socket);
+	free(id_value);
 }
 
 

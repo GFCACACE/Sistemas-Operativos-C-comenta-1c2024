@@ -7,6 +7,7 @@ sem_t sem_bin_new; //Sincroniza que plp (hilo new) no actúe hasta que haya un n
 sem_t sem_bin_ready; //Sincroniza que pcp no actúe hasta que haya un nuevo elemento en ready
 sem_t sem_bin_exit; //Sincroniza que plp (hilo exit) no actúe hasta que haya un nuevo elemento en exit
 sem_t sem_bin_cpu_libre; // Sincroniza que no haya ningun PCB ejecutando en CPU
+sem_t sem_bin_controlar_quantum;
 
 sem_t sem_bin_recibir_pcb;
 sem_t sem_bin_plp_procesos_nuevos_iniciado,sem_bin_plp_procesos_finalizados_iniciado,sem_bin_planificador_corto_iniciado;
@@ -24,13 +25,15 @@ time_t tiempo_inicial, tiempo_final;
 int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
+bool eliminar_proceso_en_FIN_QUANTUM = false, exec_recibido = false;
+
 t_config_kernel* config;
-t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked;
+t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked,*nombres_colas_dictionary;
 t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp;
 //
 t_blocked_interfaz* blocked_interfaz;
 //
-t_pcb* pcb_exec;
+t_pcb* pcb_exec = NULL;
 t_list* lista_interfaces_blocked;
 
 
@@ -167,6 +170,8 @@ bool iniciar_estados_planificacion(){
 
 bool iniciar_kernel(char* path_config){
 	return
+
+
 	iniciar_logger_config(path_config)&&
 	inicializar_comandos() &&
 	iniciar_servidor_kernel()&&
@@ -186,6 +191,7 @@ bool iniciar_semaforos(){
 	sem_init(&sem_bin_exit,0,0);
 	sem_init(&sem_bin_cpu_libre,0,1);
 	sem_init(&sem_bin_recibir_pcb,0,1);
+	sem_init(&sem_bin_controlar_quantum,0,1);
 
 	sem_init(&sem_bin_plp_procesos_nuevos_iniciado,0,1);
 	sem_init(&sem_bin_plp_procesos_finalizados_iniciado,0,1);
@@ -194,6 +200,24 @@ bool iniciar_semaforos(){
 	return true;
 }
 
+void inicializar_nombres_colas(){
+	nombres_colas_dictionary = dictionary_create();
+
+	void _agregar(t_codigo_estado codigo,char* nombre){
+		char* key = string_itoa(codigo);
+		dictionary_put(nombres_colas_dictionary,key,nombre);
+		free(key);
+	};
+
+	
+	_agregar(NEW,"NUEVO");
+	_agregar(READY,"READY");
+	_agregar(EXEC,"EXEC");
+	_agregar(EXIT_STATE,"FINALIZADO");
+	_agregar(TEMP,"TEMPORAL");
+	if(es_vrr())
+		_agregar(READY_PLUS,"READY_PLUS");
+}
 
 bool inicializar_dictionario_mutex_colas(){
 	estados_dictionary = dictionary_create();
@@ -219,11 +243,21 @@ bool inicializar_dictionario_mutex_colas(){
 	_agregar_estado(READY,estado_ready);
 	_agregar_estado(EXEC,pcb_exec);
 	_agregar_estado(EXIT_STATE,estado_exit);
+	_agregar_estado(TEMP,estado_temp);
 
 	_agregar_mx(NEW,&mx_new);
 	_agregar_mx(READY,&mx_ready);
 	_agregar_mx(EXEC,&mx_pcb_exec);
 	_agregar_mx(EXIT_STATE,&mx_exit);
+	_agregar_mx(TEMP,&mx_temp);
+
+	if(es_vrr()){
+		_agregar_estado(READY_PLUS,estado_ready_plus);
+		_agregar_mx(READY_PLUS,&mx_ready_plus);
+	}
+
+	inicializar_nombres_colas();
+
 	return true;
 }
 
@@ -237,6 +271,7 @@ void liberar_diccionario_colas(){
 	
 	liberar_diccionario(estados_dictionary);
 	liberar_diccionario(estados_mutexes_dictionary);
+	liberar_diccionario(nombres_colas_dictionary);
 	
 }
 
@@ -279,10 +314,13 @@ t_queue* buscar_cola_de_pcb(uint32_t pid){
 
 	bool _es_del_pcb(void* elem){
 		t_queue* cola = (t_queue*)elem;
-		return list_any_satisfy(cola->elements,_es_id);
+		return (!list_is_empty(cola->elements)) && list_any_satisfy(cola->elements,_es_id);
 	};
 
-	return list_find(get_estados(),_es_del_pcb);
+	t_list* estados_inicializados = get_estados_inicializados();
+	t_queue* cola = list_find(estados_inicializados,_es_del_pcb);
+	list_destroy(estados_inicializados);
+	return cola;
 }
 
 t_pcb* buscar_pcb_en_cola(t_queue* cola,uint32_t pid){
@@ -297,23 +335,42 @@ bool esta_en_exec(uint32_t pid){
 	return pcb_exec!=NULL && pcb_exec->PID==pid;
 }
 
-t_pcb_query* buscar_pcb(uint32_t pid){
-	bloquear_mutex_colas();
+t_pcb_query* buscar_pcb_sin_bloqueo(uint32_t pid){
 	t_queue* cola = NULL;
 	if(!esta_en_exec(pid))
 		cola = buscar_cola_de_pcb(pid);
+
 	t_pcb_query* pcb_query = malloc(sizeof(t_pcb_query));
 	pcb_query->estado = cola;
-	pcb_query->pcb = cola!=NULL? buscar_pcb_en_cola(cola,pid):pcb_exec;
-	desbloquear_mutex_colas();
-
+	if(cola == NULL)
+		pcb_query->pcb = pcb_exec;
+	else{
+		pcb_query->pcb = buscar_pcb_en_cola(cola, pid);
+		loguear_warning("PID ENCONTRADO: %d", pcb_query->pcb->PID);
+	}
+	//pcb_query->pcb = cola!=NULL? buscar_pcb_en_cola(cola,pid):pcb_exec;	
 	return pcb_query;
+}
+
+t_pcb_query* buscar_pcb(uint32_t pid){
+	t_pcb_query* pcb_query;
+	bloquear_mutex_colas();
+	pcb_query = buscar_pcb_sin_bloqueo(pid);
+	desbloquear_mutex_colas();
+	return pcb_query;
+}
+
+bool estado_inicializado(void* elem){
+	t_queue* cola = (t_queue*)elem;
+	return cola!= NULL;
 }
 
 /// @brief 
 	//Retorna una lista de t_queue* con las colas de estados
 /// @return 
 t_list* get_estados(){return dictionary_elements(estados_dictionary);}
+
+t_list* get_estados_inicializados(){return list_filter(dictionary_elements(estados_dictionary),&estado_inicializado);}
 
 
 bool iniciar_planificadores(){
@@ -349,12 +406,11 @@ t_queue* get_cola_pcb(t_pcb* pcb){
 
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
-	while(1){
-		
-			
+	while(1){		
 			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
 			sem_wait(&sem_bin_plp_procesos_nuevos_iniciado); 
 			sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
+
 			bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
 			if(proceso_new_a_ready){
 				sem_post(&sem_bin_ready);
@@ -409,7 +465,6 @@ void planificador_corto(){
 	}
 }
 void liberar_pcb_exec(){
-
 	pthread_mutex_lock(&mx_pcb_exec);
 	pcb_exec = NULL;
 	pthread_mutex_unlock(&mx_pcb_exec);
@@ -420,6 +475,7 @@ t_pcb_query * recibir_pcb_y_actualizar(t_paquete* paquete){
 	t_pcb* pcb_recibido = recibir_pcb(paquete);  
 	t_pcb_query* pcb_query = buscar_pcb(pcb_recibido->PID);
 	reemplazar_pcb_con(pcb_query->pcb,pcb_recibido);
+
 	pcb_destroy(pcb_recibido);
 	return pcb_query;
 }
@@ -506,7 +562,9 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	}
 	
 	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked, splitter[0]);
-	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, &interfaz->mx_blocked);
+	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
+
+	//proceso_estado();
 
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
@@ -527,6 +585,56 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	string_array_destroy(splitter);
 }
 
+void finalizar_proceso_consola_exec(t_pcb* pcb_recibido){
+	pasar_a_exit(pcb_recibido);	
+	sem_post(&sem_bin_controlar_quantum);
+}
+
+void fin_de_quantum_exec(t_pcb* pcb_recibido,t_queue* estado){
+	if(estado)
+		return;
+
+	if(exec_recibido)
+	{	pasar_a_exit(pcb_recibido);	
+		sem_post(&sem_bin_controlar_quantum);
+		return;
+	}
+
+	if (es_vrr())
+		pcb_recibido->quantum = config->QUANTUM;
+	
+	proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
+	sem_post(&sem_bin_ready);
+	sem_post(&sem_bin_controlar_quantum);
+}
+
+void gestionar_operacion_de_cpu(op_code cod_op,t_pcb* pcb_recibido,t_queue* estado){
+	switch (cod_op)
+		{
+			case FINALIZAR_PROCESO_POR_CONSOLA:
+				finalizar_proceso_consola_exec(pcb_recibido);
+				break;
+			case CPU_EXIT:
+				pasar_a_exit(pcb_recibido);			 
+				break;
+			case FIN_QUANTUM:
+				fin_de_quantum_exec(pcb_recibido,estado);
+							
+				break;
+			case IO_HANDLER:
+				io_handler_exec(pcb_recibido);
+				break;
+			default:
+				
+				break;
+		}
+
+}
+
+bool fue_finalizado(uint32_t pid){
+	return (encontrar_en_lista(pid,estado_temp, &mx_temp)!=NULL) 
+		|| (encontrar_en_lista(pid,estado_exit, &mx_exit)!=NULL);
+}
 
 void recibir_pcb_de_cpu(){
 	loguear_warning("Intento recibir de CPU!");
@@ -535,12 +643,13 @@ void recibir_pcb_de_cpu(){
 	loguear("Cod op CPU: %d", cod_op);
 	t_pcb_query* pcb_query = recibir_pcb_y_actualizar(paquete);
 	t_pcb* pcb_recibido = pcb_query->pcb;
-	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
-	liberar_pcb_exec();
-	paquete_destroy(paquete);
-	// PAUSAR POR DETENER PLANI
 	
+	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
+	
+	paquete_destroy(paquete);
+	// PAUSAR POR DETENER PLANI	
 	sem_wait(&sem_bin_recibir_pcb);
+<<<<<<< HEAD
 	switch (cod_op)
 	{
 		case FINALIZAR_PROCESO_POR_CONSOLA:
@@ -567,9 +676,17 @@ void recibir_pcb_de_cpu(){
 			
 			break;
 	}
+=======
+	liberar_pcb_exec();
+	
+	if(!fue_finalizado(pcb_recibido->PID))	
+		gestionar_operacion_de_cpu(cod_op,pcb_recibido,pcb_query->estado);
+
+>>>>>>> dev_buscar_pcb
 	sem_post(&sem_bin_cpu_libre);
 	sem_post(&sem_bin_recibir_pcb);
 	free(pcb_query);
+	exec_recibido = false;
 	
 }
 
@@ -752,6 +869,7 @@ bool eliminar_proceso_en_memoria(t_pcb* pcb){
 	return true;
 }
 
+bool maneja_quantum(){return (es_rr()||es_vrr());}
 
 bool iniciar_proceso(char** parametros){
 	
@@ -775,6 +893,8 @@ bool iniciar_proceso(char** parametros){
 		char *path = string_duplicate(parametros[1]);
 		loguear("PATH: %s",path);
 		t_pcb* pcb = pcb_create(path);   // Se crea el PCB
+		if(maneja_quantum())
+			pcb->quantum = config->QUANTUM;
 		
 		bool proceso_creado = crear_proceso_en_memoria(pcb);
 		if(proceso_creado){
@@ -791,18 +911,37 @@ bool iniciar_proceso(char** parametros){
 
 
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado){
+
 	pthread_mutex_lock(mx_estado);
 	queue_push(estado,pcb);
 	pthread_mutex_unlock(mx_estado);
 }
 
+t_validacion validacion_parametros_finalizar(char** parametros){
+	t_validacion validacion;
+	validacion.resultado = string_array_size(parametros)==2;
+	validacion.descripcion = NULL;
+	if(!validacion.resultado)
+		validacion.descripcion = "\tINICIAR_PROCESO debe recibir 1 parámetro:\n\tPath (string)\n";
+
+	return validacion;
+}
 
 bool finalizar_proceso(char** substrings){	
-		imprimir_valores_leidos(substrings);
-		uint32_t pid = atoi(substrings[1]);
-		eliminar_proceso(pid);
-		loguear("Finaliza el proceso <%s> - Motivo: Finalizado por consola",substrings[1]);
-		return true;
+	
+		t_validacion validacion = validacion_parametros_finalizar(substrings);
+		if(validacion.resultado){
+			imprimir_valores_leidos(substrings);
+
+			uint32_t pid = atoi(substrings[1]);
+			bool eliminado = eliminar_proceso(pid);
+			//crear_hilo_eliminar_proceso(pid);
+			if(eliminado)
+			loguear("Finaliza el proceso <%s> - Motivo: Finalizado por consola",substrings[1]);
+		}
+		else printf(validacion.descripcion,"");
+
+		return validacion.resultado;
 }
 
 
@@ -875,30 +1014,103 @@ bool detener_planificacion(char** substrings){
 }
 
 bool multiprogramacion(char** substrings){
-
 	loguear("El grado de multiprogramación anterior es: %d",config->GRADO_MULTIPROGRAMACION);
 	if(string_array_size(substrings)>0){
 		char* valor = substrings[1];
 		if(is_numeric(valor)){
 			char* endptr;
-			int number;
+			int number, number_anterior;
+			number_anterior = config->GRADO_MULTIPROGRAMACION;
 			number = strtol(valor, &endptr, 10);
 			config->GRADO_MULTIPROGRAMACION = number;
 			loguear("El nuevo grado de multiprogramación es: %d",config->GRADO_MULTIPROGRAMACION);
+			int diferencia = number - number_anterior;
+			int* valor_prt = malloc(sizeof(int));
+			*valor_prt = diferencia;
+			pthread_t thread_multiprogramacion;
+			pthread_create(&thread_multiprogramacion,NULL , hilo_multiprogramacion_wrapper,(void*)(valor_prt));
+			pthread_detach(thread_multiprogramacion);
 		}
 		else loguear("El valor: %s no es un grado de multiprogramación válido.",valor );
 	}
-	else{
-		loguear("No se especificó ningún grado de multiprogramación");
-	}
+	else loguear("No se especificó ningún grado de multiprogramación");
+
 	
 	return true;
-
 }
+
+void* hilo_multiprogramacion_wrapper(void* arg){
+	int* valor_ptr = (int*) arg;
+	int valor = *valor_ptr;
+	free(valor_ptr);
+	hilo_multiprogramacion(valor);
+	return NULL;
+}
+
+void hilo_multiprogramacion(int diferencia){
+	
+	if(diferencia == 0){
+		loguear("El nuevo grado de multiprogramacion es igual al anterior");
+	}
+	else if (diferencia > 0){
+		loguear("El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
+		for( ;diferencia != 0; diferencia--){
+			sem_post(&sem_cont_grado_mp);
+		}
+	}
+	else {
+		loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
+		for( ;diferencia != 0; diferencia++){
+			sem_wait(&sem_cont_grado_mp);
+		}
+	}
+}
+
+// bool multiprogramacion(char** substrings){
+
+// 	loguear("El grado de multiprogramación anterior es: %d",config->GRADO_MULTIPROGRAMACION);
+// 	if(string_array_size(substrings)>0){
+// 		char* valor = substrings[1];
+// 		if(is_numeric(valor)){
+// 			char* endptr;
+// 			int number, number_anterior;
+// 			number_anterior = config->GRADO_MULTIPROGRAMACION;
+// 			number = strtol(valor, &endptr, 10);
+// 			config->GRADO_MULTIPROGRAMACION = number;
+// 			loguear("El nuevo grado de multiprogramación es: %d",config->GRADO_MULTIPROGRAMACION);
+// 			// NUEVO: Agrego sem waits o post dependiendo si aumenta o disminuye el grad de multiprog
+// 			// int diferencia = number - number_anterior;
+// 			// if(diferencia == 0){
+// 			// 	loguear("El nuevo grado de multiprogramacion es igual al anterior");
+// 			// }
+// 			// else if (diferencia > 0){
+// 			// 	loguear("El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
+// 			// 	for( ;diferencia != 0; diferencia--){
+// 			// 		sem_post(&sem_cont_grado_mp);
+// 			// 	}
+// 			// }
+// 			// else {
+// 			// 	loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
+// 			// 	for( ;diferencia != 0; diferencia--){
+// 			// 		sem_wait(&sem_cont_grado_mp);
+// 			// 	}
+// 			// }
+
+// 			// FIN NUEVO
+// 		}
+// 		else loguear("El valor: %s no es un grado de multiprogramación válido.",valor );
+// 	}
+// 	else{
+// 		loguear("No se especificó ningún grado de multiprogramación");
+// 	}
+	
+// 	return true;
+
+// }
 
 void imprimir_cola(t_queue *cola, const char *estado) {
 
-	void imprimir_estado(void* elem){
+	void _imprimir_estado(void* elem){
 		t_pcb* pcb = (t_pcb*)elem;
 		 printf("| %-10d | %-20s | %-15s |\n", pcb->PID,pcb->path ,estado);
 	}
@@ -906,7 +1118,7 @@ void imprimir_cola(t_queue *cola, const char *estado) {
     printf("| %-10s | %-20s | %-15s |\n", "PID", "Nombre", "Estado");
     printf("|------------|----------------------|-----------------|\n");
 
-	list_iterate(cola->elements,imprimir_estado);
+	list_iterate(cola->elements,_imprimir_estado);
 
     printf("|------------|----------------------|-----------------|\n");
 }
@@ -922,21 +1134,54 @@ bool es_vrr(){
 	return es_planificacion(VRR);
 }
 
-bool proceso_estado(){
-	t_queue* estado_exec = queue_create();
-	pthread_mutex_lock(&mx_pcb_exec);
-	if(pcb_exec!=NULL)
-		queue_push(estado_exec,pcb_exec);
-	pthread_mutex_unlock(&mx_pcb_exec);
-	imprimir_cola(estado_new, "Nuevo");
-    imprimir_cola(estado_ready, "Listo");
-	// imprimir_todas las colas de blocked
-	imprimir_cola(estado_exec, "Ejecutando");	
-	imprimir_cola(estado_exit, "Finalizado");
-	imprimir_cola(estado_temp, "Temporal");
-	if( es_vrr()) imprimir_cola(estado_ready_plus,"Listo VRR");
+char* get_nombre_estado(char* clave){
+	char* nombre;
+	if(dictionary_has_key(nombres_colas_dictionary,clave))
+		nombre = string_duplicate(dictionary_get(nombres_colas_dictionary,clave));
+	else nombre = string_duplicate(clave);
 
-	queue_destroy(estado_exec);
+	return nombre;
+
+}
+
+void imprimir_estado(char* clave,void* element){
+	t_queue* estado;	
+	char* nombre_estado = get_nombre_estado(clave);
+	
+	if(element!=NULL && element!=pcb_exec){	
+		estado = (t_queue*)element;
+		imprimir_cola(estado,nombre_estado);		
+	}
+	else
+	{		
+		t_queue* estado_exec = queue_create();
+		pthread_mutex_lock(&mx_pcb_exec);
+		if(pcb_exec!=NULL)
+			queue_push(estado_exec,pcb_exec);
+		pthread_mutex_unlock(&mx_pcb_exec);
+		imprimir_cola(estado_exec,nombre_estado);
+		queue_destroy(estado_exec);
+	}
+	
+	free(nombre_estado);
+
+}
+
+bool proceso_estado(){
+	// t_queue* estado_exec = queue_create();
+	// pthread_mutex_lock(&mx_pcb_exec);
+	// if(pcb_exec!=NULL)
+	// 	queue_push(estado_exec,pcb_exec);
+	// pthread_mutex_unlock(&mx_pcb_exec);
+
+	dictionary_iterator(estados_dictionary,&imprimir_estado);
+	// imprimir_cola(estado_new, "Nuevo");
+    // imprimir_cola(estado_ready, "Listo");
+	// imprimir_todas las colas de blocked
+	//imprimir_cola(estado_exec, "Ejecutando");	
+	// imprimir_cola(estado_exit, "Finalizado");
+	// imprimir_cola(estado_temp, "Temporal");
+	if( es_vrr()) imprimir_cola(estado_ready_plus,"Listo VRR");	
 	
 	return true;
 }
@@ -967,9 +1212,11 @@ void ejecutar_planificacion(){
 
 void ejecutar_proceso(){
 
-	loguear("Se debe enviar el pcb en exec a la cpu");
-	pthread_mutex_lock(&mx_pcb_exec);
-	enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
+	if(pcb_exec){
+		loguear("Se debe enviar el pcb en exec a la cpu PID: %d",pcb_exec->PID);
+		enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
+	}else
+	 loguear_warning("No hay ningún proceso para enviar a ejecutar.");
 	pthread_mutex_unlock(&mx_pcb_exec);
 	
 }
@@ -977,16 +1224,18 @@ void ejecutar_proceso(){
 void pcb_a_exec(t_pcb* pcb){
 	if(pcb != NULL){
 		pthread_mutex_lock(&mx_pcb_exec);
-		pcb_exec = pcb;
-		pthread_mutex_unlock(&mx_pcb_exec);
+		pcb_exec = pcb;		
 		ejecutar_proceso();
 	}
 }
 
 t_pcb* ready_a_exec(){	
 	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
-	
-	t_pcb* pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
+	t_pcb* pcb = NULL;
+	int size = queue_size(estado_ready);
+	loguear_warning("La cola ready tiene: %d",size);
+	pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
+
 	pcb_a_exec(pcb);
 	return pcb;
 }
@@ -1000,20 +1249,26 @@ void controlar_quantum (t_pcb* pcb_enviado){
 	t_pcb pcb;
 	memcpy(&pcb,pcb_enviado,sizeof(t_pcb));
 	if(config->QUANTUM)
-	{	usleep(config->QUANTUM*1000);		
-		pthread_mutex_lock(&mx_pcb_exec);
-		if(pcb_exec != NULL && pcb_exec->PID==pcb.PID){
-			enviar_texto("FIN_QUANTUM",FIN_QUANTUM,cpu_interrupt);
-			loguear("PID: <%d> - Desalojado por fin de Quantum",pcb.PID);
-			
+	{	eliminar_proceso_en_FIN_QUANTUM=false;
+		usleep(pcb.quantum *1000);	
+		loguear("PID: <%d> - Esperando sem_wait(&sem_bin_controlar_quantum)",pcb.PID);
+		sem_wait(&sem_bin_controlar_quantum);	
+		loguear("PID: <%d> - &sem_bin_controlar_quantum activado",pcb.PID);
+		if(!eliminar_proceso_en_FIN_QUANTUM){
+			pthread_mutex_lock(&mx_pcb_exec);
+			if(pcb_exec != NULL && pcb_exec->PID==pcb.PID){
+				enviar_texto("FIN_QUANTUM",FIN_QUANTUM,cpu_interrupt);
+				loguear("PID: <%d> - Desalojado por fin de Quantum",pcb.PID);
+				
+			}
+			pthread_mutex_unlock(&mx_pcb_exec);
 		}
-		pthread_mutex_unlock(&mx_pcb_exec);
+		sem_post(&sem_bin_controlar_quantum);
 	}
 }
 
 void crear_hilo_quantum(t_pcb* pcb){
 	pthread_t thread_quantum;
-
 	pthread_create(&thread_quantum,NULL, (void*)controlar_quantum,pcb);
 	
 	pthread_detach(thread_quantum);
@@ -1025,8 +1280,20 @@ void crear_hilo_quantum(t_pcb* pcb){
 	
 }
 
+// void crear_hilo_eliminar_proceso(uint32_t pid){
+// 	pthread_t thread_eliminar;
+
+// 	pthread_create(&thread_eliminar,NULL, (void*)eliminar_proceso,pid);
+	
+// 	pthread_detach(thread_eliminar);
+// 	if (thread_eliminar == -1)
+// 		loguear_error("No se pudo iniciar el hilo de eliminar proceso: %d",pid);	
+	
+// }
 
 
+
+/*
 void interrumpir_por_fin_quantum(){
 	loguear("FIN DE QUANTUM: Se debe pasar el pcb a ready y notificar a la cpu");
 	t_pcb* pcb;
@@ -1036,12 +1303,13 @@ void interrumpir_por_fin_quantum(){
 	pthread_mutex_unlock(&mx_pcb_exec);
 	push_proceso_a_estado(pcb,estado_ready,&mx_ready); // Thread safe
 	sem_post(&sem_bin_ready); //Se le avisa a pcp que un nuevo proceso ingresó a esa lista
-}
+}*/
 
 
 void planificacion_RR(){
 	loguear("Planificando por Round Robbin");
 	t_pcb* pcb = ready_a_exec();
+	if(pcb)
 	crear_hilo_quantum(pcb);
 }
 
@@ -1064,7 +1332,7 @@ void planificacion_VRR(){
 		pcb = ready_plus_a_exec();	
 	else
 		pcb = ready_a_exec();
-	
+	if(pcb)
 	crear_hilo_quantum(pcb); // Agregar diferencia timestamp!!
 }
 
@@ -1101,7 +1369,9 @@ void push_proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estad
 
 t_pcb* pop_estado_get_pcb(t_queue* estado,pthread_mutex_t* mx_estado){
 	pthread_mutex_lock(mx_estado);
-	t_pcb* pcb = queue_pop(estado);
+	t_pcb* pcb;
+	if(!queue_is_empty(estado))
+		pcb = queue_pop(estado);
 	pthread_mutex_unlock(mx_estado);
 	return pcb;
 }
@@ -1200,8 +1470,8 @@ bool iniciar_servidor_kernel(){
 	loguear("El Servidor iniciado correctamente");
 	return true;
 }
-
-bool eliminar_proceso(uint32_t pid){ // Al implementar en consola, hay q parsear el char* a uint32_t
+/*
+bool eliminar_proceso_(uint32_t pid){ // Al implementar en consola, hay q parsear el char* a uint32_t
 	
 	bool _eliminar_proceso_en_lista(t_queue* estado, pthread_mutex_t* mutex_estado){
 		if (!queue_is_empty(estado)) return eliminar_proceso_en_lista(pid, estado, mutex_estado);
@@ -1219,8 +1489,69 @@ bool eliminar_proceso(uint32_t pid){ // Al implementar en consola, hay q parsear
 	_eliminar_proceso_en_lista(estado_ready, &mx_ready) || 
 	eliminar_proceso_en_blocked(pid) ||
 	eliminar_proceso_en_exec(pid));
+}*/
+
+void pasar_a_temp_sin_bloqueo(t_pcb_query* pcb_query){
+	if(pcb_query->estado)
+		list_remove_element(pcb_query->estado->elements,pcb_query->pcb);
+	else
+		pcb_exec = NULL;
+	
+	queue_push(estado_temp,pcb_query->pcb);
 }
 
+bool eliminar_proceso(uint32_t pid){
+	bool eliminado = true;
+	bloquear_mutex_colas();
+
+	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
+	if((pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)){		
+		desbloquear_mutex_colas();
+		free(pcb_query);	
+		eliminado = false;		
+	}
+	else if(pcb_exec!=NULL && pcb_query->estado==NULL){
+		sem_wait(&sem_bin_controlar_quantum);
+		exec_recibido = true;
+		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
+		free(pcb_query);
+		eliminar_proceso_en_FIN_QUANTUM = true;	
+		desbloquear_mutex_colas();
+	}
+	else if(pcb_query->estado==estado_ready||pcb_query->estado==estado_ready_plus){
+		sem_wait(&sem_bin_ready);
+		pasar_a_temp_sin_bloqueo(pcb_query);
+		free(pcb_query);
+		desbloquear_mutex_colas();
+		sem_post(&sem_bin_exit);
+	}	
+	else if(pcb_query->estado==estado_new){
+		list_remove_element(estado_new->elements,pcb_query->pcb);
+		queue_push(estado_exit,pcb_query->pcb);
+		free(pcb_query);
+		sem_wait(&sem_bin_new);
+		desbloquear_mutex_colas();
+		
+	}	
+	else if(pcb_query->pcb != NULL){	
+		
+		pasar_a_temp_sin_bloqueo(pcb_query);
+		free(pcb_query);
+		desbloquear_mutex_colas();
+		sem_post(&sem_bin_exit);
+	}
+	else{
+		free(pcb_query);
+		desbloquear_mutex_colas();
+		eliminado = false;
+		loguear_warning("PCB NO ENCONTRADO");
+	}
+	
+	return eliminado;
+
+}
+
+/*
 bool eliminar_proceso_en_exec(uint32_t pid){
 	pthread_mutex_lock(&mx_pcb_exec);
 	if(pcb_exec->PID == pid){
@@ -1231,12 +1562,10 @@ bool eliminar_proceso_en_exec(uint32_t pid){
 	pthread_mutex_unlock(&mx_pcb_exec);
 	return false;
 }
-
+*/
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
 	t_pcb* pcb_buscado;
-	/////// la función que evalua el condicional devuelve un pcb... en este caso, se toma como un true?
 	if (encontrar_en_lista(pid_buscado,estado_buscado, mutex_estado_buscado)){
-	/////
 		pcb_buscado = encontrar_en_lista(pid_buscado,estado_buscado, mutex_estado_buscado);
 		pthread_mutex_lock(mutex_estado_buscado);
 		if (list_remove_element(estado_buscado->elements, pcb_buscado)) loguear("Se removio el PCB buscado");
@@ -1246,6 +1575,7 @@ bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pth
 	}
 	return false;
 }
+/*
 bool eliminar_proceso_en_blocked(uint32_t pid){
 	bool _eliminar_proceso_en_lista(t_queue* estado, pthread_mutex_t* mutex_estado){
 		if (!queue_is_empty(estado)) return eliminar_proceso_en_lista(pid, estado, mutex_estado);
@@ -1261,7 +1591,7 @@ bool eliminar_proceso_en_blocked(uint32_t pid){
 		}
 	return false;
 	
-}
+}*/
 
 
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
@@ -1308,9 +1638,10 @@ void iniciar_conexion_io(){
 	//
 	while (1){
 		t_blocked_interfaz* blocked_interfaz = malloc(sizeof(t_blocked_interfaz));
+		blocked_interfaz->mx_blocked = malloc(sizeof(pthread_mutex_t));
 		bool aceptar_interfaz=true;
 
-		int mutex = pthread_mutex_init(&blocked_interfaz->mx_blocked, NULL);
+		int mutex = pthread_mutex_init(blocked_interfaz->mx_blocked, NULL);
 		if(mutex == -1){
 			loguear_warning("El mutex no se inicio correctamente.");
 			//jump al principio?
@@ -1337,6 +1668,11 @@ void iniciar_conexion_io(){
 			dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
 			dictionary_put(diccionario_nombre_qblocked,nombre_interfaz, blocked_interfaz);
 			dictionary_put(diccionario_conexion_qblocked,string_conexion, blocked_interfaz);
+			////
+			dictionary_put(estados_dictionary,nombre_interfaz,blocked_interfaz->estado_blocked);
+			dictionary_put(estados_mutexes_dictionary,nombre_interfaz,blocked_interfaz->mx_blocked);
+			////
+
 			//
 			list_add(lista_interfaces_blocked,blocked_interfaz);
 			//
@@ -1404,17 +1740,27 @@ void io_handler(int *ptr_conexion){
 		free(string_conexion);
 		switch (cod_operacion){
 			case TERMINO_IO:
-				if( encontrar_en_lista(pid_a_manejar,estado_temp, &mx_temp) ||  encontrar_en_lista(pid_a_manejar,estado_exit, &mx_exit)){
+				t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
+				if(pcb_query->estado==NULL||pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)
 					break;
-				}
-				//mensaje = recibir_mensaje(conexion);
-				pthread_mutex_lock(&interfaz -> mx_blocked);
-				pcb = queue_pop(interfaz -> estado_blocked);
-				pthread_mutex_unlock(&interfaz -> mx_blocked);
-				// pop_estado_get_pcb()
-				loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+					
+				pcb = pcb_query->pcb;
+				// if( encontrar_en_lista(pid_a_manejar,estado_temp, &mx_temp) ||  encontrar_en_lista(pid_a_manejar,estado_exit, &mx_exit)){
+				// 	break;
+				// }
 
-				a_ready(pcb);
+				//mensaje = recibir_mensaje(conexion);
+				
+			//	pthread_mutex_lock(interfaz -> mx_blocked);
+				bool removido = list_remove_element(interfaz -> estado_blocked->elements,pcb);
+			//	pcb = queue_pop(interfaz -> estado_blocked);
+			//	pthread_mutex_unlock(interfaz -> mx_blocked);
+				// pop_estado_get_pcb()
+				if(removido){
+					loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+					a_ready(pcb);
+				}
+				free(pcb_query);
 
 				break;
 			

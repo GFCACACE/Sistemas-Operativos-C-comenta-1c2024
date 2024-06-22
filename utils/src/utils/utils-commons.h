@@ -106,7 +106,17 @@ typedef struct
 	char* path;
 } t_pcb;
 
+typedef struct
+{
+	uint32_t id;
+	uint32_t valor;
+} t_id_valor;
 
+typedef struct
+{
+	uint32_t id;
+	char* valor;
+} t_id_valor_string;
 typedef struct
 {
 	uint32_t PID;
