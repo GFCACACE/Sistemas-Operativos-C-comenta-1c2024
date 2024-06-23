@@ -123,7 +123,7 @@ typedef struct
 {
 	uint32_t PID;
 	uint32_t direccion_fisica;
-	uint32_t bytes_restantes_en_frame;
+	
 	uint32_t size_registro;
 	char* registro_dato;
 	

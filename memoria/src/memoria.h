@@ -74,6 +74,7 @@ void acceder_a_espacio_usuario(op_code,t_acceso_espacio_usuario*);
 void liberar_proceso_de_memoria(uint32_t pid);
 int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,int tamanio_proceso);
 void efectuar_retardo();
-
-
+void escribir_memoria(char* direccion_real,char* dato,uint32_t size);
+void leer_memoria(char* direccion_real,char* buffer,uint32_t size);
+bool ejec_codigo_prueba();
 #endif /* memoria.h*/

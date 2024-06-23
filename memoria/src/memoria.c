@@ -173,6 +173,7 @@ bool iniciar_paginacion(){
 	loguear("El tamanio de pagina es: %d",tamanio_pagina);
 	
 	loguear("Cantidad frames %d",cantidadFrames);
+	
 	return true;
 }
 bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las configs*/)
@@ -182,10 +183,12 @@ bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las
 		iniciar_servidor_memoria() &&
 		inicializar_memoria()&&
 		iniciar_paginacion()&&
+		ejec_codigo_prueba()&&
 		iniciar_conexion_cpu()&&
 		iniciar_conexion_kernel()&&
-		iniciar_memoria_instrucciones();
+		iniciar_memoria_instrucciones();	
 }
+
 
 void proceso_destroy(void* elemento){
 
@@ -348,23 +351,91 @@ uint32_t ejecutar_resize(t_pid_valor* tamanio_proceso){
 	return cod_op_a_devolver;
 }
 
-void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
-	void* direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
-	uint32_t bytes_restantes_en_frame = acceso_espacio_usuario->bytes_restantes_en_frame;
-	if (tipo_acceso == LECTURA_MEMORIA){
-		loguear("PID: %d - Accion: LEER - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
-		char* dato_consultado = malloc((int)bytes_restantes_en_frame);		
+bool ejec_codigo_prueba(){
+	char* registro_dato = "100";
+    uint32_t espacio = 80;
+	uint32_t size = sizeof(uint8_t);
+	loguear("size <%d>" ,sizeof(uint32_t));
+	//uint32_t size = strlen(registro_dato) + 1;
+	uint32_t registro_dato_int = atoi(registro_dato);
+	void* direccion_real = (void*)(char*) memoriaPrincipal + espacio;
+	//Escritura
+	escribir_memoria(direccion_real,(char*) &registro_dato_int,size);
 
-		memcpy(&dato_consultado,direccion_real,(uint32_t)bytes_restantes_en_frame);
-		enviar_texto(dato_consultado,VALOR_LECTURA_MEMORIA,conexion_cpu);
+	//Lectura
+	uint8_t dato_leido;
+	leer_memoria(direccion_real,(char*)& dato_leido,size);
+	loguear("Registro de 1 byte: <%d>",dato_leido);
+	char* dato_leido_string =  string_itoa(dato_leido);
+    loguear("Registro string: <%s>\n",dato_leido_string);
+	
+
+
+	char* registro_dato_uin32 = "10000";
+    uint32_t espacio_ui32 = 800;
+	uint32_t size_ui32 = sizeof(uint32_t);
+	
+	//uint32_t size = strlen(registro_dato) + 1;
+	uint32_t registro_dato_int_ui32 = atoi(registro_dato_uin32);
+
+	void* direccion_real_ui32 = (void*)(char*) memoriaPrincipal + espacio_ui32;
+	//Escritura
+	escribir_memoria(direccion_real_ui32,(char*) &registro_dato_int_ui32,size_ui32);
+	//Lectura
+	uint32_t dato_leido_ui32;
+	leer_memoria(direccion_real_ui32,(char*)& dato_leido_ui32,size_ui32);
+	loguear("Registro de 4 bytes: <%d>",dato_leido_ui32);
+	char* dato_leido_string_ui32 =  string_itoa(dato_leido_ui32);
+    loguear("Registro string: <%s>\n",dato_leido_string_ui32);
+	
+	return true;
+}
+
+void escribir_memoria(char* direccion_real,char* dato,uint32_t size){
+	memcpy(direccion_real,dato,size);
+}
+void leer_memoria(char* direccion_real,char* buffer,uint32_t size){
+	memcpy(buffer,direccion_real,size);
+}
+
+void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
+	char* direccion_real =memoriaPrincipal  + acceso_espacio_usuario->direccion_fisica;
+	
+	if (tipo_acceso == LECTURA_MEMORIA){	
 		
+		if(acceso_espacio_usuario->size_registro==1){
+		uint8_t dato_1_byte;
+		leer_memoria(direccion_real,(char*)& dato_1_byte,acceso_espacio_usuario->size_registro);
+		char* dato_leido_1_byte=  string_itoa(dato_1_byte);
+		enviar_texto(dato_leido_1_byte,VALOR_LECTURA_MEMORIA,conexion_cpu);
+		loguear("Se leyó: <%d>. Tamaño: <%d>",dato_1_byte,acceso_espacio_usuario->size_registro);
+		}
+		
+		if(acceso_espacio_usuario->size_registro==4){
+		uint32_t dato_4_byte;
+		leer_memoria(direccion_real,(char*)& dato_4_byte,acceso_espacio_usuario->size_registro);
+		char* dato_leido_4_byte=  string_itoa(dato_4_byte);
+		enviar_texto(dato_leido_4_byte,VALOR_LECTURA_MEMORIA,conexion_cpu);
+		loguear("Se leyó: <%d>. Tamaño: <%d>",dato_4_byte,acceso_espacio_usuario->size_registro);
+		}
+		
+
 		}
 	if (tipo_acceso==ESCRITURA_MEMORIA){
-		loguear("PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
+		
+		uint32_t registro_dato_int = atoi(acceso_espacio_usuario->registro_dato);
 
-		memcpy(direccion_real,&acceso_espacio_usuario->registro_dato,(uint32_t)acceso_espacio_usuario->size_registro);
+		escribir_memoria(direccion_real,(char*) &registro_dato_int,acceso_espacio_usuario->size_registro);
+		 loguear("PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d",
+		 acceso_espacio_usuario->PID,
+		 acceso_espacio_usuario->direccion_fisica,
+		 acceso_espacio_usuario->size_registro);
+
 		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
-		loguear_warning("Se escribió: <%s>",acceso_espacio_usuario->registro_dato);
+	
+		loguear("Se escribió: <%d>. Tamaño: <%d>",registro_dato_int,acceso_espacio_usuario->size_registro);
+	
+
 	}
 	
 }

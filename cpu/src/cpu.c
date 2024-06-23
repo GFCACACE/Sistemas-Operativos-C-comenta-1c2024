@@ -486,8 +486,10 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	
 	uint32_t direccion_fisica = mmu(pcb_recibido,*(uint32_t*)registro_direccion.puntero);
 	uint32_t bytes_restantes_frame = calcular_bytes_restantes(direccion_fisica);
-
-	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb_recibido->PID, direccion_fisica,bytes_restantes_frame,NULL);
+	char* registro_dato = (char*)registro_datos.string_valor;
+	uint32_t size_registro = (uint32_t)registro_datos.size;
+	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb_recibido->PID, direccion_fisica,size_registro,registro_dato);
+	
 
 	sprintf(direccion_enviar,"%d",acceso_espacio_usuario->direccion_fisica);
 	enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion_memoria);
@@ -496,15 +498,16 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	int response = recibir_operacion(conexion_memoria);
 	if(response == VALOR_LECTURA_MEMORIA){
 		valor_memoria = recibir_mensaje(conexion_memoria);
-		loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>",
-		pcb_recibido->PID,
-		direccion_fisica,
-		valor_memoria);
-		registro_datos.string_valor =string_duplicate(valor_memoria);
+
+		registro_datos.string_valor = string_duplicate(valor_memoria);
 		registro_datos.size = sizeof(uint32_t);
 		uint32_t* valor = malloc(registro_datos.size);
 		*valor = (uint32_t) atoi(valor_memoria);
 		registro_datos.puntero = &valor;
+		loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
+		pcb_recibido->PID,
+		direccion_fisica,
+		*valor);
 	}
 	registros_cpu->PC++;
 	actualizar_contexto(pcb_recibido);
@@ -520,7 +523,9 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	u_int32_t bytes_restantes_frame = calcular_bytes_restantes(direccion_fisica);
 
 	char* registro_dato = (char*)registro_datos.string_valor;
-	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb_recibido->PID, direccion_fisica,bytes_restantes_frame,registro_dato);
+	
+	uint32_t size_registro = (uint32_t)registro_datos.size;
+	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb_recibido->PID, direccion_fisica,size_registro,registro_dato);
 	
 	sprintf(direccion_enviar,"%d %d %s",pcb_recibido->PID,direccion_fisica, registro_datos.string_valor);
 	loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>",

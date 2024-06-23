@@ -171,15 +171,15 @@ t_acceso_espacio_usuario* recibir_acceso_espacio_usuario(t_paquete* paquete)
 	t_acceso_espacio_usuario* acceso_espacio_usuario = malloc(sizeof(t_acceso_espacio_usuario*));
 	t_buffer* buffer = paquete->buffer;
 	buffer->desplazamiento = sizeof(uint32_t);
-	acceso_espacio_usuario->registro_dato = malloc(acceso_espacio_usuario->size_registro+1);
+	acceso_espacio_usuario->registro_dato = malloc(acceso_espacio_usuario->size_registro);
 	
 	recibir_de_buffer(&acceso_espacio_usuario->PID,buffer,sizeof(uint32_t));
 	recibir_de_buffer(&acceso_espacio_usuario->direccion_fisica,buffer,sizeof(uint32_t));
-	recibir_de_buffer(&acceso_espacio_usuario->bytes_restantes_en_frame,buffer,sizeof(uint32_t));
+	//recibir_de_buffer(&acceso_espacio_usuario->bytes_restantes_en_frame,buffer,sizeof(uint32_t));
 	recibir_de_buffer(&acceso_espacio_usuario->size_registro,buffer,sizeof(uint32_t));
 
 	// if (acceso_espacio_usuario->size_registro)
-	recibir_de_buffer(acceso_espacio_usuario->registro_dato,buffer,acceso_espacio_usuario->size_registro);
+	recibir_de_buffer(acceso_espacio_usuario->registro_dato,buffer,strlen(acceso_espacio_usuario->registro_dato)+1);
 	
 	return acceso_espacio_usuario;
 
