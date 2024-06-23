@@ -59,9 +59,10 @@ typedef enum
 {
 	NEW,
 	READY,
-	BLOCKED,
+	READY_PLUS,
 	EXEC,
-	EXIT_STATE
+	EXIT_STATE,
+	TEMP
 }t_codigo_estado;
 
 typedef struct t_comando_consola {
@@ -78,7 +79,7 @@ typedef struct t_pcb_query {
 
 typedef struct{
 	t_queue* estado_blocked;
-	pthread_mutex_t mx_blocked;
+	pthread_mutex_t* mx_blocked;
 }t_blocked_interfaz;
 
 t_config_kernel* iniciar_config_kernel(char*);
@@ -93,11 +94,8 @@ extern t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus,*est
 extern t_pcb* pcb_exec;
 extern t_list* lista_interfaces_blocked;
 extern bool planificacion_detenida;
-/*
-extern t_queue* io_stdin;
-extern t_queue* io_stdout;
-extern t_queue* io_generica;
-extern t_queue* io_dialfs;*/
+
+
 
 bool iniciar_interrupt();
 bool iniciar_dispatch();
@@ -150,6 +148,7 @@ bool eliminar_proceso_en_memoria(t_pcb*);
 bool eliminar_proceso_en_blocked(uint32_t pid_buscado);
 bool eliminar_proceso_en_exec(uint32_t pid);
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
+//void crear_hilo_eliminar_proceso(uint32_t pid);
 
 
 void recibir_pcb_de_cpu();
@@ -176,12 +175,17 @@ t_queue* buscar_cola_de_pcb(uint32_t pid);
 t_pcb* buscar_pcb_en_cola(t_queue* cola,uint32_t pid);
 t_pcb_query* buscar_pcb(uint32_t pid);
 t_list* get_estados();
+t_list* get_estados_inicializados();
 
 void bloquear_mutex_colas();
 void desbloquear_mutex_colas();
 
 void modificar_quantum_restante(t_pcb* pcb);
 void blocked_interfaz_destroy(void* elemento );
+bool maneja_quantum();
+bool es_rr();
+void hilo_multiprogramacion(int);
+void* hilo_multiprogramacion_wrapper(void* arg);
 
 #endif /* kernel.h*/
 

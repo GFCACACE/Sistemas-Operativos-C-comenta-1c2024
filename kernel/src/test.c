@@ -64,7 +64,7 @@ void es_FIFO()
 
 void envia_pcb()
 {
-    ejecutar_proceso();
+   // ejecutar_proceso();
 }
 
 int run_tests() {
