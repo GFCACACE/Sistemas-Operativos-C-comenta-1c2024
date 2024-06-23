@@ -95,6 +95,8 @@ extern t_pcb* pcb_exec;
 extern t_list* lista_interfaces_blocked;
 extern bool planificacion_detenida;
 
+extern int cant_procesos_en_cicuito;
+
 
 
 bool iniciar_interrupt();
@@ -186,6 +188,7 @@ bool maneja_quantum();
 bool es_rr();
 void hilo_multiprogramacion(int);
 void* hilo_multiprogramacion_wrapper(void* arg);
+void hilo_falopa();
 
 #endif /* kernel.h*/
 

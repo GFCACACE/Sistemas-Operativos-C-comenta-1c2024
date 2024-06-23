@@ -36,6 +36,10 @@ t_blocked_interfaz* blocked_interfaz;
 t_pcb* pcb_exec = NULL;
 t_list* lista_interfaces_blocked;
 
+//
+int cant_procesos_en_cicuito;
+//
+
 
  // Crear el diccionario de algoritmo
 t_planificador get_algoritmo(char* nombre){
@@ -413,6 +417,7 @@ void plp_procesos_nuevos(){
 
 			bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
 			if(proceso_new_a_ready){
+				cant_procesos_en_cicuito++;
 				sem_post(&sem_bin_ready);
 				loguear("El proceso ingresó correctamente a la lista de ready");
 				sem_post(&sem_bin_plp_procesos_nuevos_iniciado); 
@@ -435,8 +440,10 @@ void plp_procesos_finalizados(){
 			eliminar_proceso_en_memoria(pcb);
 			loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
 			push_proceso_a_estado(pcb,estado_exit,&mx_exit);
+			cant_procesos_en_cicuito--;
+			//if (cant_procesos_en_cicuito < config->GRADO_MULTIPROGRAMACION)
 			sem_post(&sem_cont_grado_mp);
-		sem_post(&sem_bin_plp_procesos_finalizados_iniciado); 
+			sem_post(&sem_bin_plp_procesos_finalizados_iniciado); 
 		
 	}
 }
@@ -1035,10 +1042,18 @@ void hilo_multiprogramacion(int diferencia){
 	else {
 		loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
 		for( ;diferencia != 0; diferencia++){
-			sem_wait(&sem_cont_grado_mp);
+			pthread_t thread_wait;
+			pthread_create(&thread_wait,NULL ,(void*) hilo_falopa,NULL);
+			pthread_detach(thread_wait);
+			// sem_wait(&sem_cont_grado_mp);
 		}
 	}
 }
+void hilo_falopa(){
+	sem_wait(&sem_cont_grado_mp);
+}
+
+
 
 // bool multiprogramacion(char** substrings){
 
