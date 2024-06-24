@@ -183,7 +183,7 @@ bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las
 		iniciar_servidor_memoria() &&
 		inicializar_memoria()&&
 		iniciar_paginacion()&&
-		ejec_codigo_prueba()&&
+		//ejec_codigo_prueba()&&
 		iniciar_conexion_cpu()&&
 		iniciar_conexion_kernel()&&
 		iniciar_memoria_instrucciones();	
@@ -351,46 +351,6 @@ uint32_t ejecutar_resize(t_pid_valor* tamanio_proceso){
 	return cod_op_a_devolver;
 }
 
-bool ejec_codigo_prueba(){
-	char* registro_dato = "100";
-    uint32_t espacio = 80;
-	uint32_t size = sizeof(uint8_t);
-	loguear("size <%d>" ,sizeof(uint32_t));
-	//uint32_t size = strlen(registro_dato) + 1;
-	uint32_t registro_dato_int = atoi(registro_dato);
-	void* direccion_real = (void*)(char*) memoriaPrincipal + espacio;
-	//Escritura
-	escribir_memoria(direccion_real,(char*) &registro_dato_int,size);
-
-	//Lectura
-	uint8_t dato_leido;
-	leer_memoria(direccion_real,(char*)& dato_leido,size);
-	loguear("Registro de 1 byte: <%d>",dato_leido);
-	char* dato_leido_string =  string_itoa(dato_leido);
-    loguear("Registro string: <%s>\n",dato_leido_string);
-	
-
-
-	char* registro_dato_uin32 = "10000";
-    uint32_t espacio_ui32 = 800;
-	uint32_t size_ui32 = sizeof(uint32_t);
-	
-	//uint32_t size = strlen(registro_dato) + 1;
-	uint32_t registro_dato_int_ui32 = atoi(registro_dato_uin32);
-
-	void* direccion_real_ui32 = (void*)(char*) memoriaPrincipal + espacio_ui32;
-	//Escritura
-	escribir_memoria(direccion_real_ui32,(char*) &registro_dato_int_ui32,size_ui32);
-	//Lectura
-	uint32_t dato_leido_ui32;
-	leer_memoria(direccion_real_ui32,(char*)& dato_leido_ui32,size_ui32);
-	loguear("Registro de 4 bytes: <%d>",dato_leido_ui32);
-	char* dato_leido_string_ui32 =  string_itoa(dato_leido_ui32);
-    loguear("Registro string: <%s>\n",dato_leido_string_ui32);
-	
-	return true;
-}
-
 void escribir_memoria(char* direccion_real,char* dato,uint32_t size){
 	memcpy(direccion_real,dato,size);
 }
@@ -399,9 +359,11 @@ void leer_memoria(char* direccion_real,char* buffer,uint32_t size){
 }
 
 void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
-	char* direccion_real =memoriaPrincipal  + acceso_espacio_usuario->direccion_fisica;
-	
-	if (tipo_acceso == LECTURA_MEMORIA){	
+	void* direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
+	//uint32_t bytes_restantes_en_frame = acceso_espacio_usuario->bytes_restantes_en_frame;
+	if (tipo_acceso == LECTURA_MEMORIA){
+		loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
+		//char* dato_consultado = malloc((int)bytes_restantes_en_frame);		
 		
 		if(acceso_espacio_usuario->size_registro==1){
 		uint8_t dato_1_byte;

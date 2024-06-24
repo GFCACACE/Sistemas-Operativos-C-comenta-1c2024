@@ -85,8 +85,8 @@ bool exe_sub(t_param,t_param);
 bool exe_jnz(t_param,t_param);
 bool exe_resize(t_pcb*,t_param);
 bool exe_copy_string(t_param);
-bool exe_wait(/*recurso*/);
-bool exe_signal(/*recurso*/);
+bool exe_wait(t_pcb* pcb,t_param);
+bool exe_signal(t_pcb* pcb,t_param);
 bool exe_exit(t_pcb*);
 bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 /*Faltan las instrucciones de IO*/

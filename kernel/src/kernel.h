@@ -82,11 +82,18 @@ typedef struct{
 	pthread_mutex_t* mx_blocked;
 }t_blocked_interfaz;
 
+typedef struct{
+	char* recurso;
+	int instancias;
+	t_queue* cola_procesos_esperando;
+} t_recurso;
+
 t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
 extern t_config_kernel* config;
 extern t_dictionary* diccionario_conexiones_io, *diccionario_struct_io;
+extern t_list* lista_recursos;
 extern int grado_multiprogamacion_actual;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt,kernel_escucha, conexion_io;
 extern int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
@@ -104,6 +111,7 @@ bool iniciar_dispatch();
 bool iniciar_kernel(char*);
 bool iniciar_logger_config();
 bool inicializar_comandos();
+bool iniciar_recursos();
 char* leer_texto_consola();
 char *recibir_nombre(int);
 bool iniciar_proceso(char** parametros);
@@ -152,7 +160,7 @@ bool eliminar_proceso_en_exec(uint32_t pid);
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
 //void crear_hilo_eliminar_proceso(uint32_t pid);
 
-
+void imprimir_cola_recursos();
 void recibir_pcb_de_cpu();
 void pasar_a_exit(t_pcb*);
 
@@ -161,12 +169,15 @@ t_comando_consola* comando_consola_create(op_code_kernel code,char* nombre,char*
 bool iniciar_threads_io();
 void iniciar_conexion_io();
 
+void rec_handler_exec(t_pcb* pcb_recibido);
+void io_handler_exec(t_pcb* pcb_recibido);
 void io_handler(int* conexion);
 void io_gen_sleep(int pid,char** splitter);
 void io_stdin(int pid,char** splitter);
 void io_stdout(int pid, char** splitter);
 bool le_queda_quantum(t_pcb* pcb);
 bool iniciar_servidor_kernel();
+t_recurso* obtener_recurso(char* recurso);
 bool existe_interfaz(char*);
 bool eliminar_proceso(uint32_t);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
