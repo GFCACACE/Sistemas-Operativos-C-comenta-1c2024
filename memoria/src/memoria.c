@@ -98,7 +98,6 @@ bool iniciar_servidor_memoria(){
 }
 
 bool iniciar_conexion_cpu(){
-
 		//Vamos a guardar el socket del cliente que se conecte en esta variable de abajo
 		conexion_cpu = esperar_cliente(memoria_escucha);
 		if(conexion_cpu == -1){
@@ -124,23 +123,75 @@ bool iniciar_conexion_kernel(){
 		return true;
 }
 
+bool iniciar_conexion_io(){
+	
+	while (1){
+		bool aceptar_interfaz = true;
+		pthread_t thread;
+    	int *fd_conexion_ptr = malloc(sizeof(int));
+    	*fd_conexion_ptr = esperar_cliente(memoria_escucha);
+		if(*fd_conexion_ptr == -1){ 
+			loguear_warning("No se puso establecer la conexion con el cliente(I/O).");
+			free(fd_conexion_ptr);
+			// JUmp al principio?
+			aceptar_interfaz=false;
+			return false;
+		}
+		//char* nombre_interfaz = malloc(16);
+		if(aceptar_interfaz){
+		//char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
+	
+			//
+			
+			char* string_conexion = string_itoa(*fd_conexion_ptr);
+			//loguear("bienvenido %s",nombre_interfaz);
+		//	dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
+			//
+			pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
+			//							
+			pthread_detach(thread);
+			free(string_conexion);
+			
+	
+	}
+	return true;
+}
+}
+void io_handler(int *ptr_conexion){
+	while(1){
+		int conexion = *ptr_conexion;
+		int cod_operacion = recibir_operacion(conexion);
+		loguear_warning("LLego el cod op %d", cod_operacion);
+		char* mensaje = recibir_mensaje(conexion);
+		loguear_warning("Llego el mensaje %s", mensaje);
+	}
+}
+
 bool iniciar_memoria_instrucciones(){
 	pthread_t thread_memoria_procesos;
 	pthread_t thread_memoria_instrucciones;//Inicializo el thread
+	pthread_t thread_controlador_io;//Inicializo el thread
 
-	pthread_create(&thread_memoria_procesos,NULL, (void*)recibir_procesos,NULL);
-	pthread_create(&thread_memoria_instrucciones,NULL,(void*)buscar_instrucciones,NULL);
+	pthread_create(&thread_memoria_procesos,NULL, (void*)recibir_procesos,NULL); //KERNEL
+	pthread_create(&thread_memoria_instrucciones,NULL,(void*)buscar_instrucciones,NULL); //CPU
+	pthread_create(&thread_controlador_io,NULL,(void*)iniciar_conexion_io,NULL); //CONTROLAR IO
 	
 	pthread_detach(thread_memoria_procesos);
 	if (thread_memoria_procesos == -1){
 		loguear_error("No se pudo iniciar la memoria de procesos.");
 		return false;
 	}
+	pthread_join(thread_controlador_io,NULL);
+	if (thread_controlador_io == -1){
+		loguear_error("No se pudo iniciar el controlador de ios.");
+		return false;
+	}	
 	pthread_join(thread_memoria_instrucciones,NULL);
 	if (thread_memoria_instrucciones == -1){
 		loguear_error("No se pudo iniciar la memoria de instrucciones.");
 		return false;
 	}
+
 	return true;
 }
 
@@ -186,6 +237,7 @@ bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las
 		//ejec_codigo_prueba()&&
 		iniciar_conexion_cpu()&&
 		iniciar_conexion_kernel()&&
+		//iniciar_conexion_io()&&
 		iniciar_memoria_instrucciones();	
 }
 
@@ -365,7 +417,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
 		//char* dato_consultado = malloc((int)bytes_restantes_en_frame);		
 		
-		if(acceso_espacio_usuario->size_registro==1){
+		if(acceso_espacio_usuario->size_registro==sizeof(uint8_t)){
 		uint8_t dato_1_byte;
 		leer_memoria(direccion_real,(char*)& dato_1_byte,acceso_espacio_usuario->size_registro);
 		char* dato_leido_1_byte=  string_itoa(dato_1_byte);
@@ -373,7 +425,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		loguear("Se leyó: <%d>. Tamaño: <%d>",dato_1_byte,acceso_espacio_usuario->size_registro);
 		}
 		
-		if(acceso_espacio_usuario->size_registro==4){
+		if(acceso_espacio_usuario->size_registro==sizeof(uint32_t)){
 		uint32_t dato_4_byte;
 		leer_memoria(direccion_real,(char*)& dato_4_byte,acceso_espacio_usuario->size_registro);
 		char* dato_leido_4_byte=  string_itoa(dato_4_byte);
