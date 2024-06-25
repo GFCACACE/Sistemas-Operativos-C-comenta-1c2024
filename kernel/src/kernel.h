@@ -148,7 +148,7 @@ bool eliminar_proceso_en_memoria(t_pcb*);
 bool eliminar_proceso_en_blocked(uint32_t pid_buscado);
 bool eliminar_proceso_en_exec(uint32_t pid);
 void proceso_a_estado(t_pcb* pcb, t_queue* estado,pthread_mutex_t* mx_estado);
-//void crear_hilo_eliminar_proceso(uint32_t pid);
+void crear_hilo_eliminar_proceso(uint32_t pid);
 
 
 void recibir_pcb_de_cpu();
@@ -166,7 +166,7 @@ void io_stdout(int pid, char** splitter);
 bool le_queda_quantum(t_pcb* pcb);
 bool iniciar_servidor_kernel();
 bool existe_interfaz(char*);
-bool eliminar_proceso(uint32_t);
+bool eliminar_proceso(uint32_t*);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 

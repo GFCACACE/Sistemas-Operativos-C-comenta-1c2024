@@ -19,6 +19,7 @@ pthread_mutex_t mx_blocked = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mx_exit = PTHREAD_MUTEX_INITIALIZER; // Garantiza mutua exclusion en estado_exit. Podrían querer acceder consola, plp y pcp al mismo tiempo
 pthread_mutex_t mx_pcb_exec = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mx_temp = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mx_grado_mult_de_mas = PTHREAD_MUTEX_INITIALIZER;
 
 time_t tiempo_inicial, tiempo_final;
 
@@ -26,6 +27,7 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
 bool eliminar_proceso_en_FIN_QUANTUM = false, exec_recibido = false;
+int grado_multiprog_de_mas =0;
 
 t_config_kernel* config;
 t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked,*nombres_colas_dictionary;
@@ -435,8 +437,13 @@ void plp_procesos_finalizados(){
 			eliminar_proceso_en_memoria(pcb);
 			loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
 			push_proceso_a_estado(pcb,estado_exit,&mx_exit);
-			sem_post(&sem_cont_grado_mp);
-		sem_post(&sem_bin_plp_procesos_finalizados_iniciado); 
+			pthread_mutex_lock(&mx_grado_mult_de_mas);
+			if(grado_multiprog_de_mas>0)
+				grado_multiprog_de_mas--;
+			else
+				sem_post(&sem_cont_grado_mp);
+			pthread_mutex_unlock(&mx_grado_mult_de_mas);
+			sem_post(&sem_bin_plp_procesos_finalizados_iniciado); 
 		
 	}
 }
@@ -908,10 +915,10 @@ bool finalizar_proceso(char** substrings){
 			imprimir_valores_leidos(substrings);
 
 			uint32_t pid = atoi(substrings[1]);
-			bool eliminado = eliminar_proceso(pid);
-			//crear_hilo_eliminar_proceso(pid);
-			if(eliminado)
-			loguear("Finaliza el proceso <%s> - Motivo: Finalizado por consola",substrings[1]);
+		//	bool eliminado = eliminar_proceso(pid);
+			crear_hilo_eliminar_proceso(pid);
+			//if(eliminado)
+			
 		}
 		else printf(validacion.descripcion,"");
 
@@ -1022,7 +1029,8 @@ void* hilo_multiprogramacion_wrapper(void* arg){
 }
 
 void hilo_multiprogramacion(int diferencia){
-	
+	pthread_mutex_lock(&mx_grado_mult_de_mas);
+	grado_multiprog_de_mas =-diferencia;
 	if(diferencia == 0){
 		loguear("El nuevo grado de multiprogramacion es igual al anterior");
 	}
@@ -1033,11 +1041,15 @@ void hilo_multiprogramacion(int diferencia){
 		}
 	}
 	else {
+		
 		loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
-		for( ;diferencia != 0; diferencia++){
-			sem_wait(&sem_cont_grado_mp);
-		}
+		// for( ;diferencia != 0; diferencia++){
+		// 	sem_wait(&sem_cont_grado_mp);
+		// }		
+		
 	}
+	
+	pthread_mutex_unlock(&mx_grado_mult_de_mas);
 }
 
 // bool multiprogramacion(char** substrings){
@@ -1254,16 +1266,18 @@ void crear_hilo_quantum(t_pcb* pcb){
 	
 }
 
-// void crear_hilo_eliminar_proceso(uint32_t pid){
-// 	pthread_t thread_eliminar;
+void crear_hilo_eliminar_proceso(uint32_t pid){
+	pthread_t thread_eliminar;
 
-// 	pthread_create(&thread_eliminar,NULL, (void*)eliminar_proceso,pid);
+    uint32_t* pid_ptr = malloc(sizeof(uint32_t));
+	*pid_ptr = pid;
+	pthread_create(&thread_eliminar,NULL, (void*)eliminar_proceso,pid_ptr);
 	
-// 	pthread_detach(thread_eliminar);
-// 	if (thread_eliminar == -1)
-// 		loguear_error("No se pudo iniciar el hilo de eliminar proceso: %d",pid);	
+	pthread_detach(thread_eliminar);
+	if (thread_eliminar == -1)
+		loguear_error("No se pudo iniciar el hilo de eliminar proceso: %d",pid);	
 	
-// }
+}
 
 
 
@@ -1476,7 +1490,9 @@ void pasar_a_temp_sin_bloqueo(t_pcb_query* pcb_query){
 	
 }
 
-bool eliminar_proceso(uint32_t pid){
+bool eliminar_proceso(uint32_t* pid_ptr){
+	uint32_t pid = *pid_ptr;
+	free(pid_ptr);
 	bool eliminado = true;
 	loguear_semaforo("grade de multiprogramacion antes del if: %d\n", &sem_cont_grado_mp);
 	bloquear_mutex_colas();
@@ -1509,7 +1525,7 @@ bool eliminar_proceso(uint32_t pid){
 		free(pcb_query);
 		loguear_semaforo("grade de multiprogramacion en else if new: %d\n", &sem_cont_grado_mp);
 		//eliminar_proceso_en_memoria(pcb_query->pcb);
-		sem_wait(&sem_bin_new);
+		sem_wait(&sem_bin_new);		
 		desbloquear_mutex_colas();
 		
 		
@@ -1527,7 +1543,8 @@ bool eliminar_proceso(uint32_t pid){
 		eliminado = false;
 		loguear_warning("PCB NO ENCONTRADO");
 	}
-	
+	if(eliminado)
+	loguear("Finaliza el proceso <%d> - Motivo: Finalizado por consola",pid);
 	return eliminado;
 
 }
