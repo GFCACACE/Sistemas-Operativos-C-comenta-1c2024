@@ -26,4 +26,6 @@ void enviar_id_value_string(t_id_valor_string* id_value,op_code operacion,int so
 void enviar_pid_value(t_pid_valor* pid_value,op_code operacion,int socket);
 void enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,op_code operacion,int socket);
 void _enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,op_code operacion,int socket);
+void* _serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,int* size);
+void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,int* size);
 #endif /* utils_client_h */
