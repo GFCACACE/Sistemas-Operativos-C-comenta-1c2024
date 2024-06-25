@@ -644,6 +644,7 @@ bool reemplazo_tlb(t_tlb* registro_nuevo){
 	t_tlb* registro_a_comparar,*registro_menor_prioridad;
 	int i=0;
 	registro_menor_prioridad=list_get(lista_tlb,i);
+
 	i++;
 	while(i < list_size(lista_tlb)){
 		registro_a_comparar=list_get(lista_tlb,i);
