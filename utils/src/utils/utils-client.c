@@ -274,20 +274,25 @@ void enviar_pid_value(t_pid_valor* pid_value,op_code operacion,int socket){
 void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,int* size){
 	// uint32_t tamanio_dato = ((uint32_t)strlen(acceso_espacio_usuario->registro_dato)+(uint32_t)1);
 	
-	*size = sizeof(uint32_t) * 3 + sizeof(uint32_t);
+	*size = sizeof(uint32_t) * 3;
+	if (acceso_espacio_usuario->registro_dato!=NULL){
+	*size = *size +  (strlen(acceso_espacio_usuario->registro_dato)+1); 
+	}
 	t_buffer* buffer = crear_buffer(*size);
 	agregar_a_buffer(buffer, &acceso_espacio_usuario->PID, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &acceso_espacio_usuario->direccion_fisica, sizeof(uint32_t));
 	//agregar_a_buffer(buffer, &acceso_espacio_usuario->bytes_restantes_en_frame, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &acceso_espacio_usuario->size_registro, sizeof(uint32_t));
-	// if(tamanio_dato)
+	if( acceso_espacio_usuario->registro_dato!=NULL){
 	agregar_a_buffer(buffer, acceso_espacio_usuario->registro_dato, strlen(acceso_espacio_usuario->registro_dato)+1);
+	}
 	void * stream = buffer->stream;
 	free(buffer);
 	
 	return stream;
 
 }
+/*
 
 void* _serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,int* size){
 	// uint32_t tamanio_dato = ((uint32_t)strlen(acceso_espacio_usuario->registro_dato)+(uint32_t)1);
@@ -316,6 +321,7 @@ void _enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usu
 	enviar_stream(stream,size,socket,operacion);
 	free(stream);
 }
+*/
 
 void enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,op_code operacion,int socket){
 	int size;

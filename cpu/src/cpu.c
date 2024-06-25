@@ -512,10 +512,18 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 		valor_memoria = recibir_mensaje(conexion_memoria);
 
 		registro_datos.string_valor = string_duplicate(valor_memoria);
-		registro_datos.size = sizeof(uint32_t);
+		
 		uint32_t* valor = malloc(registro_datos.size);
-		*valor = (uint32_t) atoi(valor_memoria);
-		registro_datos.puntero = &valor;
+		if(registro_datos.size == sizeof(uint8_t)){
+			*valor = (uint8_t*) atoi(valor_memoria);
+			*(uint8_t*)registro_datos.puntero =  *valor;
+		}
+		if(registro_datos.size == sizeof(uint32_t)){
+			*valor = (uint32_t*) atoi(valor_memoria);
+			*(uint32_t*)registro_datos.puntero =  *valor;
+		}
+				
+		
 		loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
 		pcb_recibido->PID,
 		direccion_fisica,
