@@ -3,6 +3,5 @@
 #include "entradasalida.h"
 
 void io_stdout_write(uint32_t direccion_fisica, uint32_t tamanio);
-t_paquete* armar_paquete_out(uint32_t direccion_fisica, uint32_t tamanio);
 
 #endif
