@@ -1774,7 +1774,7 @@ void iniciar_conexion_io(){
 			loguear_error("La interfaz %s ya se había conectado.",nombre_interfaz);
 		}
 		if(nombre_interfaz)
-		free(nombre_interfaz);
+			free(nombre_interfaz);
 		}
 	}
 

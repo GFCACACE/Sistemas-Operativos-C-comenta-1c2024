@@ -123,19 +123,17 @@ bool iniciar_conexion_kernel(){
 		return true;
 }
 
-bool iniciar_conexion_io(){
-	
+void iniciar_conexion_io(){
 	while (1){
 		bool aceptar_interfaz = true;
 		pthread_t thread;
     	int *fd_conexion_ptr = malloc(sizeof(int));
     	*fd_conexion_ptr = esperar_cliente(memoria_escucha);
 		if(*fd_conexion_ptr == -1){ 
-			loguear_warning("No se puso establecer la conexion con el cliente(I/O).");
+			loguear_warning("No se puso establecer la conexion con el cliente (I/O).");
 			free(fd_conexion_ptr);
-			// JUmp al principio?
 			aceptar_interfaz=false;
-			return false;
+			// return false;
 		}
 		//char* nombre_interfaz = malloc(16);
 		if(aceptar_interfaz){
@@ -145,25 +143,43 @@ bool iniciar_conexion_io(){
 			
 			char* string_conexion = string_itoa(*fd_conexion_ptr);
 			//loguear("bienvenido %s",nombre_interfaz);
-		//	dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
+			//dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
 			//
 			pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
 			//							
 			pthread_detach(thread);
 			free(string_conexion);
-			
-	
 	}
-	return true;
+	// return true;
 }
 }
 void io_handler(int *ptr_conexion){
 	while(1){
 		int conexion = *ptr_conexion;
-		int cod_operacion = recibir_operacion(conexion);
-		loguear_warning("LLego el cod op %d", cod_operacion);
-		char* mensaje = recibir_mensaje(conexion);
-		loguear_warning("Llego el mensaje %s", mensaje);
+
+		t_paquete *paquete = recibir_paquete(conexion);
+		int cod_op = paquete->codigo_operacion;
+		loguear_warning("Llego el cod op %d", cod_op);
+		// DES_SERIALIZAR EL PEDIDO
+		
+		//loguear_warning("Llego el pedido %s", pedido);
+
+		switch (cod_op)
+		{
+		case PEDIDO_STDIN:
+			/*EFECTUAR PEDIDO*/
+			/*ENVIAR RESPUESTA DE OK A I/O*/
+			break;
+		case PEDIDO_STDOUT:
+			/*EFECTUAR PEDIDO*/
+			/*ENVIAR RESPUESTA DE LO LEIDO A I/O*/
+			break;	
+		
+		default:
+			/*ENVIAR MENSAJE DE ERROR A I/O*/
+			break;
+		}
+		paquete_destroy(paquete);
 	}
 }
 
