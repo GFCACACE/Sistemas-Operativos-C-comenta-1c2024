@@ -138,9 +138,7 @@ void iniciar_conexion_io(){
 		//char* nombre_interfaz = malloc(16);
 		if(aceptar_interfaz){
 		//char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
-	
-			//
-			
+					
 			char* string_conexion = string_itoa(*fd_conexion_ptr);
 			//loguear("bienvenido %s",nombre_interfaz);
 			//dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
@@ -167,7 +165,10 @@ void io_handler(int *ptr_conexion){
 		switch (cod_op)
 		{
 		case PEDIDO_STDIN:
+			
+			
 			/*EFECTUAR PEDIDO*/
+			
 			/*ENVIAR RESPUESTA DE OK A I/O*/
 			break;
 		case PEDIDO_STDOUT:
@@ -176,7 +177,9 @@ void io_handler(int *ptr_conexion){
 			break;	
 		
 		default:
-			/*ENVIAR MENSAJE DE ERROR A I/O*/
+			log_warning(logger,"Operación desconocida. No quieras meter la pata");
+			
+			
 			break;
 		}
 		paquete_destroy(paquete);
@@ -250,10 +253,8 @@ bool iniciar_memoria(char *path_config /*acá va la ruta en dónde se hallan las
 		iniciar_servidor_memoria() &&
 		inicializar_memoria()&&
 		iniciar_paginacion()&&
-		//ejec_codigo_prueba()&&
 		iniciar_conexion_cpu()&&
 		iniciar_conexion_kernel()&&
-		//iniciar_conexion_io()&&
 		iniciar_memoria_instrucciones();	
 }
 
@@ -313,68 +314,48 @@ int buscar_instrucciones(){
          t_paquete *paquete = recibir_paquete(conexion_cpu);
          int cod_op =paquete->codigo_operacion;
 		 //int cod_op_a_devolver;
-
-
 		loguear("Cod op: %d", cod_op);
 		efectuar_retardo();
         switch (cod_op) {
             case PROXIMA_INSTRUCCION:
                 t_pcb *pcb = recibir_pcb(paquete); 
-                enviar_proxima_instruccion(pcb);
-				paquete_destroy(paquete);
+                enviar_proxima_instruccion(pcb);				
                 break;
-			case RESIZE:
-				
+			case RESIZE:				
 				t_pid_valor* tamanio_proceso =  recibir_pid_value(paquete);
 				if(ejecutar_resize(tamanio_proceso)!=OUT_OF_MEMORY){
 					imprimir_uso_frames();			
 					imprimir_tabla_paginas_proceso(tamanio_proceso->PID);
-				};
-			
-				paquete_destroy(paquete);
-				
+				};			
 				break;
-			case ESCRITURA_MEMORIA:
-	
+			case ESCRITURA_MEMORIA:	
 				t_acceso_espacio_usuario* acceso_espacio_usuario_escritura = recibir_acceso_espacio_usuario(paquete);		
 				acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_escritura);
-				paquete_destroy(paquete);
-				
 				break;
 			case ACCESO_TABLA_PAGINAS:
-				loguear("TABLA PAGINAS \n");
-				
+				loguear("TABLA PAGINAS \n");				
 				t_pid_valor* pid_pagina =  recibir_pid_value(paquete);	
 				acceder_tabla_de_paginas(pid_pagina);
-				paquete_destroy(paquete);
-				free(pid_pagina);
-				
-				break;
-				
-			case LECTURA_MEMORIA:
-				
+				free(pid_pagina);				
+				break;			
+			case LECTURA_MEMORIA:			
 				t_acceso_espacio_usuario* acceso_espacio_usuario_lectura = recibir_acceso_espacio_usuario(paquete);		
-				acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_lectura);
-				paquete_destroy(paquete);
-							
+				acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_lectura);							
 				break;
-
             case FIN_PROGRAMA:
 			    loguear("Fin programa");
-				imprimir_uso_frames();	
-				paquete_destroy(paquete);				
+				imprimir_uso_frames();		
 			break;
             case -1:
-			loguear_error("el cliente se desconectó. Terminando servidor");
-			paquete_destroy(paquete);
+			loguear_error("el cliente se desconectó. Terminando servidor");		
 			return EXIT_FAILURE;
 		    default:
-			log_warning(logger,"Operación desconocida. No quieras meter la pata");
-			paquete_destroy(paquete);
+			log_warning(logger,"Operación desconocida. No quieras meter la pata");	
 			return EXIT_FAILURE;
-        }
-
+		}
+		paquete_destroy(paquete);
     }
+	
 }
 
 // valor = 1050
@@ -576,10 +557,11 @@ int recibir_procesos(){
 			return EXIT_FAILURE;
 		    default:
 			log_warning(logger,"Operación desconocida. No quieras meter la pata");
-			paquete_destroy(paquete);
+			
 			return EXIT_FAILURE;
 
 		}
+		paquete_destroy(paquete);
 	 }
 }
 
