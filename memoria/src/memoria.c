@@ -153,9 +153,9 @@ void iniciar_conexion_io(){
 }
 void io_handler(int *ptr_conexion){
 	while(1){
-		int conexion = *ptr_conexion;
+		int conexion_io = *ptr_conexion;
 
-		t_paquete *paquete = recibir_paquete(conexion);
+		t_paquete *paquete = recibir_paquete(conexion_io);
 		int cod_op = paquete->codigo_operacion;
 		loguear_warning("Llego el cod op %d", cod_op);
 		// DES_SERIALIZAR EL PEDIDO
@@ -168,11 +168,21 @@ void io_handler(int *ptr_conexion){
 			
 			
 			/*EFECTUAR PEDIDO*/
-			
+			t_acceso_espacio_usuario* acceso_espacio_usuario_stdin = recibir_acceso_espacio_usuario(paquete);					
+			acceder_a_espacio_usuario(PEDIDO_STDIN,acceso_espacio_usuario_stdin,conexion_io);
 			/*ENVIAR RESPUESTA DE OK A I/O*/
 			break;
 		case PEDIDO_STDOUT:
+			/*
 			/*EFECTUAR PEDIDO*/
+			t_acceso_espacio_usuario* acceso_espacio_usuario_stdout = recibir_acceso_espacio_usuario(paquete);		
+
+			//FUNCION QUE RESUELVA ACCESO ESPACIO USUARIO
+			
+			acceder_a_espacio_usuario(PEDIDO_STDOUT,acceso_espacio_usuario_stdout,conexion_io);
+			
+			
+			
 			/*ENVIAR RESPUESTA DE LO LEIDO A I/O*/
 			break;	
 		
@@ -330,7 +340,7 @@ int buscar_instrucciones(){
 				break;
 			case ESCRITURA_MEMORIA:	
 				t_acceso_espacio_usuario* acceso_espacio_usuario_escritura = recibir_acceso_espacio_usuario(paquete);		
-				acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_escritura);
+				acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_escritura,conexion_cpu);
 				break;
 			case ACCESO_TABLA_PAGINAS:
 				loguear("TABLA PAGINAS \n");				
@@ -340,7 +350,7 @@ int buscar_instrucciones(){
 				break;			
 			case LECTURA_MEMORIA:			
 				t_acceso_espacio_usuario* acceso_espacio_usuario_lectura = recibir_acceso_espacio_usuario(paquete);		
-				acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_lectura);							
+				acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_lectura,conexion_cpu);							
 				break;
             case FIN_PROGRAMA:
 			    loguear("Fin programa");
@@ -407,18 +417,37 @@ void leer_memoria(char* direccion_real,char* buffer,uint32_t size){
 	memcpy(buffer,direccion_real,size);
 }
 
-void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario){
+void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario,int conexion){
 	void* direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
-	//uint32_t bytes_restantes_en_frame = acceso_espacio_usuario->bytes_restantes_en_frame;
-	if (tipo_acceso == LECTURA_MEMORIA){
-		loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
+	
+	switch (tipo_acceso)
+	{
+	case PEDIDO_STDIN:
+	
+		 escribir_memoria(direccion_real,acceso_espacio_usuario->registro_dato ,acceso_espacio_usuario->size_registro);
+		 loguear("PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d",
+		 acceso_espacio_usuario->PID,
+		 acceso_espacio_usuario->direccion_fisica,
+		 acceso_espacio_usuario->size_registro);
+
+		enviar_texto("OK",RESPUESTA_STDIN,conexion);
+		break;
+
+	case PEDIDO_STDOUT:
+	
+			leer_memoria(direccion_real,acceso_espacio_usuario->registro_dato ,acceso_espacio_usuario->size_registro);
+			enviar_texto(acceso_espacio_usuario->registro_dato,RESPUESTA_STDOUT,conexion);
+			loguear("Se leyó: <%s>. Tamaño: <%d>",acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
+		break;
+	case LECTURA_MEMORIA:
+			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
 		//char* dato_consultado = malloc((int)bytes_restantes_en_frame);		
 		
 		if(acceso_espacio_usuario->size_registro==sizeof(uint8_t)){
 		uint8_t dato_1_byte;
 		leer_memoria(direccion_real,(char*)& dato_1_byte,acceso_espacio_usuario->size_registro);
 		char* dato_leido_1_byte=  string_itoa(dato_1_byte);
-		enviar_texto(dato_leido_1_byte,VALOR_LECTURA_MEMORIA,conexion_cpu);
+		enviar_texto(dato_leido_1_byte,VALOR_LECTURA_MEMORIA,conexion);
 		loguear("Se leyó: <%d>. Tamaño: <%d>",dato_1_byte,acceso_espacio_usuario->size_registro);
 		}
 		
@@ -426,14 +455,15 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		uint32_t dato_4_byte;
 		leer_memoria(direccion_real,(char*)& dato_4_byte,acceso_espacio_usuario->size_registro);
 		char* dato_leido_4_byte=  string_itoa(dato_4_byte);
-		enviar_texto(dato_leido_4_byte,VALOR_LECTURA_MEMORIA,conexion_cpu);
+		enviar_texto(dato_leido_4_byte,VALOR_LECTURA_MEMORIA,conexion);
 		loguear("Se leyó: <%d>. Tamaño: <%d>",dato_4_byte,acceso_espacio_usuario->size_registro);
 		}
 		
 
-		}
-	if (tipo_acceso==ESCRITURA_MEMORIA){
-		
+		/* code */
+		break;
+	case ESCRITURA_MEMORIA:
+				
 		uint32_t registro_dato_int = atoi(acceso_espacio_usuario->registro_dato);
 
 		escribir_memoria(direccion_real,(char*) &registro_dato_int,acceso_espacio_usuario->size_registro);
@@ -445,9 +475,11 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
 	
 		loguear("Se escribió: <%d>. Tamaño: <%d>",registro_dato_int,acceso_espacio_usuario->size_registro);
+		break;
+	default:
+		break;
+	} 
 	
-
-	}
 	
 }
 	
