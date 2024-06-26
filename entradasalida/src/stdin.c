@@ -25,3 +25,4 @@ void io_stdin_read(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio){
         // avisar a kernel que la operación se ha completado
    
     }
+}

@@ -10,9 +10,10 @@ void io_stdout_write(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio){
     enviar_acceso_espacio_usuario(acceso_espacio_usuario,PEDIDO_STDOUT,conexion_memoria);
     // deserializar paquete y asignar lo almacenado en memoria a mensaje
     int operacion_ok = recibir_operacion(conexion_memoria);
-	if(operacion_ok== RESPUESTA_STDOUT){
+	if(operacion_ok == RESPUESTA_STDOUT){
         char* valor_a_imprimir = malloc(tamanio+1);
         valor_a_imprimir=recibir_mensaje(conexion_memoria);
         printf("Mensaje traido de memoria: \n %s",valor_a_imprimir);
         free(valor_a_imprimir);
+    }
 }
