@@ -192,7 +192,7 @@ void io_handler(int *ptr_conexion){
 			
 			break;
 		}
-		paquete_destroy(paquete);
+		// paquete_destroy(paquete);
 	}
 }
 
@@ -593,7 +593,7 @@ int recibir_procesos(){
 			return EXIT_FAILURE;
 
 		}
-		paquete_destroy(paquete);
+		// paquete_destroy(paquete);
 	 }
 }
 

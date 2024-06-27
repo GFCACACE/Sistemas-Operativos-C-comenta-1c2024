@@ -392,7 +392,7 @@ bool execute(t_pcb *pcb)
 	}
 	if(!strcmp(INSTID, "COPY_STRING")){
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s>", pcb->PID, INSTID, PARAM1.string_valor);
-		exe_copy_string(PARAM1);
+		exe_copy_string(pcb,PARAM1);
 		actualizar_contexto(pcb);
 		liberar_param(PARAM1);
 		return true;
@@ -418,6 +418,22 @@ bool execute(t_pcb *pcb)
 
 		liberar_param(PARAM1);
 		liberar_param(PARAM2);
+		return true;
+	}
+	if(!strcmp(INSTID,"STDIN_READ")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor);
+		exe_stdin_read(pcb,PARAM1,PARAM2,PARAM3);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
+		liberar_param(PARAM3);
+		return true;
+	}
+	if(!strcmp(INSTID,"STDOUT_WRITE")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor);
+		exe_stdout_write(pcb,PARAM1,PARAM2,PARAM3);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
+		liberar_param(PARAM3);
 		return true;
 	}
 	if (es_exit(INSTID))
@@ -587,9 +603,25 @@ bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 	actualizar_contexto(pcb);
 	return true;
 }
-bool exe_copy_string(t_param tamanio){
-	memcpy(&registros_cpu->DI,&registros_cpu->SI,atoi(tamanio.string_valor));
+bool exe_copy_string(t_pcb* pcb,t_param tamanio){
+	uint direccion_fisica_origen = mmu(pcb,registros_cpu->SI);
+	uint direccion_fisica_destino = mmu(pcb,registros_cpu->DI);
+	//Falta Loop
+	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb->PID, direccion_fisica_destino,atoi(tamanio.string_valor),direccion_fisica_origen);
 	registros_cpu->PC++;
+	actualizar_contexto(pcb);
+	return true;
+}
+bool exe_stdin_read(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
+	loguear_warning("STDIN_READ no implementado");
+	(uint32_t)registros_cpu->PC++;
+	actualizar_contexto(pcb);
+	return true;
+}
+bool exe_stdout_write(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
+	loguear_warning("STDOUT_WRITE no implementado");
+	(uint32_t)registros_cpu->PC++;
+	actualizar_contexto(pcb);
 	return true;
 }
 bool exe_wait(t_pcb* pcb,t_param recurso){
