@@ -191,12 +191,12 @@ bool iniciar_recursos(){
 	
 
 	//list_add(lista_recursos,recurso);
-	loguear("RECURSO: %s - INSTANCIAS: %d",key,value);
+	
 	for(int i=0;i < cantidad_recursos ;i++){
 		key = string_array_pop(config->RECURSOS);
 		value = atoi(string_array_pop(config->INSTANCIAS_RECURSOS));
 		//recurso = crear_recurso(key,value);
-		
+		loguear("RECURSO: %s - INSTANCIAS: %d",key,value);
 		/////////////////
 		 recurso = crear_recurso(key,value);
 		list_add(lista_recursos,recurso);
@@ -451,28 +451,37 @@ t_queue* get_cola_pcb(t_pcb* pcb){
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
 	while(1){		
+			loguear_warning("plp_procesos_nuevos - sem_wait &sem_bin_new");
 			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
+			loguear_warning("plp_procesos_nuevos - sem_wait &sem_bin_plp_procesos_nuevos_iniciado)");
 			sem_wait(&sem_bin_plp_procesos_nuevos_iniciado); 
+			loguear_warning("plp_procesos_nuevos - antes sem_wait &sem_cont_grado_mp):%d",get_sem_grado_value());
 			sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
-
+			loguear_warning("plp_procesos_nuevos - después sem_wait &sem_cont_grado_mp):%d",get_sem_grado_value());
+			loguear_warning("plp_procesos_nuevos - cambio_de_estado)");
 			bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
 			if(proceso_new_a_ready){
-				cant_procesos_en_cicuito++;
+				loguear_warning("plp_procesos_nuevos - sem_post(&sem_bin_ready)");
 				sem_post(&sem_bin_ready);
+				loguear_warning("plp_procesos_nuevos - GMPDMás_%d",grado_multiprog_de_mas);
 				loguear("El proceso ingresó correctamente a la lista de ready");
-				sem_post(&sem_bin_plp_procesos_nuevos_iniciado); 
+				
 			}
 			else {
-				loguear("No hay procesos en New para plp_procesos_nuevos");
+				loguear_warning("No hay procesos en New para plp_procesos_nuevos");
+				loguear_warning("plp_procesos_nuevos - GMPDMás_%d",grado_multiprog_de_mas);
+				//sem_post(&sem_bin_new);
 			}	
+			sem_post(&sem_bin_plp_procesos_nuevos_iniciado); 
 	}
 }
 
 
 void plp_procesos_finalizados(){
 	while(1){
-		
+			loguear_warning("plp_procesos_finalizados - sem_wait(&sem_bin_exit)");			
 			sem_wait(&sem_bin_exit);
+			loguear_warning("plp_procesos_finalizados - sem_wait(&sem_bin_plp_procesos_finalizados_iniciado)");
 			sem_wait(&sem_bin_plp_procesos_finalizados_iniciado); 
 			loguear_warning("Se va a sacar un PCB de temp");
 			t_pcb* pcb = pop_estado_get_pcb(estado_temp,&mx_temp);
@@ -480,12 +489,34 @@ void plp_procesos_finalizados(){
 			eliminar_proceso_en_memoria(pcb);
 			loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
 			push_proceso_a_estado(pcb,estado_exit,&mx_exit);
+			loguear_warning("plp_procesos_finalizados - pthread_mutex_lock(&mx_grado_mult_de_mas);");	
 			pthread_mutex_lock(&mx_grado_mult_de_mas);
 			if(grado_multiprog_de_mas>0)
+			{	loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas--");	
 				grado_multiprog_de_mas--;
+				loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+				loguear_warning("plp_procesos_finalizados - get_sem_grado_value:%d",get_sem_grado_value());
+				// if(grado_multiprog_de_mas==0){
+				// 	sem_post(&sem_cont_grado_mp);
+				// 	loguear_warning("plp_procesos_finalizados -sem_post(&sem_cont_grado_mp) grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+				// }
+			}
 			else
-				sem_post(&sem_cont_grado_mp);
+				{	
+					loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas<=0. Grado actual:%d",get_sem_grado_value());
+					if(grado_multiprog_de_mas<0)
+					{	grado_multiprog_de_mas++;
+						loguear_warning("plp_procesos_finalizados - Se aumentó el grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+					}
+					else{ 
+						sem_post(&sem_cont_grado_mp);
+						loguear_warning("plp_procesos_finalizados -sem_post(&sem_cont_grado_mp) grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+						loguear_warning("plp_procesos_finalizados - sem_cont_grado_mp:%d",get_sem_grado_value());
+					}
+				}
+			loguear_warning("plp_procesos_finalizados - pthread_mutex_unlock(&mx_grado_mult_de_mas)");
 			pthread_mutex_unlock(&mx_grado_mult_de_mas);
+			loguear_warning("plp_procesos_finalizados -sem_post(&sem_bin_plp_procesos_finalizados_iniciado)");
 			sem_post(&sem_bin_plp_procesos_finalizados_iniciado); 
 		
 	}
@@ -499,6 +530,11 @@ void loguear_semaforo(char* texto,sem_t* semaforo){
 	sem_getvalue(semaforo,&sval);
 	printf(texto,sval);
 
+}
+int get_sem_grado_value(){
+	int sval;
+	sem_getvalue(&sem_cont_grado_mp,&sval);
+	return sval;
 }
 
 void planificador_corto(){
@@ -1074,6 +1110,55 @@ bool detener_planificacion(char** substrings){
 	}
 	return true;
 }
+void* hilo_multiprogramacion_ajuste(void* diferencia_ptr){
+	int diferencia = *(int*)diferencia_ptr;
+	pthread_mutex_lock(&mx_grado_mult_de_mas);
+	grado_multiprog_de_mas = grado_multiprog_de_mas - diferencia;
+	free(diferencia_ptr);
+	if (diferencia > 0)
+		loguear("hilo_multiprogramacion_ajuste - El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
+	else loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
+	
+	if (grado_multiprog_de_mas < 0){
+		loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas. Negativo: %d",grado_multiprog_de_mas);
+		
+		for( ;grado_multiprog_de_mas < 0 ; grado_multiprog_de_mas++){	
+			loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas antes sem_post sem_cont_grado_mp:%d",grado_multiprog_de_mas);
+			sem_post(&sem_cont_grado_mp);
+			loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas después sem_post sem_cont_grado_mp:%d",grado_multiprog_de_mas);	
+		}
+		// if(grado_multiprog_de_mas > 0)
+		// 	grado_multiprog_de_mas = 0;
+	
+		loguear("hilo_multiprogramacion_ajuste - Se terminó de ajustar. grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+		loguear("hilo_multiprogramacion_ajuste -get_sem_grado_value %d: ",get_sem_grado_value());
+		pthread_mutex_unlock(&mx_grado_mult_de_mas);
+	}
+	else {		
+		loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas. Positivo: %d",grado_multiprog_de_mas);
+		//pthread_mutex_lock(&mx_grado_mult_de_mas);
+		for( ;grado_multiprog_de_mas >0; grado_multiprog_de_mas--){
+			
+			loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas antes sem_wait sem_cont_grado_mp:%d",grado_multiprog_de_mas);
+			loguear_warning("hilo_multiprogramacion_ajuste - antes sem_wait sem_cont_grado_mp:%d",get_sem_grado_value());
+			pthread_mutex_unlock(&mx_grado_mult_de_mas);
+			sem_wait(&sem_cont_grado_mp);
+			pthread_mutex_lock(&mx_grado_mult_de_mas);
+			// if(grado_multiprog_de_mas>0)
+			// 	grado_multiprog_de_mas--;	
+			loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas después sem_wait sem_cont_grado_mp:%d",grado_multiprog_de_mas);		
+			loguear_warning("hilo_multiprogramacion_ajuste - después sem_wait sem_cont_grado_mp:%d",get_sem_grado_value());
+		}		
+		for( ;grado_multiprog_de_mas < 0 ; grado_multiprog_de_mas++)
+		{	loguear("hilo_multiprogramacion_ajuste - Reajustamos - grado_multiprog_de_mas: %d",grado_multiprog_de_mas);
+			sem_post(&sem_cont_grado_mp);
+			loguear("hilo_multiprogramacion_ajuste - Reajustamos - get_sem_grado_value: %d",get_sem_grado_value());
+		}
+		loguear("hilo_multiprogramacion_ajuste - Se terminó de reducir. grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+		pthread_mutex_unlock(&mx_grado_mult_de_mas);
+	}
+	return NULL;
+}
 
 bool multiprogramacion(char** substrings){
 	loguear("El grado de multiprogramación anterior es: %d",config->GRADO_MULTIPROGRAMACION);
@@ -1087,11 +1172,15 @@ bool multiprogramacion(char** substrings){
 			config->GRADO_MULTIPROGRAMACION = number;
 			loguear("El nuevo grado de multiprogramación es: %d",config->GRADO_MULTIPROGRAMACION);
 			int diferencia = number - number_anterior;
-			int* valor_prt = malloc(sizeof(int));
-			*valor_prt = diferencia;
-			pthread_t thread_multiprogramacion;
-			pthread_create(&thread_multiprogramacion,NULL , hilo_multiprogramacion_wrapper,(void*)(valor_prt));
-			pthread_detach(thread_multiprogramacion);
+			if(diferencia == 0)
+				loguear("El nuevo grado de multiprogramacion es igual al anterior");			
+			else
+			{	int* valor_prt = malloc(sizeof(int));
+					*valor_prt = diferencia;
+				pthread_t thread_multiprogramacion;
+				pthread_create(&thread_multiprogramacion,NULL , hilo_multiprogramacion_ajuste,(void*)(valor_prt));
+				pthread_detach(thread_multiprogramacion);
+			}
 		}
 		else loguear("El valor: %s no es un grado de multiprogramación válido.",valor );
 	}
@@ -1101,38 +1190,6 @@ bool multiprogramacion(char** substrings){
 	return true;
 }
 
-void* hilo_multiprogramacion_wrapper(void* arg){
-	int* valor_ptr = (int*) arg;
-	int valor = *valor_ptr;
-	free(valor_ptr);
-	hilo_multiprogramacion(valor);
-	return NULL;
-}
-
-void hilo_multiprogramacion(int diferencia){
-	pthread_mutex_lock(&mx_grado_mult_de_mas);
-	grado_multiprog_de_mas =-diferencia;
-	if(diferencia == 0){
-		loguear("El nuevo grado de multiprogramacion es igual al anterior");
-	}
-	else if (diferencia > 0){
-		loguear("El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
-		for( ;diferencia != 0; diferencia--){
-			sem_post(&sem_cont_grado_mp);
-		}
-	}
-	else {
-		
-		loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
-
-		// for( ;diferencia != 0; diferencia++){
-		// 	sem_wait(&sem_cont_grado_mp);
-		// }		
-		
-	}
-	
-	pthread_mutex_unlock(&mx_grado_mult_de_mas);
-}
 
 // bool multiprogramacion(char** substrings){
 
@@ -1606,11 +1663,15 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 		desbloquear_mutex_colas();
 	}
 	else if(pcb_query->estado==estado_ready||pcb_query->estado==estado_ready_plus){
+
 		sem_wait(&sem_bin_ready);
+		
+		
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
 		sem_post(&sem_bin_exit);
+				
 	}	
 	else if(pcb_query->estado==estado_new){
 		//sem_post(&sem_bin_new);
@@ -1619,9 +1680,30 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 		free(pcb_query);
 		loguear_semaforo("grade de multiprogramacion en else if new: %d\n", &sem_cont_grado_mp);
 		//eliminar_proceso_en_memoria(pcb_query->pcb);
-		sem_wait(&sem_bin_new);		
-		desbloquear_mutex_colas();
+		loguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
 		
+		pthread_mutex_lock(&mx_grado_mult_de_mas);
+		loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+		if(grado_multiprog_de_mas>0)
+			{	//grado_multiprog_de_mas--;
+				loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+				pthread_mutex_unlock(&mx_grado_mult_de_mas);
+				//loguear_warning("eliminar_proceso - New sem_wait(&sem_bin_new)"  );
+				//sem_wait(&sem_bin_new);
+				
+			}	
+			else {
+				if(grado_multiprog_de_mas<0){
+					sem_post(&sem_cont_grado_mp);
+					loguear_warning("eliminar_proceso - New sem_post get_sem_grado_value:%d",get_sem_grado_value());
+					grado_multiprog_de_mas++;
+					loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+				}
+				pthread_mutex_unlock(&mx_grado_mult_de_mas);
+				loguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
+			}	
+		loguear_warning("eliminar_proceso - desbloquear_mutex_colas()");
+		desbloquear_mutex_colas();	
 		
 	}	
 	else if(pcb_query->pcb != NULL){	

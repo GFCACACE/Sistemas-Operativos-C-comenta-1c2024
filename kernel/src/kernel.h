@@ -199,7 +199,7 @@ bool maneja_quantum();
 bool es_rr();
 void hilo_multiprogramacion(int);
 void* hilo_multiprogramacion_wrapper(void* arg);
-
+int get_sem_grado_value();
 #endif /* kernel.h*/
 
 
