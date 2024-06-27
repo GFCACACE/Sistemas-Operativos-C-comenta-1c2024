@@ -42,6 +42,7 @@ t_config_io* iniciar_config_io(char* path_config,char* nombre){
 		config_io->PATH_BASE_DIALFS = config_get_string_value(_config,"PATH_BASE_DIALFS");
 		config_io->BLOCK_SIZE = config_get_int_value(_config,"BLOCK_SIZE");
 		config_io->BLOCK_COUNT = config_get_int_value(_config,"BLOCK_COUNT");
+		config_io->RETRASO_COMPACTACION = config_get_int_value(_config,"RETRASO_COMPACTACION");
 	}
 	config_io->NOMBRE = string_new();
 	config_io->NOMBRE = string_duplicate(nombre);
@@ -84,6 +85,7 @@ void loguear_config_dialfs(){
 	loguear("PATH_BASE_DIALFS: %s",config->PATH_BASE_DIALFS);
 	loguear("BLOCK_SIZE: %d",config->BLOCK_SIZE);
     loguear("BLOCK_COUNT: %d",config->BLOCK_COUNT);
+	loguear("RETRASO_COMPACTACION: %d",config->RETRASO_COMPACTACION);
 }
 
 bool iniciar_log_config(char* path_config, char* nombre){
