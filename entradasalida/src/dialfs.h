@@ -23,8 +23,10 @@ bool io_fs_create();
 // bool io_fs_read();
 
 t_dialfs_metadata* create_metadata();
+t_bitarray* obtener_bitmap();
 
 extern FILE *archivo_bitmap,*archivo_metadata,*archivo_bloques;
 extern int tamanio_filesystem;
+extern char* bitmap;
 
 #endif

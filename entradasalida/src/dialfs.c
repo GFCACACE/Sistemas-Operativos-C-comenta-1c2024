@@ -2,17 +2,16 @@
 
 FILE *archivo_bitmap,*archivo_metadata,*archivo_bloques;
 int tamanio_filesystem;
-t_bitarray dialfs_bitmap;
-
+char* path_bitmap, *path_bloques;
+char* bitmap;
 bool iniciar_archivos_dialfs(){
     if(!strcmp("DIALFS",config->TIPO_INTERFAZ))
     {
     int i;
     
     tamanio_filesystem = config->BLOCK_SIZE * config->BLOCK_COUNT;
-    char* path_bitmap = path_resolve(config->PATH_BASE_DIALFS,PATH_BITMAP);
-    dialfs_bitmap = bitarray_create_with_mode(/*byte 0 de archivo bitmap.dat*/, config->BLOCK_COUNT,LSB_FIRST);
-    char* path_bloques = path_resolve(config->PATH_BASE_DIALFS,PATH_BLOQUES);
+    path_bitmap = path_resolve(config->PATH_BASE_DIALFS,PATH_BITMAP);
+    path_bloques = path_resolve(config->PATH_BASE_DIALFS,PATH_BLOQUES);
     archivo_bloques = fopen(path_bloques,"w");
     archivo_bitmap = fopen(path_bitmap,"w");
     for(i=0;i<tamanio_filesystem;i++) fprintf(archivo_bloques,"@");
@@ -36,3 +35,17 @@ t_dialfs_metadata* create_metadata(){
     metadata->bloque_inicial= asignar_bloque();
 
 }
+
+
+uint32_t asignar_bloque(){
+    t_bitarray* bitmap=obtener_bitmap();
+
+}
+
+t_bitarray* obtener_bitmap(){
+    archivo_bitmap = fopen(path_bitmap,"r");
+    char* bitmap = sizeof(config->BLOCK_COUNT);
+    fread(bitmap,0 ,sizeof(config->BLOCK_COUNT), archivo_bitmap);
+    return bitarray_create(bitmap,config->BLOCK_COUNT);
+}
+
