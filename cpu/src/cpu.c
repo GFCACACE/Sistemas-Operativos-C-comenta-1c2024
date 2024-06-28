@@ -237,9 +237,8 @@ char *pedir_proxima_instruccion(t_pcb *pcb)
 }
 
 bool check_interrupt(){ return (cod_op_kernel_interrupt != EJECUTAR_CPU && !es_exit(IR) && !es_io_handler(INSTID));};
-bool es_io_handler(char* INSTID){
-if(!strcmp(INSTID,"IO_GEN_SLEEP")) return true;
-return false;
+bool es_io_handler(char* INSTID){	
+	return (strncmp(INSTID, "IO_", 3) == 0);
 }
 bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !check_interrupt() && !es_io_handler(INSTID);};
 
@@ -495,6 +494,26 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 	return true;
 }
 
+bool exe_stdin_read(t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_param registro_tamanio)
+{//IO_STDIN_READ TECLADO EAX EBX
+	char* texto = string_new();
+	
+	(uint32_t)registros_cpu->PC++;
+	actualizar_contexto(pcb);
+	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
+
+	uint32_t dir_logica = atoi(registro_direccion.string_valor);
+	uint32_t dir_fisica = mmu(pcb,dir_logica);
+	char* dir_fisica_str = string_itoa(dir_fisica);
+	
+	sprintf(texto,"%s %s %s",interfaz.string_valor,dir_fisica_str,registro_tamanio.string_valor);
+	
+	enviar_texto(texto,IO_GEN_SLEEP,kernel_dispatch);
+	free(dir_fisica_str);
+	free(texto);
+	return true;
+}
+
 bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 {
 	char* texto = string_new();
@@ -612,12 +631,12 @@ bool exe_copy_string(t_pcb* pcb,t_param tamanio){
 	actualizar_contexto(pcb);
 	return true;
 }
-bool exe_stdin_read(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
-	loguear_warning("STDIN_READ no implementado");
-	(uint32_t)registros_cpu->PC++;
-	actualizar_contexto(pcb);
-	return true;
-}
+// bool exe_stdin_read(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
+// 	loguear_warning("STDIN_READ no implementado");
+// 	(uint32_t)registros_cpu->PC++;
+// 	actualizar_contexto(pcb);
+// 	return true;
+// }
 bool exe_stdout_write(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
 	loguear_warning("STDOUT_WRITE no implementado");
 	(uint32_t)registros_cpu->PC++;
