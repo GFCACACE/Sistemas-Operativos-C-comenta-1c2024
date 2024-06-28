@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <commons/txt.h>
+#include <commons/bitarray.h>
 #include<commons/collections/queue.h>
 #include <utils/utils-client.h>
 #include <utils/utils-server.h>
