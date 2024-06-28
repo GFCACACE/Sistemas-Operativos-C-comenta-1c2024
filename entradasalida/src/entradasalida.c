@@ -146,6 +146,7 @@ bool iniciar_hilo_ejecutar_io(){
 
 bool iniciar_io(char* path_config, char* nombre){
     return iniciar_log_config(path_config, nombre)
+	&& iniciar_archivos_dialfs()
     // && iniciar_conexion_memoria()
 	&& iniciar_hilo_ejecutar_io()
 	&& iniciar_semaforo_y_cola()

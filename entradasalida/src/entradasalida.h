@@ -3,6 +3,10 @@
 #include<commons/config.h>
 #include<commons/string.h>
 #include<commons/log.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <commons/txt.h>
+#include <commons/bitarray.h>
 #include<commons/collections/queue.h>
 #include <utils/utils-client.h>
 #include <utils/utils-server.h>
@@ -13,6 +17,7 @@
 #include "generica.h"
 #include "stdin.h"
 #include "stdout.h"
+#include "dialfs.h"
 #define MODULO "entradasalida"
 
 typedef struct
@@ -27,6 +32,7 @@ typedef struct
     int BLOCK_SIZE;
     int BLOCK_COUNT;
     char* NOMBRE;
+    int RETRASO_COMPACTACION;
 	
 	t_config* config;
 } t_config_io;
