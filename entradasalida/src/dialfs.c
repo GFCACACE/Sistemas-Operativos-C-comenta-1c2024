@@ -12,6 +12,7 @@ bool iniciar_archivos_dialfs(){
     int i;
     
     tamanio_filesystem = config->BLOCK_SIZE * config->BLOCK_COUNT;
+    
     path_bitmap = path_resolve(config->PATH_BASE_DIALFS,PATH_BITMAP);
     path_bloques = path_resolve(config->PATH_BASE_DIALFS,PATH_BLOQUES);
     archivo_bloques = fopen(path_bloques,"w");
@@ -22,7 +23,8 @@ bool iniciar_archivos_dialfs(){
     fwrite(&bitmap,config->BLOCK_COUNT,1,archivo_bitmap);
     fclose(archivo_bloques);
     fclose(archivo_bitmap);
-    
+    bitarray_destroy(bitmap_array);
+   
     }
     return true;
 

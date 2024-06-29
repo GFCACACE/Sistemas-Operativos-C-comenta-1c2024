@@ -183,10 +183,7 @@ bool iniciar_recursos(){
 	lista_recursos = list_create();
 	char* key;
 	int value;
-	// char* key = string_array_pop(config->RECURSOS);
-	// int value = atoi(string_array_pop(config->INSTANCIAS_RECURSOS));	
-	//key[string_length(key)-1]='\0';
-	//t_recurso* recurso = crear_recurso(key,value);
+	
 	t_recurso* recurso;
 	
 
@@ -195,10 +192,11 @@ bool iniciar_recursos(){
 	for(int i=0;i < cantidad_recursos ;i++){
 		key = string_array_pop(config->RECURSOS);
 		value = atoi(string_array_pop(config->INSTANCIAS_RECURSOS));
-		//recurso = crear_recurso(key,value);
+		if(string_contains(key,"]"))
+			key[string_length(key)-1]='\0';
 		loguear("RECURSO: %s - INSTANCIAS: %d",key,value);
 		/////////////////
-		 recurso = crear_recurso(key,value);
+		recurso = crear_recurso(key,value);
 		list_add(lista_recursos,recurso);
 		dictionary_put(estados_dictionary, key, recurso->cola_procesos_esperando);
 		pthread_mutex_t* mx_recurso = malloc(sizeof(pthread_mutex_t)); 
