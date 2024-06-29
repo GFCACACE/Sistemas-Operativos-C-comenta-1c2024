@@ -124,6 +124,7 @@ bool iniciar_recursos();
 void liberar_recurso(t_pcb* pcb_recibido,t_recurso* recurso);
 void asignar_recurso(t_pcb* pcb,t_recurso* recurso);
 void devolver_recursos(t_pcb* pcb_saliente);
+void a_ready_sin_mutex(t_pcb* pcb);
 ///////////////////////
 char* leer_texto_consola();
 char *recibir_nombre(int);

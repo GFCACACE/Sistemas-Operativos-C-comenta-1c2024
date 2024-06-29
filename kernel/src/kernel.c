@@ -736,17 +736,18 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 		liberar_instancia(pcb_recibido,recurso);
 		// pthread_mutex_t* mutex_cola = dictionary_get(estados_mutexes_dictionary,recurso->recurso);
 		// pthread_mutex_lock(mutex_cola);
-		bloquear_mutex_colas();
+		// bloquear_mutex_colas();
 		if(!queue_is_empty(recurso->cola_procesos_esperando)){
 			
 			
 			t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
 			asignar_recurso(pcb_liberado,recurso);
-			a_ready(pcb_liberado);
-			
+			// a_ready(pcb_liberado);
+
+			a_ready_sin_mutex(pcb_liberado);
 			
 		}
-		desbloquear_mutex_colas();
+		// desbloquear_mutex_colas();
 		loguear("SIGNAL DE PID:<%d> - RECURSO: <%s> - INSTANCIAS_DISPONIBLES: <%d>",pcb_recibido->PID,
 		recurso->recurso,
 		recurso->instancias);
@@ -1867,7 +1868,6 @@ t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_
 
 void pasar_a_exit(t_pcb* pcb){
 	loguear_warning("ESTOY POR DEVOLVER RECURSOS DEL PID <%d>",pcb->PID);
-	// devolver_recursos(pcb);
 	proceso_a_estado(pcb, estado_temp,&mx_temp); 
 	
 	
@@ -1885,32 +1885,32 @@ void devolver_recursos(t_pcb* pcb_saliente){
 		};
 		return list_any_satisfy(recurso->lista_procesos_asignados,&pcb_del_recurso);
 	};
-	t_list* lista_filtrada_recursos = list_filter(lista_recursos,&tiene_pcb_saliente);
-	if(!list_is_empty(lista_filtrada_recursos)){
-		void restaurar_recursos(void* elem){
+	void restaurar_recursos(void* elem){
 			t_recurso* recurso = (t_recurso*)elem;
 			liberar_recurso(pcb_saliente,recurso);
-			// pthread_mutex_t* mutex_cola = dictionary_get(estados_mutexes_dictionary,recurso->recurso);
-			// pthread_mutex_lock(mutex_cola);
-			// bloquear_mutex_colas();
+			
 			if(!queue_is_empty(recurso->cola_procesos_esperando)){
 				
 				
 				t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
-				// desbloquear_mutex_colas();
+				
 				asignar_recurso(pcb_liberado,recurso);
 
-				a_ready(pcb_liberado);
+				a_ready_sin_mutex(pcb_liberado);
 				
 				
 			}
 			// pthread_mutex_unlock(mutex_cola);
 			
-		};
+	};
+
+	t_list* lista_filtrada_recursos = list_filter(lista_recursos,&tiene_pcb_saliente);
+	if(!list_is_empty(lista_filtrada_recursos))
 		list_iterate(lista_filtrada_recursos,&restaurar_recursos);
 
-	}
 }
+
+
 
 bool iniciar_threads_io(){
 	pthread_t thread_io_conexion;
@@ -2033,7 +2033,17 @@ void a_ready(t_pcb* pcb){
 		push_proceso_a_estado(pcb,estado_ready,&mx_ready);
 	sem_post(&sem_bin_ready);
 }
-
+void a_ready_sin_mutex(t_pcb* pcb){
+	if(es_vrr()){
+		if(le_queda_quantum(pcb))
+			queue_push(estado_ready_plus,pcb);
+		else
+			queue_push(estado_ready,pcb);
+	}
+	else
+		queue_push(estado_ready,pcb);
+	sem_post(&sem_bin_ready);
+}
 void io_handler(int *ptr_conexion){
 	while(1){
 		int conexion = *ptr_conexion;
