@@ -173,6 +173,7 @@ t_recurso* crear_recurso(char* nombre, int instancias){
 	recurso->recurso = nombre;
 	recurso->instancias = instancias;
 	recurso->cola_procesos_esperando = queue_create();
+	recurso->lista_procesos_asignados = list_create();
 	return recurso;
 }
 
@@ -616,6 +617,69 @@ void io_stdin(int pid, char** splitter){
 	loguear_warning("Peticion a IO enviada");
 }
 
+
+
+void asignar_recurso(t_pcb* pcb,t_recurso* recurso){
+	bool pcb_del_recurso(void* elem){
+
+	t_proceso_instancia* pid_instacia = (t_proceso_instancia*) elem;
+	return pid_instacia->PID == pcb->PID;
+
+	};
+	t_proceso_instancia* pid_instancia = (t_proceso_instancia*)list_find(recurso->lista_procesos_asignados,&pcb_del_recurso);
+	if(pid_instancia)
+		pid_instancia->instancias++;
+	else{
+		pid_instancia = malloc(sizeof(t_proceso_instancia));
+		pid_instancia ->instancias=1;
+		pid_instancia->PID = pcb->PID;
+		list_add(recurso->lista_procesos_asignados,pid_instancia);
+	}
+		
+	loguear("INSTANCIA ASIGNADA - PID:<%d> - CANTIDAD_INSTANCIAS: <%d>",pcb->PID,pid_instancia->instancias);
+	
+}
+
+void liberar_instancia(t_pcb* pcb_recibido,t_recurso* recurso){
+
+	bool pcb_del_recurso(void* elem){
+
+	t_proceso_instancia* pid_instacia = (t_proceso_instancia*) elem;
+	return pid_instacia->PID == pcb_recibido->PID;
+
+	};
+	t_proceso_instancia* pid_instancia = (t_proceso_instancia*)list_find(recurso->lista_procesos_asignados,&pcb_del_recurso);
+	if(pid_instancia!=NULL && pid_instancia->instancias > 0){
+		pid_instancia->instancias--;
+		recurso->instancias++;
+		free(pid_instancia);
+		return;
+
+	}
+	loguear_error("NO HAY INSTANCIAS ASIGNADAS EN PID:<%d> PARA <%s>",pcb_recibido->PID,recurso->recurso);
+}
+void liberar_recurso(t_pcb* pcb_recibido,t_recurso* recurso){
+
+	bool pcb_del_recurso(void* elem){
+
+	t_proceso_instancia* pid_instacia = (t_proceso_instancia*) elem;
+	return pid_instacia->PID == pcb_recibido->PID;
+
+	};
+	t_proceso_instancia* pid_instancia = (t_proceso_instancia*)list_find(recurso->lista_procesos_asignados,&pcb_del_recurso);
+	if(pid_instancia!=NULL){
+		recurso->instancias = recurso->instancias + pid_instancia->instancias;
+		list_remove_element(recurso->lista_procesos_asignados,pid_instancia);
+		loguear("SE LIBERA PID: <%d> - INSTANCIAS: <%d> - RECURSO: <%s>",
+		pcb_recibido->PID,
+		pid_instancia->instancias,
+		recurso->recurso
+		);
+		free(pid_instancia);
+	}
+
+}
+
 void io_stdout(int pid, char** splitter){
 	loguear_warning("Entra al case");
 	char pid_direccion_tamanio [30];
@@ -658,6 +722,7 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 		else{
 			//Devolver el proceso a ejecutar
 			loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <READY>",pcb_recibido->PID);
+			asignar_recurso(pcb_recibido,recurso);
 			a_ready(pcb_recibido);
 		}
 		break;
@@ -665,10 +730,11 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 		case SIGNAL:
 		recurso->instancias++;
 		if(!queue_is_empty(recurso->cola_procesos_esperando)){
-			loguear_warning("Falta manejo de bloqueo en SIGNAL");
+			liberar_instancia(pcb_recibido,recurso);
 			t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
 			a_ready(pcb_liberado);
 		}
+		a_ready(pcb_recibido);
 		break;
 	}
 
@@ -1033,6 +1099,7 @@ bool finalizar_proceso(char** substrings){
 			imprimir_valores_leidos(substrings);
 
 			uint32_t pid = atoi(substrings[1]);
+			
 		//	bool eliminado = eliminar_proceso(pid);
 			crear_hilo_eliminar_proceso(pid);
 			//if(eliminado)
@@ -1781,10 +1848,24 @@ t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_
 }
 
 void pasar_a_exit(t_pcb* pcb){
+
 	proceso_a_estado(pcb, estado_temp,&mx_temp); 
+	devolver_recursos(pcb);
 	sem_post(&sem_bin_exit);
 }
 
+void devolver_recursos(t_pcb* pcb){
+	for(int i=0;i<list_size(lista_recursos);i++){
+		t_recurso* recurso = list_get(lista_recursos,i);
+		liberar_recurso(pcb,recurso);
+		if(!queue_is_empty(recurso->cola_procesos_esperando)){
+			t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
+			asignar_recurso(pcb_liberado,recurso);
+			a_ready(pcb_liberado);
+		}
+
+	}
+}
 
 bool iniciar_threads_io(){
 	pthread_t thread_io_conexion;

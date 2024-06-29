@@ -86,7 +86,15 @@ typedef struct{
 	char* recurso;
 	int instancias;
 	t_queue* cola_procesos_esperando;
+	t_list* lista_procesos_asignados;
 } t_recurso;
+
+typedef struct 
+{
+	uint32_t PID;
+	uint32_t instancias;
+} t_proceso_instancia;
+
 
 t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
