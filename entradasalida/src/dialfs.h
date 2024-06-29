@@ -17,13 +17,16 @@ typedef struct
 
 bool iniciar_archivos_dialfs();//Control de bloques de datos
 // bool compactacion();
-bool io_fs_create();
+bool io_fs_create(char* nombre_archivo);
 // bool io_fs_delete();
 // bool io_fs_write();
 // bool io_fs_read();
 
+bool actualizar_bitmap(t_bitarray* bitmap);
+
 t_dialfs_metadata* create_metadata();
 t_bitarray* obtener_bitmap();
+uint32_t asignar_bloque();
 
 extern FILE *archivo_bitmap,*archivo_metadata,*archivo_bloques;
 extern int tamanio_filesystem;
