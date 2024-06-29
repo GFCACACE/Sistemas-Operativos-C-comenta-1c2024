@@ -419,7 +419,7 @@ bool execute(t_pcb *pcb)
 		liberar_param(PARAM2);
 		return true;
 	}
-	if(!strcmp(INSTID,"STDIN_READ")){
+	if(!strcmp(INSTID,"IO_STDIN_READ")){
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor);
 		exe_stdin_read(pcb,PARAM1,PARAM2,PARAM3);
 		liberar_param(PARAM1);
@@ -427,7 +427,7 @@ bool execute(t_pcb *pcb)
 		liberar_param(PARAM3);
 		return true;
 	}
-	if(!strcmp(INSTID,"STDOUT_WRITE")){
+	if(!strcmp(INSTID,"IO_STDOUT_WRITE")){
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor);
 		exe_stdout_write(pcb,PARAM1,PARAM2,PARAM3);
 		liberar_param(PARAM1);
@@ -508,7 +508,7 @@ bool exe_stdin_read(t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_pa
 	
 	sprintf(texto,"%s %s %s",interfaz.string_valor,dir_fisica_str,registro_tamanio.string_valor);
 	
-	enviar_texto(texto,IO_GEN_SLEEP,kernel_dispatch);
+	enviar_texto(texto,IO_STDIN_READ,kernel_dispatch);
 	free(dir_fisica_str);
 	free(texto);
 	return true;

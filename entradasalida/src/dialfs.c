@@ -32,15 +32,15 @@ bool io_fs_create(char* nombre_archivo){
 
 t_dialfs_metadata* create_metadata(){
     t_dialfs_metadata* metadata = malloc(sizeof(t_dialfs_metadata));
-    metadata->bloque_inicial= asignar_bloque();
+  //  metadata->bloque_inicial= asignar_bloque();
 
 }
 
-
+/*
 uint32_t asignar_bloque(){
-    t_bitarray* bitmap=obtener_bitmap();
+  //  t_bitarray* bitmap=obtener_bitmap();
 
-}
+}*/
 
 t_bitarray* obtener_bitmap(){
     archivo_bitmap = fopen(path_bitmap,"r");
