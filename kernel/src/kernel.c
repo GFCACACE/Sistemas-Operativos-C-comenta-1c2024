@@ -636,7 +636,7 @@ void asignar_recurso(t_pcb* pcb,t_recurso* recurso){
 		list_add(recurso->lista_procesos_asignados,pid_instancia);
 	}
 		
-	loguear("INSTANCIA ASIGNADA - PID:<%d> - CANTIDAD_INSTANCIAS: <%d>",pcb->PID,pid_instancia->instancias);
+	loguear("INSTANCIA ASIGNADA A <%s> - PID:<%d> - INSTANCIAS_POSEIDAS: <%d>",recurso->recurso,pcb->PID,pid_instancia->instancias);
 	
 }
 
@@ -648,16 +648,18 @@ void liberar_instancia(t_pcb* pcb_recibido,t_recurso* recurso){
 	return pid_instacia->PID == pcb_recibido->PID;
 
 	};
+
 	t_proceso_instancia* pid_instancia = (t_proceso_instancia*)list_find(recurso->lista_procesos_asignados,&pcb_del_recurso);
 	if(pid_instancia!=NULL && pid_instancia->instancias > 0){
 		pid_instancia->instancias--;
 		recurso->instancias++;
-		free(pid_instancia);
+		
 		return;
 
 	}
 	loguear_error("NO HAY INSTANCIAS ASIGNADAS EN PID:<%d> PARA <%s>",pcb_recibido->PID,recurso->recurso);
 }
+
 void liberar_recurso(t_pcb* pcb_recibido,t_recurso* recurso){
 
 	bool pcb_del_recurso(void* elem){
@@ -715,7 +717,8 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 		case WAIT:
 		recurso->instancias--;
 		if(recurso->instancias < 0){
-			queue_push(recurso->cola_procesos_esperando, pcb_recibido);
+			// queue_push(recurso->cola_procesos_esperando, pcb_recibido);
+			proceso_a_estado(pcb_recibido,recurso->cola_procesos_esperando,dictionary_get(estados_mutexes_dictionary,recurso->recurso));
 			loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <%s - BLOCKED>",pcb_recibido->PID,recurso->recurso);
 			//Bloquear proceso
 		}
@@ -728,13 +731,26 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 		break;
 
 		case SIGNAL:
-		recurso->instancias++;
+		// recurso->instancias++;
+		
+		liberar_instancia(pcb_recibido,recurso);
+		pthread_mutex_t* mutex_cola = dictionary_get(estados_mutexes_dictionary,recurso->recurso);
+		pthread_mutex_lock(mutex_cola);
 		if(!queue_is_empty(recurso->cola_procesos_esperando)){
-			liberar_instancia(pcb_recibido,recurso);
+			
+			
 			t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
+			asignar_recurso(pcb_liberado,recurso);
 			a_ready(pcb_liberado);
+			
+			
 		}
+		pthread_mutex_unlock(mutex_cola);
+		loguear("SIGNAL DE PID:<%d> - RECURSO: <%s> - INSTANCIAS_DISPONIBLES: <%d>",pcb_recibido->PID,
+		recurso->recurso,
+		recurso->instancias);
 		a_ready(pcb_recibido);
+
 		break;
 	}
 
@@ -1780,7 +1796,7 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 		
 	}	
 	else {	
-		
+		devolver_recursos(pcb_query->pcb);
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
@@ -1848,22 +1864,46 @@ t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_
 }
 
 void pasar_a_exit(t_pcb* pcb){
-
+	loguear_warning("ESTOY POR DEVOLVER RECURSOS DEL PID <%d>",pcb->PID);
+	// devolver_recursos(pcb);
 	proceso_a_estado(pcb, estado_temp,&mx_temp); 
-	devolver_recursos(pcb);
+	
+	
 	sem_post(&sem_bin_exit);
 }
 
-void devolver_recursos(t_pcb* pcb){
-	for(int i=0;i<list_size(lista_recursos);i++){
-		t_recurso* recurso = list_get(lista_recursos,i);
-		liberar_recurso(pcb,recurso);
-		if(!queue_is_empty(recurso->cola_procesos_esperando)){
-			t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
-			asignar_recurso(pcb_liberado,recurso);
-			a_ready(pcb_liberado);
-		}
+void devolver_recursos(t_pcb* pcb_saliente){
+	bool tiene_pcb_saliente(void* elem){
+		t_recurso* recurso = (t_recurso*) elem;
+		bool pcb_del_recurso(void* elem){
 
+			t_proceso_instancia* pid_instacia = (t_proceso_instancia*) elem;
+			return pid_instacia->PID == pcb_saliente->PID;
+
+		};
+		return list_any_satisfy(recurso->lista_procesos_asignados,&pcb_del_recurso);
+	};
+	t_list* lista_filtrada_recursos = list_filter(lista_recursos,&tiene_pcb_saliente);
+	if(!list_is_empty(lista_filtrada_recursos)){
+		void restaurar_recursos(void* elem){
+			t_recurso* recurso = (t_recurso*)elem;
+			liberar_recurso(pcb_saliente,recurso);
+			
+
+		};
+		list_iterate(lista_filtrada_recursos,&restaurar_recursos);
+	// for(int i=0;i<list_size(lista_filtrada_recursos);i++){
+	// 	t_recurso* recurso = list_get(lista_filtrada_recursos,i);
+		
+	// 	// if(!queue_is_empty(recurso->cola_procesos_esperando)){
+	// 	// 	t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
+	// 	// 	if(pcb_liberado != pcb_saliente){
+	// 	// 		asignar_recurso(pcb_liberado,recurso);
+	// 	// 		a_ready(pcb_liberado);
+	// 	// 	}
+	// 	// }
+	// 	// liberar_recurso(pcb_saliente,recurso);
+	// }
 	}
 }
 

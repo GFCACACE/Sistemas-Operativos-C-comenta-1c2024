@@ -119,7 +119,10 @@ bool iniciar_dispatch();
 bool iniciar_kernel(char*);
 bool iniciar_logger_config();
 bool inicializar_comandos();
+/*Manejo recursos*/
 bool iniciar_recursos();
+void liberar_recurso(t_pcb* pcb_recibido,t_recurso* recurso);
+///////////////////////
 char* leer_texto_consola();
 char *recibir_nombre(int);
 bool iniciar_proceso(char** parametros);
