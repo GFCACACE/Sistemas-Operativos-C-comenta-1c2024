@@ -421,7 +421,7 @@ bool execute(t_pcb *pcb)
 	}
 	if(!strcmp(INSTID,"IO_STDIN_READ")){
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor);
-		exe_stdin_read(pcb,PARAM1,PARAM2,PARAM3);
+		exe_std(IO_STDIN_READ, pcb,PARAM1,PARAM2,PARAM3);
 		liberar_param(PARAM1);
 		liberar_param(PARAM2);
 		liberar_param(PARAM3);
@@ -429,7 +429,7 @@ bool execute(t_pcb *pcb)
 	}
 	if(!strcmp(INSTID,"IO_STDOUT_WRITE")){
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor);
-		exe_stdout_write(pcb,PARAM1,PARAM2,PARAM3);
+		exe_std(IO_STDOUT_WRITE, pcb,PARAM1,PARAM2,PARAM3);
 		liberar_param(PARAM1);
 		liberar_param(PARAM2);
 		liberar_param(PARAM3);
@@ -494,7 +494,7 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 	return true;
 }
 
-bool exe_stdin_read(t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_param registro_tamanio)
+bool exe_std(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_param registro_tamanio)
 {//IO_STDIN_READ TECLADO EAX EBX
 	char* texto = string_new();
 	
@@ -508,7 +508,7 @@ bool exe_stdin_read(t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_pa
 	
 	sprintf(texto,"%s %s %s",interfaz.string_valor,dir_fisica_str,registro_tamanio.string_valor);
 	
-	enviar_texto(texto,IO_STDIN_READ,kernel_dispatch);
+	enviar_texto(texto,cod_op,kernel_dispatch);
 	free(dir_fisica_str);
 	free(texto);
 	return true;
@@ -637,12 +637,12 @@ bool exe_copy_string(t_pcb* pcb,t_param tamanio){
 // 	actualizar_contexto(pcb);
 // 	return true;
 // }
-bool exe_stdout_write(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
-	loguear_warning("STDOUT_WRITE no implementado");
-	(uint32_t)registros_cpu->PC++;
-	actualizar_contexto(pcb);
-	return true;
-}
+// bool exe_stdout_write(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
+// 	loguear_warning("STDOUT_WRITE no implementado");
+// 	(uint32_t)registros_cpu->PC++;
+// 	actualizar_contexto(pcb);
+// 	return true;
+// }
 bool exe_wait(t_pcb* pcb,t_param recurso){
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);

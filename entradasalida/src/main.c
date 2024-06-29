@@ -19,3 +19,17 @@ int main(int argc, char* argv[]) {
     finalizar_io();
     return EXIT_SUCCESS;
 }
+
+
+// int main() {
+//     // Write C code here
+//     int t = 1;
+//     char* cadena = malloc(t);
+//     fgets(cadena,t,stdin);
+//     scanf("%s", cadena);
+//     printf("%s\n", cadena);
+//     printf("%d\n", sizeof(char));
+//     printf("%d", sizeof("hola"));
+    
+//     return 0;
+// }

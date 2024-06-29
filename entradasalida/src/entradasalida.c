@@ -219,7 +219,7 @@ int ejecutar_op_io()
 				io_gen_sleep(atoi(splitter[1]));
 				//loguear_warning("Ya termino de dormir zzzzz");
 				enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-				loguear_warning("Termino el io_gen_sleep");
+				loguear_warning("Termino el IO_GEN_SLEEP.");
                 break;			
 			case IO_STDIN_READ:
 				
@@ -228,7 +228,7 @@ int ejecutar_op_io()
 				loguear("PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
 				io_stdin_read((uint32_t)atoi(splitter[0]), (uint32_t)atoi(splitter[1]), (uint32_t) atoi(splitter[2]));
 				enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-				loguear_warning("Termino el io_stdin_read");
+				loguear_warning("Termino el IO_STDIN_READ.");
                 break;
 			case IO_STDOUT_WRITE:
 				
@@ -237,7 +237,7 @@ int ejecutar_op_io()
 				loguear("PID: <%s> - Operacion: <IO_STDOUT_WRITE> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
 				io_stdout_write((uint32_t)atoi(splitter[0]),(uint32_t)atoi(splitter[1]), (uint32_t) atoi(splitter[2]));
 				enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-				loguear_warning("Termino el io_stdin_read");
+				loguear_warning("Termino el IO_STDOUT_WRITE.");
                 break;	
             case -1:
 				loguear_error("Problemas en la comunicacion con el servidor. Cerrando conexion...");
