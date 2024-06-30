@@ -795,8 +795,10 @@ bool admite_operacion(op_code cod, char* interfaz){
 	char* clave = string_itoa(cod);
 	loguear("DICCIONARIO: %s", dictionary_get(tipos_de_interfaces, clave));
 	loguear("INTERFAZ: %s", interfaz);
-	char* key_d = (char*)dictionary_get(tipos_de_interfaces, clave);
-	if(strcmp(key_d, clave)){
+	char* key_d = string_new();
+	key_d = (char*)dictionary_get(tipos_de_interfaces, clave);
+	loguear("VALORRRR: %d", strcmp(key_d, clave));
+	if(strncmp(key_d, interfaz,4 ) == 0){
 		free(clave);
 		return true;
 	}
@@ -810,7 +812,6 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	char* tipo_interfaz = string_new();
 
 	loguear("NOMBRE INT: %s", splitter[0]);
-	loguear("TIPO INTERFAZ: %s", splitter[1]);
 
 	if(!existe_interfaz(splitter[0]/*Nombre*/)){
 		loguear("NO EXISTE LA INTERFAZ.");	
