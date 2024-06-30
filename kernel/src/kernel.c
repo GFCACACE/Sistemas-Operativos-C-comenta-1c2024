@@ -815,7 +815,13 @@ void fin_de_quantum_exec(t_pcb* pcb_recibido,t_queue* estado){
 		pcb_recibido->quantum = config->QUANTUM;
 	
 	proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
-	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <READY>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO			
+	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <READY>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
+	loguear("Cola Ready / Ready Prioridad");
+	loguear_pids(estado_ready,&mx_ready);
+	if(es_vrr()){
+		loguear("Cola Ready Plus / Ready Plus Prioridad");
+		loguear_pids(estado_ready_plus,&mx_ready_plus);		
+	}
 	sem_post(&sem_bin_ready);
 	sem_post(&sem_bin_controlar_quantum);
 }
@@ -906,6 +912,39 @@ void loguear_config(){
 	loguear("CANT. RECURSOS: %d", string_array_size(config->RECURSOS));
 }
 
+void loguear_pids(t_queue* cola,pthread_mutex_t* mx_estado){
+
+	pthread_mutex_lock(mx_estado);
+	char lista_pids[1000]= "[";
+	char* pid_string;
+	void _agregar_a_lista(void* elem){
+		t_pcb* pcb = (t_pcb*)elem;
+		pid_string = string_itoa(pcb->PID);
+		strcat(lista_pids, pid_string);
+		strcat(lista_pids, ",");
+	}
+	list_iterate(cola->elements, _agregar_a_lista);
+	size_t len = strlen(lista_pids);
+	lista_pids[len - 1] = '\0';
+	strcat(lista_pids, "]");
+	loguear("%s",lista_pids);
+	//free(pid_string);
+	pthread_mutex_unlock(mx_estado);
+}
+// void imprimir_cola(t_queue *cola, const char *estado) {
+
+// 	void _imprimir_estado(void* elem){
+// 		t_pcb* pcb = (t_pcb*)elem;
+// 		 printf("| %-10d | %-20s | %-15s |\n", pcb->PID,pcb->path ,estado);
+// 	}
+//     printf("Estado: %s\n", estado);
+//     printf("| %-10s | %-20s | %-15s |\n", "PID", "Nombre", "Estado");
+//     printf("|------------|----------------------|-----------------|\n");
+
+// 	list_iterate(cola->elements,_imprimir_estado);
+
+//     printf("|------------|----------------------|-----------------|\n");
+// }
 
 char* leer_texto_consola(){
 	
@@ -1347,6 +1386,7 @@ void imprimir_cola(t_queue *cola, const char *estado) {
 
     printf("|------------|----------------------|-----------------|\n");
 }
+
 /*
 void imprimir_cola_recursos(){
 	char* nombre_cola=malloc(30);
@@ -1358,7 +1398,9 @@ void imprimir_cola_recursos(){
 		
 	}
 	free(nombre_cola);
-}*/
+}
+*/
+
 bool es_planificacion(t_alg_planificador algoritmo){
 	return config->ALGORITMO_PLANIFICACION.id == algoritmo;
 }
@@ -1587,6 +1629,12 @@ bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino,pthread_mu
 		push_proceso_a_estado(pcb,estado_destino,sem_destino);
 		if (estado_origen == estado_new){
 			loguear("PID: <%d> - Estado Anterior: <NEW> - Estado Actual: <READY>",pcb->PID); // LOG MINIMO Y OBLIGATORIO
+			loguear("Cola Ready / Ready Prioridad");
+			loguear_pids(estado_ready,&mx_ready);
+			if(es_vrr()){
+				loguear("Cola Ready Plus / Ready Plus Prioridad");
+				loguear_pids(estado_ready_plus,&mx_ready_plus);		
+			}
 		}
 		pthread_mutex_unlock(sem_origen);
 	}
@@ -2048,10 +2096,16 @@ void a_ready(t_pcb* pcb){
 		if(le_queda_quantum(pcb)){
 			push_proceso_a_estado(pcb,estado_ready_plus,&mx_ready_plus);
 			loguear("PID: <%d> - Estado Anterior: <BLOCKED> - Estado Actual: <READY_PLUS>", pcb->PID); // LOG MINIMO Y OBLIGATORIO
+			loguear("Cola Ready / Ready Prioridad");
+			loguear_pids(estado_ready,&mx_ready);
+			loguear("Cola Ready Plus / Ready Plus Prioridad");
+			loguear_pids(estado_ready_plus,&mx_ready_plus);		
 		}
 		else{
 			push_proceso_a_estado(pcb,estado_ready,&mx_ready);
 			loguear("PID: <%d> - Estado Anterior: <BLOCKED> - Estado Actual: <READY>", pcb->PID); // LOG MINIMO Y OBLIGATORIO
+			loguear("Cola Ready / Ready Prioridad");
+			loguear_pids(estado_ready,&mx_ready);
 		}
 	}
 	else

@@ -145,6 +145,7 @@ bool finalizar_consola(char**);
 void listar_comandos();
 t_list* get_comandos();
 void loguear_config();
+void loguear_pids(t_queue* cola,pthread_mutex_t* mx_estado);
 void finalizar_kernel();
 int ejecutar_comando_consola(char*params);
 bool ejecutar_scripts_de_archivo(char** parametros);
@@ -211,6 +212,7 @@ bool es_rr();
 void hilo_multiprogramacion(int);
 void* hilo_multiprogramacion_wrapper(void* arg);
 int get_sem_grado_value();
+
 #endif /* kernel.h*/
 
 
