@@ -1868,6 +1868,7 @@ t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_
 
 void pasar_a_exit(t_pcb* pcb){
 	loguear_warning("ESTOY POR DEVOLVER RECURSOS DEL PID <%d>",pcb->PID);
+	devolver_recursos(pcb);
 	proceso_a_estado(pcb, estado_temp,&mx_temp); 
 	
 	
