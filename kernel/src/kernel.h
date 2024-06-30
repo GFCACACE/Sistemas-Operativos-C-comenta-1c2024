@@ -62,7 +62,11 @@ typedef enum
 	READY_PLUS,
 	EXEC,
 	EXIT_STATE,
-	TEMP
+	TEMP,
+	GENERICA,
+	STDIN,
+	STDOUT,
+	DIALFS
 }t_codigo_estado;
 
 typedef struct t_comando_consola {
@@ -80,6 +84,7 @@ typedef struct t_pcb_query {
 typedef struct{
 	t_queue* estado_blocked;
 	pthread_mutex_t* mx_blocked;
+	char* tipo_de_interfaz;
 }t_blocked_interfaz;
 
 typedef struct{
@@ -127,7 +132,7 @@ void devolver_recursos(t_pcb* pcb_saliente);
 void a_ready_sin_mutex(t_pcb* pcb);
 ///////////////////////
 char* leer_texto_consola();
-char *recibir_nombre(int);
+char **recibir_io(int);
 bool iniciar_proceso(char** parametros);
 bool finalizar_proceso(char**);
 bool iniciar_planificacion(char**);
@@ -193,6 +198,7 @@ bool le_queda_quantum(t_pcb* pcb);
 bool iniciar_servidor_kernel();
 t_recurso* obtener_recurso(char* recurso);
 bool existe_interfaz(char*);
+bool admite_operacion(op_code cod, char* interfaz);
 bool eliminar_proceso(uint32_t*);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);

@@ -107,12 +107,14 @@ bool iniciar_log_config(char* path_config, char* nombre){
 
 bool iniciar_conexion_kernel(){
     conexion_kernel = crear_conexion(config->IP_KERNEL, config->PUERTO_KERNEL);
+	char* texto = string_new();
 	if(conexion_kernel ==-1){
 		
 		loguear_error("No se pudo conectar kernel");
 		return false;
 	}
-	enviar_texto(config->NOMBRE,NUEVA_IO,conexion_kernel);
+	sprintf(texto,"%s %s",config->NOMBRE,config->TIPO_INTERFAZ);
+	enviar_texto(texto,NUEVA_IO,conexion_kernel);
     return true;
 }
 
@@ -150,7 +152,7 @@ bool iniciar_io(char* path_config, char* nombre){
     // && iniciar_conexion_memoria()
 	&& iniciar_hilo_ejecutar_io()
 	&& iniciar_semaforo_y_cola()
-    && iniciar_conexion_kernel();
+    && iniciar_conexion_kernel(config->TIPO_INTERFAZ);
 }
 
 

@@ -30,7 +30,14 @@ bool eliminar_proceso_en_FIN_QUANTUM = false, exec_recibido = false;
 int grado_multiprog_de_mas =0;
 
 t_config_kernel* config;
-t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked,*nombres_colas_dictionary;
+t_dictionary * comandos_consola,
+	*estados_dictionary,
+	*estados_mutexes_dictionary, 
+	*diccionario_nombre_conexion, 
+	*diccionario_nombre_qblocked, 
+	*diccionario_conexion_qblocked,
+	*nombres_colas_dictionary,
+	*tipos_de_interfaces;
 t_list * lista_recursos;
 t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp;
 //
@@ -210,6 +217,8 @@ bool iniciar_recursos(){
 	return true;
 }
 
+
+
 bool iniciar_kernel(char* path_config){
 	return
 
@@ -265,9 +274,15 @@ void inicializar_nombres_colas(){
 bool inicializar_dictionario_mutex_colas(){
 	estados_dictionary = dictionary_create();
 	estados_mutexes_dictionary = dictionary_create();
+	tipos_de_interfaces = dictionary_create();
 
  
 	void _agregar(t_codigo_estado codigo,void* estado,t_dictionary* diccionario){
+		char* clave = string_itoa(codigo);
+		dictionary_put(diccionario,clave,estado);
+		free(clave);
+	};
+	void _agregar_interfaz(op_code codigo,void* estado,t_dictionary* diccionario){
 		char* clave = string_itoa(codigo);
 		dictionary_put(diccionario,clave,estado);
 		free(clave);
@@ -280,6 +295,21 @@ bool inicializar_dictionario_mutex_colas(){
 	void _agregar_mx(t_codigo_estado codigo,pthread_mutex_t* mx){
 		_agregar(codigo,mx,estados_mutexes_dictionary);
 	};
+
+	_agregar_interfaz(IO_STDIN_READ,"STDIN",tipos_de_interfaces);
+	_agregar_interfaz(IO_STDOUT_WRITE,"STDOUT",tipos_de_interfaces);
+	_agregar_interfaz(IO_GEN_SLEEP,"GENERICA",tipos_de_interfaces);
+	_agregar_interfaz(IO_FS_CREATE,"DIALFS",tipos_de_interfaces);
+	_agregar_interfaz(IO_FS_DELETE,"DIALFS",tipos_de_interfaces);
+	_agregar_interfaz(IO_FS_TRUNCATE,"DIALFS",tipos_de_interfaces);
+	_agregar_interfaz(IO_FS_WRITE,"DIALFS",tipos_de_interfaces);
+	_agregar_interfaz(IO_FS_READ,"DIALFS",tipos_de_interfaces);
+
+	
+
+
+
+
 
 
 	_agregar_estado(NEW,estado_new);
@@ -758,10 +788,22 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 
 
 }
+
+bool admite_operacion(op_code cod, char* interfaz){
+	char* clave = string_itoa(cod);
+	if(dictionary_get(tipos_de_interfaces, clave) == interfaz){
+		free(clave);
+		return true;
+	}
+	free(clave);
+	return false;
+
+}
 void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);		
 	char* peticion = recibir_mensaje(cpu_dispatch);
 	char** splitter = string_split(peticion," ");
+	char* tipo_interfaz = string_new();
 
 	if(!existe_interfaz(splitter[0]/*Nombre*/)){
 		pasar_a_exit(pcb_recibido);		
@@ -769,6 +811,13 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	}
 	
 	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked, splitter[0]);
+	tipo_interfaz = interfaz ->tipo_de_interfaz;
+
+	if(!admite_operacion(cod_op_io, tipo_interfaz)){
+		pasar_a_exit(pcb_recibido);
+		loguear_warning("NO SE ADMITE OPERACION.");	
+		return;
+	}
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
 
 	//proceso_estado();
@@ -1961,34 +2010,43 @@ void iniciar_conexion_io(){
 		}
 		//char* nombre_interfaz = malloc(16);
 		if(aceptar_interfaz){
-		char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
-		if(nombre_interfaz !=NULL && !existe_interfaz(nombre_interfaz)){
-		 blocked_interfaz -> estado_blocked = queue_create();
-			//
-			char* string_conexion = string_itoa(*fd_conexion_ptr);
-			loguear("bienvenido %s",nombre_interfaz);
-			dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
-			dictionary_put(diccionario_nombre_qblocked,nombre_interfaz, blocked_interfaz);
-			dictionary_put(diccionario_conexion_qblocked,string_conexion, blocked_interfaz);
-			////
-			dictionary_put(estados_dictionary,nombre_interfaz,blocked_interfaz->estado_blocked);
-			dictionary_put(estados_mutexes_dictionary,nombre_interfaz,blocked_interfaz->mx_blocked);
-			////
+			//op_code cod_op = recibir_operacion()
+			char** splitter_io = recibir_io(*fd_conexion_ptr);
+			loguear_warning("NOMBRE DE LA IO: %s", splitter_io[0]);
+			loguear_warning("TIPO DE INTERFAZ: %s", splitter_io[1]);
+			char* nombre_interfaz = splitter_io[0];
+			char* tipo_interfaz = splitter_io[1]; 
+			if(nombre_interfaz !=NULL && !existe_interfaz(nombre_interfaz)){
+				blocked_interfaz -> estado_blocked = queue_create();
+				blocked_interfaz ->tipo_de_interfaz = tipo_interfaz;
+				
+				//
+				char* string_conexion = string_itoa(*fd_conexion_ptr);
+				loguear("bienvenido %s",nombre_interfaz);
+				dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
+				dictionary_put(diccionario_nombre_qblocked,nombre_interfaz, blocked_interfaz);
+				dictionary_put(diccionario_conexion_qblocked,string_conexion, blocked_interfaz);
+				////
+				dictionary_put(estados_dictionary,nombre_interfaz,blocked_interfaz->estado_blocked);
+				dictionary_put(estados_mutexes_dictionary,nombre_interfaz,blocked_interfaz->mx_blocked);
+				////
 
-			//
-			list_add(lista_interfaces_blocked,blocked_interfaz);
-			//
-			pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
-			//							
-			pthread_detach(thread);
-			free(string_conexion);
+				//
+				list_add(lista_interfaces_blocked,blocked_interfaz);
+				//
+				pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
+				//							
+				pthread_detach(thread);
+				free(string_conexion);
 			
-		}
-		else if(nombre_interfaz){
-			loguear_error("La interfaz %s ya se había conectado.",nombre_interfaz);
-		}
-		if(nombre_interfaz)
-			free(nombre_interfaz);
+			}
+			else if(nombre_interfaz){
+				loguear_error("La interfaz %s ya se había conectado.",nombre_interfaz);
+			}
+			if(nombre_interfaz){
+				free(nombre_interfaz);
+				//free(tipo_interfaz);
+			}
 		}
 	}
 
@@ -2008,11 +2066,19 @@ t_recurso* obtener_recurso(char* recurso/*Nombre*/){
 	return NULL;
 }
 
-char *recibir_nombre(int conexion){
+char **recibir_io(int conexion){
+	char* mensaje;
+	char** splitter = string_array_new();
 	
-	if(recibir_operacion(conexion) == NUEVA_IO)
-	 return recibir_mensaje(conexion);
+	if(recibir_operacion(conexion) == NUEVA_IO){
+		mensaje = recibir_mensaje(conexion);
+		loguear_warning("Llego el mensaje %s", mensaje);
+		splitter = string_split(mensaje," ");
+		return splitter;
+	}
 	else loguear_error("RECIBÍ VACÍO");
+	//free(mensaje);
+	//free(splitter);
 	return NULL;
 }
 
