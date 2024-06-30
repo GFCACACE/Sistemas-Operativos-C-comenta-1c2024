@@ -345,6 +345,8 @@ void liberar_diccionario_colas(){
 	liberar_diccionario(estados_dictionary);
 	liberar_diccionario(estados_mutexes_dictionary);
 	liberar_diccionario(nombres_colas_dictionary);
+	liberar_diccionario(tipos_de_interfaces);
+
 	
 }
 
@@ -791,13 +793,15 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 
 bool admite_operacion(op_code cod, char* interfaz){
 	char* clave = string_itoa(cod);
-	if(dictionary_get(tipos_de_interfaces, clave) == interfaz){
+	loguear("DICCIONARIO: %s", dictionary_get(tipos_de_interfaces, clave));
+	loguear("INTERFAZ: %s", interfaz);
+	char* key_d = (char*)dictionary_get(tipos_de_interfaces, clave);
+	if(strcmp(key_d, clave)){
 		free(clave);
 		return true;
 	}
 	free(clave);
 	return false;
-
 }
 void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);		
@@ -805,17 +809,23 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	char** splitter = string_split(peticion," ");
 	char* tipo_interfaz = string_new();
 
+	loguear("NOMBRE INT: %s", splitter[0]);
+	loguear("TIPO INTERFAZ: %s", splitter[1]);
+
 	if(!existe_interfaz(splitter[0]/*Nombre*/)){
+		loguear("NO EXISTE LA INTERFAZ.");	
 		pasar_a_exit(pcb_recibido);		
 		return;
 	}
 	
 	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked, splitter[0]);
 	tipo_interfaz = interfaz ->tipo_de_interfaz;
+	//loguear("TIPO_DE_INTERFAZ: %s",tipo_interfaz);
 
 	if(!admite_operacion(cod_op_io, tipo_interfaz)){
+		loguear("NO SE ADMITE OPERACION.");	
 		pasar_a_exit(pcb_recibido);
-		loguear_warning("NO SE ADMITE OPERACION.");	
+		
 		return;
 	}
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
