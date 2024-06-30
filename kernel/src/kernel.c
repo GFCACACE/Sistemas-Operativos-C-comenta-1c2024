@@ -925,7 +925,7 @@ void loguear_pids(t_queue* cola,pthread_mutex_t* mx_estado){
 	}
 	list_iterate(cola->elements, _agregar_a_lista);
 	size_t len = strlen(lista_pids);
-	lista_pids[len - 1] = '\0';
+	if(len > 1) lista_pids[len - 1] = '\0';
 	strcat(lista_pids, "]");
 	loguear("%s",lista_pids);
 	//free(pid_string);
