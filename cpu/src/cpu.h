@@ -65,7 +65,7 @@ void* gestionar_interrupcion();
 int ejecutar_proceso_cpu();
 int intentar_conexion(char*,int,char*);
 char* pedir_proxima_instruccion(t_pcb* pcb);
-
+uint32_t obtener_direccion_fisica (t_pcb* pcb, uint32_t numero_pagina,uint32_t desplazamiento);
 //Ciclo de Instrucción//////////////////////
 void ciclo_de_instruccion(t_pcb* pcb);
 t_param interpretar_valor_instruccion(char*);
@@ -96,7 +96,7 @@ bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 /*MMU*/
-uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica);
+uint32_t mmu(t_pcb* pcb,uint32_t direccion_logica, uint32_t size_registro);
 t_tlb* crear_registro_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame);
 int tlb_hit(uint32_t pid, uint32_t numero_pagina);
 bool actualizar_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame);
