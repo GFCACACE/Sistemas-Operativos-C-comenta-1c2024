@@ -728,8 +728,8 @@ uint32_t mmu(t_pcb* pcb,uint32_t direccion_logica, uint32_t size_registro){
 	uint32_t direccion_fisica;
 	uint32_t size_registro_pagina = size_registro;
 	uint32_t indice_pagina;
-	for (indice_pagina=0;indice_pagina < cantidad_paginas;indice_pagina++){
-		direccion_fisica = obtener_direccion_fisica(pcb,numero_pagina,desplazamiento);
+	for (indice_pagina=numero_pagina;indice_pagina < numero_pagina + cantidad_paginas;indice_pagina++){
+		direccion_fisica = obtener_direccion_fisica(pcb,indice_pagina,desplazamiento);
 		uint32_t bytes_restantes_pagina = tamanio_pagina - desplazamiento;
 		if(size_registro_pagina > bytes_restantes_pagina){
 			size_registro_pagina = bytes_restantes_pagina;
@@ -737,7 +737,6 @@ uint32_t mmu(t_pcb* pcb,uint32_t direccion_logica, uint32_t size_registro){
 		//ACA VA EL AGREGAR_LISTA DE (direccion_fisica;size_registro_pagina)
 		size_registro_pagina = size_registro - size_registro_pagina; //Cantidad de bytes que restan consumir
 		desplazamiento = 0; //La segunda vuelta en adelante desplazamiento es 0. Se reinicia.
-
 	}
 
 	return direccion_fisica;
