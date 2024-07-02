@@ -300,3 +300,37 @@ bool is_true(void* element){
 bool is_false(void* element){
    return !is_true(element);
 }
+
+t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio){
+	t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
+	direcciones_proceso->dir_proceso_id.PID = pid;
+	direcciones_proceso->dir_proceso_id.valor=tamanio;
+	direcciones_proceso->direcciones = list_create();
+	return direcciones_proceso;
+}
+
+t_id_valor* id_valor_new(uint32_t id,uint32_t valor){
+	t_id_valor* id_valor = malloc(sizeof(t_id_valor));
+	id_valor->id = id;
+	id_valor->valor =valor;
+
+	return id_valor;
+}
+
+void direcciones_proceso_destroy(t_direcciones_proceso* direcciones_proceso){
+	list_destroy_and_destroy_elements(direcciones_proceso->direcciones,free);
+	free(direcciones_proceso);
+}
+
+void loguear_direccion_proceso(t_direcciones_proceso* dir_proceso){
+
+	loguear("PID proceso:%d",dir_proceso->dir_proceso_id.PID);
+	loguear("Tam proceso:%d",dir_proceso->dir_proceso_id.valor);
+	loguear("--------%s--------","direcciones");
+	for(int i=0;i<list_size(dir_proceso->direcciones);i++){
+		t_id_valor* id_valor = (t_id_valor* )list_get(dir_proceso->direcciones,i);
+		loguear("Direcc: %d - Tam: %d", id_valor->id,id_valor->valor);
+	}
+	loguear("--------%s--------","fin direcciones");
+
+}

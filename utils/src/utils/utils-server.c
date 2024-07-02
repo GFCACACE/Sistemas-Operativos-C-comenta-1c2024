@@ -215,3 +215,27 @@ t_acceso_espacio_usuario* recibir_acceso_espacio_usuario(t_paquete* paquete)
 	return acceso_espacio_usuario;
 
 }
+
+
+t_direcciones_proceso* recibir_direcciones_proceso(t_paquete* paquete)
+{
+	t_buffer* buffer = paquete->buffer;
+	buffer->desplazamiento = sizeof(uint32_t);
+	void _recibir(void* lugar_destino,size_t tam){
+		recibir_de_buffer(lugar_destino,buffer,tam);
+	}
+	int cant_direcciones;
+	t_direcciones_proceso* direcciones_proceso = direcciones_proceso_create(0,0);
+	
+	_recibir(&direcciones_proceso->dir_proceso_id.PID,sizeof(uint32_t));
+	_recibir(&direcciones_proceso->dir_proceso_id.valor,sizeof(uint32_t));
+	_recibir(&cant_direcciones,sizeof(uint32_t));
+	for(int i=0;i<cant_direcciones;i++)
+	{	t_id_valor* id_valor = malloc(sizeof(t_id_valor));
+		_recibir(&id_valor->id,sizeof(uint32_t));
+		_recibir(&id_valor->valor,sizeof(uint32_t));
+		list_add(direcciones_proceso->direcciones,id_valor);
+	}
+
+	return direcciones_proceso;
+}

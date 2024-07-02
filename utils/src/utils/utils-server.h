@@ -29,5 +29,6 @@ t_id_valor* recibir_id_value(t_paquete* paquete);
 t_id_valor_string* recibir_id_value_string(t_paquete* paquete);
 t_pid_valor* recibir_pid_value(t_paquete* paquete);
 t_acceso_espacio_usuario* recibir_acceso_espacio_usuario(t_paquete* paquete);
+t_direcciones_proceso* recibir_direcciones_proceso(t_paquete* paquete);
 
 #endif /* utils_server_h */

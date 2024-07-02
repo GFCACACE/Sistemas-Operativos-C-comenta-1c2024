@@ -210,6 +210,17 @@ bool iniciar_recursos(){
 	return true;
 }
 
+bool prueba(){
+	t_direcciones_proceso* dir_proceso = direcciones_proceso_create(1,20);
+	for(int i =0;i<10;i++){
+		list_add(dir_proceso->direcciones,id_valor_new(i,2*i));
+	};
+	loguear_direccion_proceso(dir_proceso);
+	enviar_direcciones_proceso(dir_proceso,DIRECCIONES_PROCESO,cpu_dispatch);
+	direcciones_proceso_destroy(dir_proceso);
+	return true;
+}
+
 bool iniciar_kernel(char* path_config){
 	return
 
@@ -225,7 +236,7 @@ bool iniciar_kernel(char* path_config){
 	iniciar_semaforos()&&
 	inicializar_dictionario_mutex_colas()&&
 	iniciar_recursos() &&
-	iniciar_threads_io();
+	iniciar_threads_io()&& prueba();
 }
 bool iniciar_semaforos(){
 	sem_init(&sem_cont_grado_mp,0,config->GRADO_MULTIPROGRAMACION);
@@ -981,7 +992,6 @@ void agregar_comando(op_code_kernel code,char* nombre,char* params,bool(*funcion
 
 void imprimir_valores_leidos(char** substrings){
 
-	int index=0;
 	void imprimir_valor(char* leido){
 		//loguear("substring[%d] vale:%s\n",index++,leido);
 	};
@@ -1511,7 +1521,7 @@ void pcb_a_exec(t_pcb* pcb){
 t_pcb* ready_a_exec(){	
 	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
 	t_pcb* pcb = NULL;
-	int size = queue_size(estado_ready);
+	//int size = queue_size(estado_ready);
 	//loguear_warning("La cola ready tiene: %d",size);
 	pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
 	loguear("PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->PID); // LOG MINIMO Y OBLIGATORIO

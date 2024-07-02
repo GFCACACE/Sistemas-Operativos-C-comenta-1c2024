@@ -834,6 +834,12 @@ int ejecutar_proceso_cpu()
                 ciclo_de_instruccion(pcb);
 				paquete_destroy(paquete);
                 break;	
+			case DIRECCIONES_PROCESO:
+			  	t_direcciones_proceso *dir_proceso = recibir_direcciones_proceso(paquete); 
+				loguear_direccion_proceso(dir_proceso);
+				direcciones_proceso_destroy(dir_proceso);
+				paquete_destroy(paquete);
+                break;
             case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");
 			paquete_destroy(paquete);

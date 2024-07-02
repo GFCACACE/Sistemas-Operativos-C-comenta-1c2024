@@ -69,7 +69,8 @@ typedef enum
 	PEDIDO_STDIN,
 	PEDIDO_STDOUT,
 	RESPUESTA_STDIN,
-	RESPUESTA_STDOUT
+	RESPUESTA_STDOUT,
+	DIRECCIONES_PROCESO
 }op_code;
 
 // BRAND NEW
@@ -132,6 +133,12 @@ typedef struct
 	uint32_t valor;
 } t_pid_valor;
 
+typedef struct t_direcciones_proceso
+{
+	t_pid_valor dir_proceso_id;
+	t_list* direcciones;
+}t_direcciones_proceso;
+
 typedef struct t_validacion
 {
 	bool resultado;
@@ -165,6 +172,10 @@ t_registros_cpu* inicializar_registros();
 void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen);
 void loguear_pid_value(t_pid_valor* tamanio_proceso);
 t_pid_valor* pid_value_create(uint32_t pid, uint32_t valor);
+t_id_valor* id_valor_new(uint32_t id,uint32_t valor);
+t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio);
+void direcciones_proceso_destroy(t_direcciones_proceso* direcciones_proceso);
+void loguear_direccion_proceso(t_direcciones_proceso* direcciones_proceso);
 t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t bytes_restantes,char* valor);
 /**
  * @fn    list_find_index
@@ -184,5 +195,6 @@ int list_find_index(t_list* self, bool(*condition)(void*));
  */
 bool is_true(void* element);
 bool is_false(void* element);
+
 
 #endif /* utils_commons_h */

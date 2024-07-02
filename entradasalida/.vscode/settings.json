@@ -4,4 +4,12 @@
         "*.h": "c",
     },
     "C_Cpp.errorSquiggles": "disabled",
+    "files.exclude": {
+        "*/bin/": true,
+        "*/obj/": true,
+        "*.gitignore": true,
+        "*.mk": false,
+        "makefile":false
+    }
 }
+//
