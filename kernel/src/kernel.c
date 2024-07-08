@@ -27,6 +27,7 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
 bool eliminar_proceso_en_FIN_QUANTUM = false, exec_recibido = false;
+//bool eliminar_proceso_en_FIN_QUANTUM2 = false;
 int grado_multiprog_de_mas =0;
 
 t_config_kernel* config;
@@ -915,13 +916,25 @@ void recibir_pcb_de_cpu(){
 	loguear("Cod op CPU: %d", cod_op);
 	t_pcb_query* pcb_query = recibir_pcb_y_actualizar(paquete);
 	t_pcb* pcb_recibido = pcb_query->pcb;
+	paquete_destroy(paquete);
+	// if(cod_op == FIN_QUANTUM && pcb_recibido->PID != pcb_exec->PID){
+	// 	loguear_warning("ENTRA POR ACÁ, PID recibido: %d.", pcb_recibido->PID  );
+	// 	loguear_warning("ENTRA POR ACÁ, PID exec: %d.", pcb_exec->PID  );
+	// 	eliminar_proceso_en_FIN_QUANTUM = true;
+	// 	sem_post(&sem_bin_cpu_libre);
+	// 	//sem_post(&sem_bin_recibir_pcb);
+	// 	free(pcb_query);
+	// 	exec_recibido = false;
+	// 	return;
+	// }
 	
 	if(es_vrr()) modificar_quantum_restante(pcb_recibido);
 	
-	paquete_destroy(paquete);
+	
 	// PAUSAR POR DETENER PLANI	
 	sem_wait(&sem_bin_recibir_pcb);
 	liberar_pcb_exec();
+	loguear_warning("Frenado en recibir_pcb_de_cpu.");
 	
 	if(!fue_finalizado(pcb_recibido->PID))	
 		gestionar_operacion_de_cpu(cod_op,pcb_recibido,pcb_query->estado);
@@ -1533,11 +1546,12 @@ void controlar_quantum (t_pcb* pcb_enviado){
 	memcpy(&pcb,pcb_enviado,sizeof(t_pcb));
 	if(config->QUANTUM)
 	{	eliminar_proceso_en_FIN_QUANTUM=false;
+		//eliminar_proceso_en_FIN_QUANTUM2 = false;
 		usleep(pcb.quantum *1000);	
 		loguear("PID: <%d> - Esperando sem_wait(&sem_bin_controlar_quantum)",pcb.PID);
 		sem_wait(&sem_bin_controlar_quantum);	
 		loguear("PID: <%d> - &sem_bin_controlar_quantum activado",pcb.PID);
-		if(!eliminar_proceso_en_FIN_QUANTUM){
+		if(!eliminar_proceso_en_FIN_QUANTUM /*|| !eliminar_proceso_en_FIN_QUANTUM2  */){
 			pthread_mutex_lock(&mx_pcb_exec);
 			if(pcb_exec != NULL && pcb_exec->PID==pcb.PID){
 				enviar_texto("FIN_QUANTUM",FIN_QUANTUM,cpu_interrupt);

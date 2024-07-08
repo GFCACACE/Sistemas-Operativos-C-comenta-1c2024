@@ -2,6 +2,7 @@
 
 int kernel_dispatch, dispatch, interrupt, kernel_interrupt, conexion_memoria;
 int tamanio_pagina;
+bool wait_o_signal = false;
 //op_code cod_op_kernel_dispatch;
 op_code cod_op_kernel_interrupt;
 char *IR, *INSTID;
@@ -244,12 +245,14 @@ bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !check_interrupt() &
 
  void ciclo_de_instruccion(t_pcb* pcb){
 	bool flag_execute;
+
 	do{		
+		wait_o_signal = false;
 		fetch(pcb);
 		decode();
 		flag_execute = execute(pcb);
 		
-		if(check_interrupt())
+		if(check_interrupt() && !wait_o_signal)
 			devolver_contexto(pcb,cod_op_kernel_interrupt);
 
 	}while (continuar_ciclo_instruccion() && flag_execute);
@@ -648,6 +651,7 @@ bool exe_wait(t_pcb* pcb,t_param recurso){
 	actualizar_contexto(pcb);
 	enviar_pcb(pcb,REC_HANDLER,kernel_dispatch);
 	enviar_texto(recurso.string_valor,WAIT,kernel_dispatch);
+	wait_o_signal = true;
 
 	return true;
 }
@@ -656,6 +660,7 @@ bool exe_signal(t_pcb* pcb,t_param recurso){
 	actualizar_contexto(pcb);
 	enviar_pcb(pcb,REC_HANDLER,kernel_dispatch);
 	enviar_texto(recurso.string_valor,SIGNAL,kernel_dispatch);
+	wait_o_signal = true;
 
 	return true;
 }
