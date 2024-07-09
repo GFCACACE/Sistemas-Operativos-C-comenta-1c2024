@@ -773,6 +773,39 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 
 
 }
+
+void limpiar_buffer(int cod_op_io){
+	switch(cod_op_io){
+		case IO_GEN_SLEEP:
+			recibir_operacion(cpu_dispatch); 
+			char* peticion = recibir_mensaje(cpu_dispatch);
+			break;
+		case IO_STDIN_READ:
+			t_paquete* paquete_ior = recibir_paquete(cpu_dispatch);
+			break;
+		case IO_STDOUT_WRITE:
+			t_paquete* paquete_iow = recibir_paquete(cpu_dispatch);
+			break;
+		case IO_FS_CREATE:
+			//TODO
+			break;
+		case IO_FS_DELETE:
+			//TODO
+			break;
+		case IO_FS_READ:
+			//TODO
+			break;
+		case IO_FS_TRUNCATE:
+			//TODO
+			break;
+		case IO_FS_WRITE:
+			//TODO
+			break;
+		default:			
+			break;
+	}
+}
+
 void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);		
 	char* nombre_interfaz = recibir_mensaje(cpu_dispatch);
@@ -783,28 +816,12 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	if(!existe_interfaz(nombre_interfaz)){
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
-		switch(cod_op_io){
-		case IO_GEN_SLEEP:
-			recibir_operacion(cpu_dispatch); // NECESARIO PARA QUE NO ROMPA
-			char* peticion = recibir_mensaje(cpu_dispatch);
-			loguear("SEGUNDO MENSAJE RECIBIDO: %s", peticion);
-			break;
-		case IO_STDIN_READ:
-			t_paquete* paquete_ior = recibir_paquete(cpu_dispatch);
-			break;
-		case IO_STDOUT_WRITE:
-			t_paquete* paquete_iow = recibir_paquete(cpu_dispatch);
-			break;
-		default:			
-			break;
-	}
+		limpiar_buffer(cod_op_io);
 		pasar_a_exit(pcb_recibido);		
 		//paquete_destroy(paquete_IO);
 		return;
 	}
 
-
-	
 	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked,nombre_interfaz);
 	tipo_interfaz = interfaz->tipo_interfaz;
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
@@ -813,6 +830,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	if(!admite_operacion(cod_op_io, tipo_interfaz)){ 
 		loguear("NO SE ADMITE OPERACION.");
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
+		limpiar_buffer(cod_op_io);
 		pasar_a_exit(pcb_recibido);
 		return; 
 	}
@@ -834,6 +852,21 @@ void io_handler_exec(t_pcb* pcb_recibido){
 		case IO_STDOUT_WRITE:
 			t_paquete* paquete_iow = recibir_paquete(cpu_dispatch);
 			io_std(pcb_recibido->PID, paquete_iow,nombre_interfaz);
+			break;
+		case IO_FS_CREATE:
+			//TODO
+			break;
+		case IO_FS_DELETE:
+			//TODO
+			break;
+		case IO_FS_READ:
+			//TODO
+			break;
+		case IO_FS_TRUNCATE:
+			//TODO
+			break;
+		case IO_FS_WRITE:
+			//TODO
 			break;
 		default:
 			pasar_a_exit(pcb_recibido);			
