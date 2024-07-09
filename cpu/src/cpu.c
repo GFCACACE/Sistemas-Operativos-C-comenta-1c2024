@@ -594,9 +594,9 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	
 	//Devolver lista de elementos necesarios.
 	uint32_t size_registro = (uint32_t)registro_datos.size;
-	char* registro_dato_ = (char*)registro_datos.string_valor; 
+	char* registro_dato = (char*)registro_datos.string_valor; 
 	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
-	uint32_t registro_dato = atoi(registro_dato_);
+	
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb_recibido,direccion_logica,size_registro);
 
 	loguear_direccion_proceso(direcciones_fisicas_registros);
@@ -612,13 +612,27 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
 		uint32_t size_leido=0;
 		uint32_t size_registro_pagina_actual;
+
+    uint32_t registro_ecx = atoi(registro_dato);
+    uint32_t registro_ecx_reconstruido;
+    
+	//void* registro_ecx_puntero_char = &registro_dato;
+    void* registro_ecx_puntero = &registro_ecx;
+    void* registro_ecx_reconstruido_puntero = &registro_ecx_reconstruido;
+    
 		void _enviar_direcciones_memoria(void* element){
 			char* valor_memoria = string_new();
+			
 			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
 			size_registro_pagina_actual = direccion_registro->size_registro_pagina;
 			
 			void* dato_parcial = malloc(size_registro_pagina_actual);
-			memcpy(dato_parcial,&registro_dato + size_leido,size_registro_pagina_actual);
+
+			memcpy(dato_parcial, registro_ecx_puntero + size_leido,size_registro_pagina_actual);
+
+			//PRUEBA
+			//memcpy(registro_ecx_reconstruido_puntero + size_leido, registro_ecx_puntero + size_leido, size_registro_pagina_actual);
+			memcpy(registro_ecx_reconstruido_puntero + size_leido,dato_parcial, size_registro_pagina_actual);
 			
 			acceso_espacio_usuario =  acceso_espacio_usuario_create(
 			pcb_recibido->PID,
@@ -626,7 +640,6 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 			direccion_registro-> size_registro_pagina,
 			dato_parcial);
 			
-			memcpy(&dato_reconstruido + size_leido,dato_parcial,size_registro_pagina_actual);
 			
 			size_leido += size_registro_pagina_actual;
 			
@@ -646,11 +659,11 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 			pid_size_total.PID,direccion_registro->direccion_fisica,registro_dato + size_leido);
 			free(dato_parcial);
 			free(valor_memoria);
+			//free(registro_ecx_parte);
 		};
 		
-		loguear("Valor previo a recontruir <%d>",dato_reconstruido);
 		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
-		loguear("Valor recontruido <%d>",dato_reconstruido);
+		loguear("Valor post a reconstruir <%d>",registro_ecx_reconstruido);
 		uint32_t _nro_valor = atoi(registro_dato);
 		loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>",
 		pid_size_total.PID,
