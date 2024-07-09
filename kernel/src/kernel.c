@@ -605,7 +605,7 @@ void io_gen_sleep(int pid,char** splitter){
 				IO_GEN_SLEEP,
 				conexion_io);
 	loguear_warning("Peticion a IO enviada");
-	free(splitter);
+	string_array_destroy(splitter);
 }
 
 void io_std(int pid,t_paquete* paquete_IO, char* nombre_interfaz){
@@ -791,18 +791,14 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			char* peticion = recibir_mensaje(cpu_dispatch);
 			char** splitter = string_split(peticion," ");
 			io_gen_sleep(pcb_recibido->PID,splitter);
-
-			//free(splitter);
-			//free(peticion)?
 			break;
 		case IO_STDIN_READ:
-			t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
-			io_std(pcb_recibido->PID, paquete_IO,nombre_interfaz);
+			t_paquete* paquete_ior = recibir_paquete(cpu_dispatch);
+			io_std(pcb_recibido->PID, paquete_ior,nombre_interfaz);
 			break;
 		case IO_STDOUT_WRITE:
-			t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
-			io_std(pcb_recibido->PID, paquete_IO,nombre_interfaz);
-			  	//io_stdout(pcb_recibido->PID, paquete_IO);
+			t_paquete* paquete_iow = recibir_paquete(cpu_dispatch);
+			io_std(pcb_recibido->PID, paquete_iow,nombre_interfaz);
 			break;
 		default:
 			pasar_a_exit(pcb_recibido);			

@@ -52,17 +52,10 @@ typedef struct
 } t_config_io;
 
 
-
-
-
-
 typedef struct{
     int cod_op;
     char* peticion;
 }t_peticion_io;
-
-
-
 
 
 t_config_io* iniciar_config_io(char*, char*);
