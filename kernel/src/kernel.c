@@ -1886,27 +1886,29 @@ void pasar_a_temp_sin_bloqueo(t_pcb_query* pcb_query){
 
 	
 }
-
 bool eliminar_proceso(uint32_t* pid_ptr){
 	uint32_t pid = *pid_ptr;
 	free(pid_ptr);
 	bool eliminado = true;
-	//loguear_warning("grado de multiprogramación antes del if: %d\n", get_sem_grado_value());
+	loguear_warning("grado de multiprogramación antes del if: %d\n", get_sem_grado_value());
 	bloquear_mutex_colas();
 
-	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
-	if(pcb_query->pcb==NULL){
+	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);
+	if(pcb_query->pcb != NULL){
+		devolver_recursos(pcb_query->pcb);
+	}
+	if(pcb_query->pcb==NULL){ //CASO NO EXISTE
 		free(pcb_query);
 		desbloquear_mutex_colas();
 		eliminado = false;
 		loguear_warning("PCB NO ENCONTRADO");
 	}
-	else if((pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)){	 //SI YA FUE ELIMINADO	
+	else if((pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)){	// CASO YA FUE ELIMINADO	
 		desbloquear_mutex_colas();
 		free(pcb_query);	
 		eliminado = false;		
 	}
-	else if(pcb_exec!=NULL && pcb_query->estado==NULL){ // SI ESTA EN EXEC
+	else if(pcb_exec!=NULL && pcb_query->estado==NULL){ //CASO EXEC
 		sem_wait(&sem_bin_controlar_quantum);
 		exec_recibido = true;
 		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
@@ -1914,36 +1916,30 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 		eliminar_proceso_en_FIN_QUANTUM = true;	
 		desbloquear_mutex_colas();
 	}
-	else if(pcb_query->estado==estado_ready||pcb_query->estado==estado_ready_plus){ // SI ESTA EN READY O READY+
+	else if(pcb_query->estado==estado_ready||pcb_query->estado==estado_ready_plus){ //CASO READY
 
 		sem_wait(&sem_bin_ready);	
 		
 		pasar_a_temp_sin_bloqueo(pcb_query);
-		if(pcb_query->estado==estado_ready_plus){
-			loguear("PID: <%d> - Estado Anterior: <READY_PLUS> - Estado Actual: <EXIT>", pcb_query->pcb->PID); // LOG MINIMO Y OBLIGATORIO
-		}else{
-			loguear("PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXIT>", pcb_query->pcb->PID); // LOG MINIMO Y OBLIGATORIO
-		}
 		free(pcb_query);
 		desbloquear_mutex_colas();
 		sem_post(&sem_bin_exit);
-		
+				
 	}	
-	else if(pcb_query->estado==estado_new){ //SI ESTA EN NEW
+	else if(pcb_query->estado==estado_new){ //CASO NEW
 		//sem_post(&sem_bin_new);
 		list_remove_element(estado_new->elements,pcb_query->pcb);
 		queue_push(estado_exit,pcb_query->pcb);
-		loguear("PID: <%d> - Estado Anterior: <NEW> - Estado Actual: <EXIT>", pcb_query->pcb->PID); // LOG MINIMO Y OBLIGATORIO
 		free(pcb_query);
-		//loguear_warning("grado de multiprogramación antes del if: %d\n", get_sem_grado_value());
+		loguear_warning("grado de multiprogramación antes del if: %d\n", get_sem_grado_value());
 		//eliminar_proceso_en_memoria(pcb_query->pcb);
-		//oguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
+		loguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
 		
 		pthread_mutex_lock(&mx_grado_mult_de_mas);
-		//loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+		loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
 		if(grado_multiprog_de_mas>0)
 			{	//grado_multiprog_de_mas--;
-				//loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+				loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
 				pthread_mutex_unlock(&mx_grado_mult_de_mas);
 				//loguear_warning("eliminar_proceso - New sem_wait(&sem_bin_new)"  );
 				//sem_wait(&sem_bin_new);
@@ -1952,28 +1948,33 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 			else {
 				if(grado_multiprog_de_mas<0){
 					sem_post(&sem_cont_grado_mp);
-					//loguear_warning("eliminar_proceso - New sem_post get_sem_grado_value:%d",get_sem_grado_value());
+					loguear_warning("eliminar_proceso - New sem_post get_sem_grado_value:%d",get_sem_grado_value());
 					grado_multiprog_de_mas++;
-					//loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+					loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
 				}
 				pthread_mutex_unlock(&mx_grado_mult_de_mas);
-				//loguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
+				loguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
 			}	
-		//loguear_warning("eliminar_proceso - desbloquear_mutex_colas()");
+		loguear_warning("eliminar_proceso - desbloquear_mutex_colas()");
 		desbloquear_mutex_colas();	
 		
 	}	
-	else {	// SI ESTA EN BLOCKED? 
-		devolver_recursos(pcb_query->pcb);
+	else {	// CASO BLOCKED
+		//t_recurso* recurso = encontrar_recurso(pcb_query->pcb);
+		// if(recurso != NULL){
+		// 	loguear_warning("INSTANCIA: %s", recurso->recurso);
+		// 	liberar_instancia(pcb_query->pcb,recurso);
+		// 	loguear_warning("Libero la INSTANCIA.");
+		// }
+		
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
-		loguear("PID: <%d> - Estado Anterior: <BLOCKED> - Estado Actual: <EXIT>", pcb_query->pcb->PID); // LOG MINIMO Y OBLIGATORIO
 		sem_post(&sem_bin_exit);
 	}
 	
 	if(eliminado)
-		loguear("Finaliza el proceso <%d> - Motivo <INTERRUPTED_BY_USER>",pid);// LOG MINIMO Y OBLIGATORIO
+		loguear("Finaliza el proceso <%d> - Motivo: Finalizado por consola",pid);
 	return eliminado;
 
 }
