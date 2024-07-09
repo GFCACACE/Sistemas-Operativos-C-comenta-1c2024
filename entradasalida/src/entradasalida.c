@@ -368,32 +368,32 @@ int ejecutar_op_io_stdout()
 // }
 
 int ejecutar_op_io_generica(){
+	while(1){
+		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		sem_wait(&sem_bin_cola_peticiones);
+		pthread_mutex_lock(&mx_peticion);
+		peticion_io = queue_pop(cola_peticiones_io);
+		pthread_mutex_unlock(&mx_peticion);
+		int cod_op = peticion_io->cod_op;
+		char* _peticion;
+		_peticion = peticion_io->peticion;
+		char** splitter = string_array_new();
+		splitter = string_split(_peticion," ");
+		loguear("Cod op: %d", cod_op);
+		// ESTAMOS BIEN
+		char mensaje[70];
 
-	t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
-	sem_wait(&sem_bin_cola_peticiones);
-	pthread_mutex_lock(&mx_peticion);
-	peticion_io = queue_pop(cola_peticiones_io);
-	pthread_mutex_unlock(&mx_peticion);
-	int cod_op = peticion_io->cod_op;
-	char* _peticion;
-	_peticion = peticion_io->peticion;
-	char** splitter = string_array_new();
-	splitter = string_split(_peticion," ");
-	loguear("Cod op: %d", cod_op);
-	// ESTAMOS BIEN
-	char mensaje[70];
+		sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
+		//loguear(mensaje);
+		loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]); // LOG MÍNIMO Y OBLIGATORIO
+		io_gen_sleep(atoi(splitter[1]));
+		//loguear_warning("Ya termino de dormir zzzzz");
+		enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
+		loguear_warning("Termino el IO_GEN_SLEEP.");
 
-	sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
-	//loguear(mensaje);
-	loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]); // LOG MÍNIMO Y OBLIGATORIO
-	io_gen_sleep(atoi(splitter[1]));
-	//loguear_warning("Ya termino de dormir zzzzz");
-	enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-	loguear_warning("Termino el IO_GEN_SLEEP.");
-
-	string_array_destroy(splitter);
-	free(peticion_io);
-
+		string_array_destroy(splitter);
+		free(peticion_io);
+	}
 }
 int ejecutar_op_io_dialfs(){
 
