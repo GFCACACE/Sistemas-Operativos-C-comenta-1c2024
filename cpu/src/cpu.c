@@ -607,16 +607,42 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	char* valor_memoria = string_new();
 	//Devolver lista de elementos necesarios.
 	uint32_t size_registro = (uint32_t)registro_datos.size;
-	char* registro_dato = (char*)registro_datos.string_valor;
+	char* registro_dato = (char*)registro_datos.string_valor; 
 	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
 	
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb_recibido,direccion_logica,size_registro);
-	
-	
-	t_list* direcciones_registros = direcciones_fisicas_registros->direcciones; 
 
 	loguear_direccion_proceso(direcciones_fisicas_registros);
 
+	t_list* direcciones_registros =  direcciones_proceso->direcciones;
+	
+	uint32_t cantidad_elementos = list_size(direcciones_registros);
+	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
+
+	t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
+	
+	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
+		
+		void _enviar_direcciones_io_stdin(void* element){
+			void* dato_parcial = malloc(size_registro_pagina);
+			memccpy(dato_parcial,registro_dato + size_leido,size_registro_pagina);
+			t_direccion_registro* dir_reg = (t_direccion_registro*) element;
+			acceso_espacio_usuario =  acceso_espacio_usuario_create(
+			pcb_recibido->PID,
+			dir_reg->direccion_fisica,
+			dir_reg-> size_registro_pagina,
+			dato_parcial);
+			size_leido += size_registro_pagina;
+			free(dato_parcial);
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,ESCRITURA_MEMORIA,conexion_memoria);
+			loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
+			pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
+			
+		};
+		
+		
+		list_iterate(direcciones_registros, &_enviar_direcciones_io_stdin);
+/*
 
 	uint32_t nro_pagina_inicial =  obtener_numero_pagina(direccion_logica);
 	uint32_t desplazamiento = obtener_desplazamiento(direccion_logica,nro_pagina_inicial);

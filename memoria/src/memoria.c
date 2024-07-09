@@ -410,16 +410,15 @@ uint32_t ejecutar_resize(t_pid_valor* tamanio_proceso){
 	return cod_op_a_devolver;
 }
 
-void escribir_memoria(char* direccion_fisica,char* dato,uint32_t size){
+void escribir_memoria(void* direccion_fisica,void* dato,uint32_t size){
 	memcpy(direccion_fisica,dato,size);
 }
-void leer_memoria(char* direccion_fisica,char* buffer,uint32_t size){
-	memcpy(buffer, direccion_fisica,size);
+void leer_memoria(void* direccion_fisica,void* buffer,uint32_t size){
+	memcpy(buffer,direccion_fisica,size);
 }
 
 void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario,int conexion){
 	void* direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
-	
 	switch (tipo_acceso)
 	{
 	case PEDIDO_STDIN:
@@ -437,7 +436,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	
 			leer_memoria(direccion_real,acceso_espacio_usuario->registro_dato ,acceso_espacio_usuario->size_registro);
 			enviar_texto(acceso_espacio_usuario->registro_dato,RESPUESTA_STDOUT,conexion);
-			loguear("Se leyó: <%s>. Tamaño: <%d>",acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
+			//loguear("Se leyó: <%s>. Tamaño: <%d>",acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
 		break;
 	case LECTURA_MEMORIA:
 			char* dato_leido = malloc(acceso_espacio_usuario->size_registro);
