@@ -4,7 +4,7 @@
 #include "memoria.h"
 
 int main(int argc, char** argv) {
-
+    
     //Iniciamos mediante una funcion las config, el logger y las conexiones
     //Asignamos un flag que nos devolverá si se pudo iniciar correctamente el módulo o no.
     bool memmoria_iniciada = iniciar_memoria(argv[1]);

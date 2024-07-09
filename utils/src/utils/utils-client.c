@@ -279,8 +279,8 @@ void* serializar_direcciones_proceso(t_direcciones_proceso* direcciones_proceso,
 	t_buffer* buffer = crear_buffer(*size);
 	
 
-	agregar_a_buffer(buffer, &direcciones_proceso->dir_proceso_id.PID, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &direcciones_proceso->dir_proceso_id.valor, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &direcciones_proceso->pid_size_total.PID, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &direcciones_proceso->pid_size_total.valor, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t));
 	
 	for(int i=0;i<cant_direcciones;i++)

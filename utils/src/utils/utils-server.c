@@ -227,8 +227,8 @@ t_direcciones_proceso* recibir_direcciones_proceso(t_paquete* paquete)
 	int cant_direcciones;
 	t_direcciones_proceso* direcciones_proceso = direcciones_proceso_create(0,0);
 	
-	_recibir(&direcciones_proceso->dir_proceso_id.PID,sizeof(uint32_t));
-	_recibir(&direcciones_proceso->dir_proceso_id.valor,sizeof(uint32_t));
+	_recibir(&direcciones_proceso->pid_size_total.PID,sizeof(uint32_t));
+	_recibir(&direcciones_proceso->pid_size_total.valor,sizeof(uint32_t));
 	_recibir(&cant_direcciones,sizeof(uint32_t));
 	for(int i=0;i<cant_direcciones;i++)
 	{	t_id_valor* id_valor = malloc(sizeof(t_id_valor));

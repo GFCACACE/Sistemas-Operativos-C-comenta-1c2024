@@ -24,6 +24,8 @@ typedef struct{
 	t_alg_planificador id;
 	void (*planificar)(void);
 }t_planificador;
+
+void ejecutar_selector_io();
 typedef struct
 {
 	int PUERTO_ESCUCHA;
@@ -80,6 +82,7 @@ typedef struct t_pcb_query {
 typedef struct{
 	t_queue* estado_blocked;
 	pthread_mutex_t* mx_blocked;
+	char* tipo_interfaz;
 }t_blocked_interfaz;
 
 typedef struct{
@@ -95,7 +98,7 @@ typedef struct
 	uint32_t instancias;
 } t_proceso_instancia;
 
-
+bool admite_operacion(op_code cod_op_io, char* tipo_interfaz);
 t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
@@ -120,6 +123,7 @@ bool iniciar_kernel(char*);
 bool iniciar_logger_config();
 bool inicializar_comandos();
 /*Manejo recursos*/
+
 bool iniciar_recursos();
 void liberar_recurso(t_pcb* pcb_recibido,t_recurso* recurso);
 ///////////////////////
@@ -185,7 +189,7 @@ void rec_handler_exec(t_pcb* pcb_recibido);
 void io_handler_exec(t_pcb* pcb_recibido);
 void io_handler(int* conexion);
 void io_gen_sleep(int pid,char** splitter);
-void io_stdin(int pid,char** splitter);
+void io_std(int pid,t_paquete* paquete, char* nombre_interfaz);
 void io_stdout(int pid, char** splitter);
 bool le_queda_quantum(t_pcb* pcb);
 bool iniciar_servidor_kernel();
@@ -195,7 +199,7 @@ bool eliminar_proceso(uint32_t*);
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 
-
+char** recibir_io(int conexion);
 t_queue* buscar_cola_de_pcb(uint32_t pid);
 t_pcb* buscar_pcb_en_cola(t_queue* cola,uint32_t pid);
 t_pcb_query* buscar_pcb(uint32_t pid);

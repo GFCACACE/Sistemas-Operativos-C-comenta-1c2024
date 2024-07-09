@@ -607,24 +607,11 @@ void io_gen_sleep(int pid,char** splitter){
 	loguear_warning("Peticion a IO enviada");
 }
 
-void io_stdin(int pid, char** splitter){
+void io_std(int pid,t_paquete* paquete_IO, char* nombre_interfaz){
 	loguear_warning("Entra al case");
-	char pid_direccion_tamanio [30];
-	sprintf(pid_direccion_tamanio,"%u",pid);
-	loguear_warning("El pid es %s", pid_direccion_tamanio);
-	strcat(pid_direccion_tamanio," ");
-	strcat(pid_direccion_tamanio, splitter[1]);
-	strcat(pid_direccion_tamanio," ");
-	strcat(pid_direccion_tamanio,splitter[2]);
-	loguear_warning("El mensaje es %s", pid_direccion_tamanio);
-
-	loguear_warning("IO_STDIN_READ -> Interfaz:%s Direccion:%s Tamanio:%s", splitter[0], splitter[1], splitter[2]);
-	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, splitter[0]);
+	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
 	int conexion_io = *(int *)ptr_conexion;
-
-	enviar_texto(pid_direccion_tamanio,
-				IO_STDIN_READ,
-				conexion_io);
+	enviar_paquete(paquete_IO,conexion_io);
 	loguear_warning("Peticion a IO enviada");
 }
 
@@ -770,39 +757,49 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 }
 void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);		
-	char* peticion = recibir_mensaje(cpu_dispatch);
-	char** splitter = string_split(peticion," ");
-
-	if(!existe_interfaz(splitter[0]/*Nombre*/)){
+	char* nombre_interfaz = recibir_mensaje(cpu_dispatch);
+	t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
+	char* tipo_interfaz = string_new();
+	if(!existe_interfaz(nombre_interfaz)){
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		pasar_a_exit(pcb_recibido);		
+		paquete_destroy(paquete_IO);
 		return;
 	}
+
+
 	
-	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked, splitter[0]);
+	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked,nombre_interfaz);
+	tipo_interfaz = interfaz;
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
 	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
-	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,splitter[0]); // LOG MINIMO Y OBLIGATORIO
-	//proceso_estado();
+	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,nombre_interfaz); // LOG MINIMO Y OBLIGATORIO
+	if(!admite_operacion(cod_op_io, tipo_interfaz)){ loguear("NO SE ADMITE OPERACION.");
+		pasar_a_exit(pcb_recibido);
+		return; }
+		//proceso_estado();
+
+
 
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
-				io_gen_sleep(pcb_recibido->PID,splitter);
+				//io_gen_sleep(pcb_recibido->PID,splitter);
 			break;
 		case IO_STDIN_READ:
-				io_stdin(pcb_recibido->PID, splitter);
+				io_std(pcb_recibido->PID, paquete_IO,nombre_interfaz);
 			break;
 		case IO_STDOUT_WRITE:
-		//  io_stdout(pcb_recibido->PID, splitter);
+				io_std(pcb_recibido->PID, paquete_IO,nombre_interfaz);
+			  	//io_stdout(pcb_recibido->PID, paquete_IO);
 			break;
 
 		default:
 			pasar_a_exit(pcb_recibido);			
 			break;
 	}
-	free(peticion);	
-	string_array_destroy(splitter);
+	//free(peticion);	
+	//string_array_destroy(splitter);
 }
 
 void finalizar_proceso_consola_exec(t_pcb* pcb_recibido){
@@ -836,6 +833,19 @@ void fin_de_quantum_exec(t_pcb* pcb_recibido,t_queue* estado){
 	sem_post(&sem_bin_ready);
 	sem_post(&sem_bin_controlar_quantum);
 }
+
+bool admite_operacion(op_code cod, char* interfaz){
+	 char* clave = string_itoa(cod);
+	 //loguear("DICCIONARIO: %s", dictionary_get(tipos_de_interfaces, clave)); 
+	 loguear("INTERFAZ: %s", interfaz); 
+	// char* key_d = string_new(); 
+	// key_d = (char*)dictionary_get(tipos_de_interfaces, clave); 
+	 //loguear("VALORRRR: %d", strcmp(key_d, clave)); 
+	// if(strncmp(key_d, interfaz,4 ) == 0){ 
+	//	free(clave); return true; 
+	//	} free(clave); 
+		return false; 
+		}
 
 void gestionar_operacion_de_cpu(op_code cod_op,t_pcb* pcb_recibido,t_queue* estado){
 	switch (cod_op)
@@ -2037,12 +2047,15 @@ void iniciar_conexion_io(){
 			// JUmp al principio?
 			aceptar_interfaz=false;
 		}
+
 		//char* nombre_interfaz = malloc(16);
 		if(aceptar_interfaz){
-		char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
+		char** splitter_io = recibir_io(*fd_conexion_ptr);
+		char* nombre_interfaz = splitter_io[0];
+		char* tipo_interfaz = splitter_io[1];
 		if(nombre_interfaz !=NULL && !existe_interfaz(nombre_interfaz)){
 		 blocked_interfaz -> estado_blocked = queue_create();
-			//
+			blocked_interfaz->tipo_interfaz = tipo_interfaz;
 			char* string_conexion = string_itoa(*fd_conexion_ptr);
 			loguear("Se conecto la interfaz: %s",nombre_interfaz);
 			dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
@@ -2095,6 +2108,20 @@ char *recibir_nombre(int conexion){
 }
 
 
+char** recibir_io(int conexion){ 
+	char* mensaje; 
+	char** splitter = string_array_new();
+
+	if(recibir_operacion(conexion) == NUEVA_IO){
+		mensaje = recibir_mensaje(conexion);
+		loguear_warning("Llego el mensaje %s", mensaje);
+		splitter = string_split(mensaje," "); 
+		return splitter; 	
+	} else loguear_error("RECIBÍ VACÍO");
+	 	//free(mensaje); 
+	//free(splitter); //DOBLE PUNTERO. COMO LIBERAR?
+	return NULL;
+	}
 
 bool le_queda_quantum(t_pcb* pcb){
 	return pcb->quantum != config->QUANTUM;

@@ -13,29 +13,30 @@ t_config_io* iniciar_config_io(char* path_config,char* nombre){
 	if(_config ==NULL)
 		return NULL;
 	t_config_io* config_io = malloc(sizeof(t_config_io));	
+	//config_kernel->ALGORITMO_PLANIFICACION = get_algoritmo(config_get_string_value(_config,"ALGORITMO_PLANIFICACION"));
 	// Los siguientes valores le son comunes a todos los tipos de interfaces, por lo cual los inicializamos siempre
-	config_io->TIPO_INTERFAZ = config_get_string_value(_config,"TIPO_INTERFAZ");
+	config_io->TIPO_INTERFAZ = get_tipo_io(config_get_string_value(_config,"TIPO_INTERFAZ"));
 	config_io->IP_KERNEL = config_get_string_value(_config,"IP_KERNEL");
 	config_io->PUERTO_KERNEL = config_get_int_value(_config,"PUERTO_KERNEL");
 
 	// Los siguientes casos se pueden modularizar en funciones. No lo hice asi xq no sabia bien como :/
 	// CASO GENERICA
-	if (!strcmp("GENERICA",config_io->TIPO_INTERFAZ)){
+	if (GENERICA==config_io->TIPO_INTERFAZ.id){
 		config_io->TIEMPO_UNIDAD_TRABAJO = config_get_int_value(_config,"TIEMPO_UNIDAD_TRABAJO");
 	}
 	//CASO STDIN
-	if (!strcmp("STDIN",config_io->TIPO_INTERFAZ)){
+	if (STDIN ==config_io->TIPO_INTERFAZ.id){
 		config_io->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
 		config_io->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
 	}
 	//CASO STDOUT
-	if (!strcmp("STDOUT",config_io->TIPO_INTERFAZ)){
+	if (STDOUT==config_io->TIPO_INTERFAZ.id){
 		config_io->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
 		config_io->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
 		config_io->TIEMPO_UNIDAD_TRABAJO = config_get_int_value(_config,"TIEMPO_UNIDAD_TRABAJO");
 	}
 	//CASO DIALFS
-	if (!strcmp("DIALFS",config_io->TIPO_INTERFAZ)){
+	if (DIALFS == config_io->TIPO_INTERFAZ.id){
 		config_io->IP_MEMORIA = config_get_string_value(_config,"IP_MEMORIA");
 		config_io->PUERTO_MEMORIA = config_get_int_value(_config,"PUERTO_MEMORIA");
 		config_io->TIEMPO_UNIDAD_TRABAJO = config_get_int_value(_config,"TIEMPO_UNIDAD_TRABAJO");
@@ -58,10 +59,10 @@ void loguear_config(){
 	loguear("TIPO_INTERFAZ: %s",config->TIPO_INTERFAZ);
 	loguear("IP_KERNEL: %s",config->IP_KERNEL);
     loguear("PUERTO_KERNEL: %d",config->PUERTO_KERNEL);
-	if (!strcmp("GENERICA",config->TIPO_INTERFAZ)) loguear_config_generica();
-	if (!strcmp("STDIN",config->TIPO_INTERFAZ)) loguear_config_stdin();
-	if (!strcmp("STDOUT",config->TIPO_INTERFAZ)) loguear_config_stdout();
-	if (!strcmp("DIALFS",config->TIPO_INTERFAZ)) loguear_config_dialfs();
+	if (GENERICA==config->TIPO_INTERFAZ.id) loguear_config_generica();
+	if (STDIN ==config->TIPO_INTERFAZ.id) loguear_config_stdin();
+	if (STDOUT==config->TIPO_INTERFAZ.id) loguear_config_stdout();
+	if (DIALFS == config->TIPO_INTERFAZ.id) loguear_config_dialfs();
 
 }
 
@@ -107,13 +108,17 @@ bool iniciar_log_config(char* path_config, char* nombre){
 
 bool iniciar_conexion_kernel(){
     conexion_kernel = crear_conexion(config->IP_KERNEL, config->PUERTO_KERNEL);
+	char* texto = string_new();
 	if(conexion_kernel ==-1){
 		
 		loguear_error("No se pudo conectar kernel");
 		return false;
 	}
-	enviar_texto(config->NOMBRE,NUEVA_IO,conexion_kernel);
-    return true;
+
+	sprintf(texto,"%s %s",config->NOMBRE,config->TIPO_INTERFAZ);
+	enviar_texto(texto,NUEVA_IO,conexion_kernel);
+    free(texto);
+	return true;
 }
 
 
@@ -134,7 +139,7 @@ bool iniciar_semaforo_y_cola(){
 
 bool iniciar_hilo_ejecutar_io(){
 	pthread_t thread_io;
-	pthread_create(&thread_io,NULL, (void*) ejecutar_op_io, NULL);							
+	pthread_create(&thread_io,NULL, (void*)  ejecutar_selector_io, NULL);							
 	pthread_detach(thread_io);
 
 	if (thread_io == -1){
@@ -172,84 +177,138 @@ void recibir_io(){
 	loguear("IO conectada: Esperando ordenes");
 	
 	while(1){
-		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
-		int cod_op_io = recibir_operacion(conexion_kernel);		
+		//t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		//int cod_op_io = recibir_operacion(conexion_kernel);		
+
+		t_paquete* paquete = recibir_paquete(conexion_kernel);
+		int cod_op_io = paquete->codigo_operacion;
 		if(cod_op_io==-1){
 			loguear_warning("Kernel se desconectó.");
-			free(peticion_io);
+			free(paquete);
 			return;
 		}
-		peticion_io->cod_op = cod_op_io;
-		char* _peticion;
-		_peticion = recibir_mensaje(conexion_kernel);
-		peticion_io->peticion = strdup(_peticion);
-		loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
+//		peticion_io->cod_op = cod_op_io;
+		//char* _peticion;
+
+		t_direcciones_proceso* direcciones_proceso = recibir_direcciones_proceso(paquete);
+
+		//_peticion = recibir_mensaje(conexion_kernel);
+		//peticion_io->peticion = strdup(_peticion);
+		//loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
 		pthread_mutex_lock(&mx_peticion);
-		queue_push(cola_peticiones_io, peticion_io);
+		queue_push(cola_peticiones_io, direcciones_proceso);
 		pthread_mutex_unlock(&mx_peticion);
 		sem_post(&sem_bin_cola_peticiones);
-		free(_peticion);	
+		free(paquete);	
 	}
+}
+
+void ejecutar_selector_io(){
+	config->TIPO_INTERFAZ.seleccionar_io();
+}
+
+t_selector_io get_tipo_io(char* nombre){
+
+
+	 // Crear el diccionario de algoritmos
+    t_dictionary *tipo_ios = dictionary_create();
+	t_selector_io selector_io;
+
+    // Función para agregar un algoritmo al diccionario
+    void _agregar(char* _nombre, t_interfaz tipo,void(*funcion)(void)){
+		t_selector_io* select = malloc(sizeof(t_selector_io));
+		select->id = tipo;
+		select->seleccionar_io = funcion; 	
+        dictionary_put(tipo_ios, _nombre, select);
+    };
+
+	_agregar("STDIN",STDIN,&ejecutar_op_io_stdin);
+	_agregar("STDOUT",STDOUT,&ejecutar_op_io_stdout);
+	_agregar("GENERICA",GENERICA,&ejecutar_op_io_generica);
+	_agregar("DIALFS",DIALFS,&ejecutar_op_io_dialfs);
+
+	t_selector_io* selector_io_ptr= (t_selector_io*)dictionary_get(tipo_ios, nombre);
+	if(selector_io_ptr==NULL)	
+	{	
+		perror("Tipo de funcion IO no encontrada");
+
+		exit(EXIT_FAILURE);
+	}
+	else selector_io=*selector_io_ptr;
+	
+	dictionary_destroy_and_destroy_elements(tipo_ios,free);
+	return selector_io;
 
 }
-int ejecutar_op_io()
-{
 
+bool es_selector(t_interfaz tipo_interfaz){
+	return config->TIPO_INTERFAZ.id == tipo_interfaz;
+}
+
+bool es_stdin(){
+	return es_selector(STDIN);
+}
+bool es_stdout(){
+	return es_selector(STDOUT);
+}
+bool es_dialfs(){
+	return es_selector(DIALFS);
+}
+bool es_generica(){
+	return es_selector(GENERICA);
+}
+
+
+
+int ejecutar_op_io_stdin()
+{
+	
 	loguear("Ejecuta operacion de entrada salida");
 	while (1)
 	{
-		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
-		peticion_io = queue_pop(cola_peticiones_io);
+		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
-		int cod_op = peticion_io->cod_op;
-		char* _peticion;
-		_peticion = peticion_io->peticion;
-		char** splitter = string_array_new();
-		splitter = string_split(_peticion," ");
-		loguear("Cod op: %d", cod_op);
-		// ESTAMOS BIEN
-		char mensaje[70];
+		//sprintf(mensaje,"PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
 
-        switch (cod_op) {
-            case IO_GEN_SLEEP:
-				
-				sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
-				//loguear(mensaje);
-				loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
-				io_gen_sleep(atoi(splitter[1]));
-				//loguear_warning("Ya termino de dormir zzzzz");
-				enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-				loguear_warning("Termino el IO_GEN_SLEEP.");
-                break;			
-			case IO_STDIN_READ:
-				
-				sprintf(mensaje,"PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
-				//loguear(mensaje);
-				loguear("PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
-				io_stdin_read((uint32_t)atoi(splitter[0]), (uint32_t)atoi(splitter[1]), (uint32_t) atoi(splitter[2]));
-				enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-				loguear_warning("Termino el IO_STDIN_READ.");
-                break;
-			case IO_STDOUT_WRITE:
-				
-				sprintf(mensaje,"PID: <%s> - Operacion: <IO_STDOUT_WRITE> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
-				//loguear(mensaje);
-				loguear("PID: <%s> - Operacion: <IO_STDOUT_WRITE> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
-				io_stdout_write((uint32_t)atoi(splitter[0]),(uint32_t)atoi(splitter[1]), (uint32_t) atoi(splitter[2]));
-				enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-				loguear_warning("Termino el IO_STDOUT_WRITE.");
-                break;	
-            case -1:
-				loguear_error("Problemas en la comunicacion con el servidor. Cerrando conexion...");
-				free(peticion_io);
-				return EXIT_FAILURE;
-			default:
-				log_warning(logger, "Operacion desconocida. No quieras meter la pata");
-				free(peticion_io);
-				return EXIT_FAILURE;
+
+		
+		t_pid_valor pid_valor = direcciones_proceso->pid_size_total;
+		t_list* direcciones_registros =  direcciones_proceso->direcciones;
+		uint32_t cantidad_elementos = list_size(direcciones_registros);
+		
+		t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
+		uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
+
+		void _enviar_direcciones_io_stdin(void* element){
+			t_direccion_registro* dir_reg = (t_direccion_registro*) element;
+			io_stdin_read(pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
+			loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
+			pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
+		};
+		
+		
+		list_iterate(direcciones_registros, &_enviar_direcciones_io_stdin);
+		loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
+		pid_valor.PID,direccion_fisica_inicial,pid_valor.valor);
+		
+		enviar_texto("OK",TERMINO_IO,conexion_kernel);
+		loguear_warning("Termino el IO_STDIN_READ.");
 		}
-		free(peticion_io);
-	}
+
+
 }
+
+int ejecutar_op_io_stdout(){
+		
+}
+
+int ejecutar_op_io_generica(){
+
+}
+int ejecutar_op_io_dialfs(){
+
+}
+
+

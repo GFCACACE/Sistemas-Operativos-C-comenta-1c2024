@@ -7,12 +7,11 @@ char* bitmap;
 
 
 bool iniciar_archivos_dialfs(){
-    if(!strcmp("DIALFS",config->TIPO_INTERFAZ))
+    if(DIALFS == config->TIPO_INTERFAZ.id)
     {
     int i;
     
     tamanio_filesystem = config->BLOCK_SIZE * config->BLOCK_COUNT;
-    
     path_bitmap = path_resolve(config->PATH_BASE_DIALFS,PATH_BITMAP);
     path_bloques = path_resolve(config->PATH_BASE_DIALFS,PATH_BLOQUES);
     archivo_bloques = fopen(path_bloques,"w");

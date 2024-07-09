@@ -5,6 +5,7 @@
 #include<commons/log.h>
 #include<commons/string.h>
 #include<math.h>
+#include<commons/collections/queue.h>
 #include<commons/collections/dictionary.h>
 #include "utils/utils-server.h"
 #include "utils/utils-client.h"
@@ -96,7 +97,11 @@ bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 /*MMU*/
-uint32_t mmu(t_pcb* pcb,uint32_t direccion_logica, uint32_t size_registro);
+t_direcciones_proceso* obtener_paquete_direcciones(t_pcb* pcb,uint32_t direccion_logica, uint32_t size_registro);
+uint32_t obtener_numero_pagina(uint32_t direccion_logica);
+uint32_t obtener_desplazamiento(uint32_t direccion_logica,uint32_t numero_pagina);
+uint32_t obtener_cantidad_paginas(uint32_t desplazamiento,uint32_t size_registro);
+uint32_t mmu(t_pcb* pcb,uint32_t direccion_logica);
 t_tlb* crear_registro_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame);
 int tlb_hit(uint32_t pid, uint32_t numero_pagina);
 bool actualizar_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame);
