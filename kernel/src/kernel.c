@@ -812,7 +812,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	//t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
 
 	char* tipo_interfaz = string_new();
-	loguear("NOMBRE INTERFAZ: %s",nombre_interfaz);
+	//loguear("NOMBRE INTERFAZ: %s",nombre_interfaz);
 	if(!existe_interfaz(nombre_interfaz)){
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
@@ -825,7 +825,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked,nombre_interfaz);
 	tipo_interfaz = interfaz->tipo_interfaz;
 	if(!admite_operacion(cod_op_io, tipo_interfaz)){ 
-		loguear("NO SE ADMITE OPERACION.");
+		//loguear("NO SE ADMITE OPERACION.");
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		limpiar_buffer(cod_op_io);
 		pasar_a_exit(pcb_recibido);
@@ -873,8 +873,6 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			pasar_a_exit(pcb_recibido);			
 			break;
 	}
-	//free(peticion);	
-	//string_array_destroy(splitter);
 }
 
 void finalizar_proceso_consola_exec(t_pcb* pcb_recibido){
@@ -915,7 +913,7 @@ bool admite_operacion(op_code cod, char* interfaz){
 	loguear("INTERFAZ: %s", interfaz); 
 	char* key_d = string_new(); 
 	key_d = (char*)dictionary_get(tipos_de_interfaces, clave); 
-	loguear("VALORRRR: %d", strcmp(key_d, clave)); 
+	//loguear("VALORRRR: %d", strcmp(key_d, clave)); 
 	if(strncmp(key_d, interfaz,4 ) == 0){ 
 		free(clave); 
 		return true; 
@@ -2231,9 +2229,9 @@ void io_handler(int *ptr_conexion){
 	while(1){
 		int conexion = *ptr_conexion;
 		int cod_operacion = recibir_operacion(conexion);
-		loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
+		//loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
 		char* mensaje = recibir_mensaje(conexion);
-		loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR
+		//loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR
 		t_pcb* pcb;
 		char** splitter = string_array_new();
 		splitter = string_split(mensaje," ");
@@ -2268,7 +2266,7 @@ void io_handler(int *ptr_conexion){
 
 				break;
 			
-			// NO BORRAR POR SI ACASO, COMO ES INDIFERENTE CUAL FUE, Y LAS RESPONSABILIDADES ESTAN EN LA I/O,
+			// NO BORRAR POR SI ACASO; COMO ES INDIFERENTE CUAL FUE, Y LAS RESPONSABILIDADES ESTAN EN LA I/O,
 			// ACA SE LAS PUEDE TRATAR DE IGUAL FORMA
 
 			// case TERMINO_STDIN:
@@ -2295,6 +2293,7 @@ void io_handler(int *ptr_conexion){
 					return;
 		}
 		free(mensaje);
+		string_array_destroy(splitter);
 	}
 	// envia a la interfaz correspodiente la operación que debe ejecutar
 }
