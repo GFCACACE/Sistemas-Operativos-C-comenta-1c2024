@@ -103,7 +103,7 @@ t_config_kernel* iniciar_config_kernel(char*);
 void config_kernel_destroy(t_config_kernel*);
 extern t_log* logger;
 extern t_config_kernel* config;
-extern t_dictionary* diccionario_conexiones_io, *diccionario_struct_io;
+extern t_dictionary* diccionario_conexiones_io, *diccionario_struct_io,*tipos_de_interfaces;
 extern t_list* lista_recursos;
 extern int grado_multiprogamacion_actual;
 extern int conexion_memoria, cpu_dispatch,cpu_interrupt,kernel_escucha, conexion_io;

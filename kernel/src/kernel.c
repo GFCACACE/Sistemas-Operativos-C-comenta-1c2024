@@ -30,7 +30,7 @@ bool eliminar_proceso_en_FIN_QUANTUM = false, exec_recibido = false;
 int grado_multiprog_de_mas =0;
 
 t_config_kernel* config;
-t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked,*nombres_colas_dictionary;
+t_dictionary * comandos_consola,*estados_dictionary,*estados_mutexes_dictionary, *diccionario_nombre_conexion, *diccionario_nombre_qblocked, *diccionario_conexion_qblocked,*nombres_colas_dictionary, *tipos_de_interfaces;
 t_list * lista_recursos;
 t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_temp;
 //
@@ -275,6 +275,7 @@ void inicializar_nombres_colas(){
 
 bool inicializar_dictionario_mutex_colas(){
 	estados_dictionary = dictionary_create();
+	tipos_de_interfaces = dictionary_create();
 	estados_mutexes_dictionary = dictionary_create();
 
  
@@ -310,6 +311,20 @@ bool inicializar_dictionario_mutex_colas(){
 		_agregar_mx(READY_PLUS,&mx_ready_plus);
 	}
 
+	void _agregar_interfaz(op_code codigo,void* estado,t_dictionary* diccionario){
+        char* clave = string_itoa(codigo);
+        dictionary_put(diccionario,clave,estado);
+        free(clave);
+    };
+	_agregar_interfaz(IO_STDIN_READ,"STDIN",tipos_de_interfaces);
+    _agregar_interfaz(IO_STDOUT_WRITE,"STDOUT",tipos_de_interfaces);
+    _agregar_interfaz(IO_GEN_SLEEP,"GENERICA",tipos_de_interfaces);
+    _agregar_interfaz(IO_FS_CREATE,"DIALFS",tipos_de_interfaces);
+    _agregar_interfaz(IO_FS_DELETE,"DIALFS",tipos_de_interfaces);
+    _agregar_interfaz(IO_FS_TRUNCATE,"DIALFS",tipos_de_interfaces);
+    _agregar_interfaz(IO_FS_WRITE,"DIALFS",tipos_de_interfaces);
+    _agregar_interfaz(IO_FS_READ,"DIALFS",tipos_de_interfaces);
+
 	inicializar_nombres_colas();
 
 	return true;
@@ -324,6 +339,7 @@ void liberar_diccionario(t_dictionary* diccionario){
 void liberar_diccionario_colas(){
 	
 	liberar_diccionario(estados_dictionary);
+	liberar_diccionario(tipos_de_interfaces);
 	liberar_diccionario(estados_mutexes_dictionary);
 	liberar_diccionario(nombres_colas_dictionary);
 	
@@ -763,6 +779,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	//t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
 
 	char* tipo_interfaz = string_new();
+	loguear("NOMBRE INTERFAZ: %s",nombre_interfaz);
 	if(!existe_interfaz(nombre_interfaz)){
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
@@ -774,7 +791,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 
 	
 	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked,nombre_interfaz);
-	tipo_interfaz = interfaz;
+	tipo_interfaz = interfaz->tipo_interfaz;
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
 	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,nombre_interfaz); // LOG MINIMO Y OBLIGATORIO
@@ -841,17 +858,19 @@ void fin_de_quantum_exec(t_pcb* pcb_recibido,t_queue* estado){
 }
 
 bool admite_operacion(op_code cod, char* interfaz){
-	 char* clave = string_itoa(cod);
-	 //loguear("DICCIONARIO: %s", dictionary_get(tipos_de_interfaces, clave)); 
-	 loguear("INTERFAZ: %s", interfaz); 
-	// char* key_d = string_new(); 
-	// key_d = (char*)dictionary_get(tipos_de_interfaces, clave); 
-	 //loguear("VALORRRR: %d", strcmp(key_d, clave)); 
-	// if(strncmp(key_d, interfaz,4 ) == 0){ 
-	//	free(clave); return true; 
-	//	} free(clave); 
-		return false; 
-		}
+	char* clave = string_itoa(cod);
+	//loguear("DICCIONARIO: %s", dictionary_get(tipos_de_interfaces, clave)); 
+	loguear("INTERFAZ: %s", interfaz); 
+	char* key_d = string_new(); 
+	key_d = (char*)dictionary_get(tipos_de_interfaces, clave); 
+	loguear("VALORRRR: %d", strcmp(key_d, clave)); 
+	if(strncmp(key_d, interfaz,4 ) == 0){ 
+		free(clave); 
+		return true; 
+	} 
+	free(clave); 
+	return false; 
+}
 
 void gestionar_operacion_de_cpu(op_code cod_op,t_pcb* pcb_recibido,t_queue* estado){
 	switch (cod_op)
