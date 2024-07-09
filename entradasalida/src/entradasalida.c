@@ -291,17 +291,14 @@ bool es_generica(){
 int ejecutar_op_io_stdin()
 {
 	
-	loguear("Ejecuta operacion de entrada salida");
+	//loguear("Ejecuta operacion de entrada salida");
 	while (1)
 	{
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
 		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
-		//sprintf(mensaje,"PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
 
-
-		
 		t_pid_valor pid_valor = direcciones_proceso->pid_size_total;
 		t_list* direcciones_registros =  direcciones_proceso->direcciones;
 		uint32_t cantidad_elementos = list_size(direcciones_registros);
@@ -330,14 +327,13 @@ int ejecutar_op_io_stdin()
 int ejecutar_op_io_stdout()
 {
 	
-	loguear("Ejecuta operacion de entrada salida");
+	//loguear("Ejecuta operacion de entrada salida");
 	while (1)
 	{
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
 		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
-		//sprintf(mensaje,"PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
 
 		t_pid_valor pid_valor = direcciones_proceso->pid_size_total;
 		t_list* direcciones_registros =  direcciones_proceso->direcciones;
@@ -362,10 +358,6 @@ int ejecutar_op_io_stdout()
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
 		}
 }
-
-// int ejecutar_op_io_stdout(){
-		
-// }
 
 int ejecutar_op_io_generica(){
 	while(1){
@@ -396,7 +388,7 @@ int ejecutar_op_io_generica(){
 	}
 }
 int ejecutar_op_io_dialfs(){
-
+	//TODO
 }
 
 
