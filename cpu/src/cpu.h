@@ -97,6 +97,8 @@ bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 /*MMU*/
+void escribir_memoria(t_direcciones_proceso* direcciones_proceso,char* registro_dato);
+t_buffer* leer_memoria(t_direcciones_proceso* direcciones_proceso);
 t_direcciones_proceso* obtener_paquete_direcciones(t_pcb* pcb,uint32_t direccion_logica, uint32_t size_registro);
 uint32_t obtener_numero_pagina(uint32_t direccion_logica);
 uint32_t obtener_desplazamiento(uint32_t direccion_logica,uint32_t numero_pagina);

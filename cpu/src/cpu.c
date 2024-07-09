@@ -524,151 +524,56 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 	return true;
 }
 bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_direccion){
-	//char* direccion_enviar = string_new();
 	int response;
-		
 	uint32_t size_registro = (uint32_t)registro_datos.size;
-	char* registro_dato = (char*)registro_datos.string_valor; 
 	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
-	
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb_recibido,direccion_logica,size_registro);
-
 	loguear_direccion_proceso(direcciones_fisicas_registros);
-	t_acceso_espacio_usuario* acceso_espacio_usuario;
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
 	
-	uint32_t cantidad_elementos = list_size(direcciones_registros);
-
-	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
-
 	t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
-	
 	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
-		uint32_t size_leido=0;
-		uint32_t size_registro_pagina_actual;
-	char* dato_final_puntero;
-		void _enviar_direcciones_memoria(void* element){
-			char* valor_memoria;
-			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
-			size_registro_pagina_actual = direccion_registro->size_registro_pagina;
-			
-			acceso_espacio_usuario =  acceso_espacio_usuario_create(
-			pcb_recibido->PID,
-			direccion_registro->direccion_fisica,
-			direccion_registro->size_registro_pagina,
-			NULL);
-			
-			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion_memoria);
-			
-			response = recibir_operacion(conexion_memoria);
-			if(response == VALOR_LECTURA_MEMORIA){
-				valor_memoria = recibir_mensaje(conexion_memoria);		
-				memcpy(dato_final_puntero + size_leido,valor_memoria ,direccion_registro->size_registro_pagina);
-				size_leido += size_registro_pagina_actual;
-		}
-	 		
-			loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
-			pid_size_total.PID,direccion_registro->direccion_fisica,registro_dato + size_leido);
+	int registro_reconstruido;
+	void* registro_reconstruido_puntero =  &registro_reconstruido;
+
+	t_buffer* buffer_lectura = leer_memoria(direcciones_fisicas_registros);
+
+	memcpy(registro_reconstruido_puntero,buffer_lectura->stream,buffer_lectura->size);
 		
-		}
-		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
-		char* nuevo_valor = malloc(5);
-		 memcpy(nuevo_valor,dato_final_puntero,4);
-		 nuevo_valor[4]= '\0';
-		//uint32_t _nro_valor = atoi(dato_final_puntero);
-		loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>",
-		pid_size_total.PID,
-		direccion_registro_inicial->direccion_fisica,
-		nuevo_valor);
+	loguear("Valor post a reconstruir <%d>",registro_reconstruido);
 
-
+	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
+	pcb_recibido->PID,
+	direccion_registro_inicial->direccion_fisica,
+	registro_reconstruido);
+	buffer_destroy(buffer_lectura);
+	
 	registros_cpu->PC++;
 	actualizar_contexto(pcb_recibido);
-	//free(direccion_enviar);
+	
 	return true;
 }
 
+
+
+
 bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registro_datos){
-	int operacion_ok;
-	//char* direccion_enviar = string_new();
-	
-	//Devolver lista de elementos necesarios.
-	uint32_t size_registro = (uint32_t)registro_datos.size;
+	uint32_t size_registro = (uint32_t)registro_datos.size; 
 	char* registro_dato = (char*)registro_datos.string_valor; 
 	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
-	
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb_recibido,direccion_logica,size_registro);
-
-	loguear_direccion_proceso(direcciones_fisicas_registros);
-	t_acceso_espacio_usuario* acceso_espacio_usuario;
+	loguear_direccion_proceso(direcciones_fisicas_registros);	
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
-	
-	uint32_t cantidad_elementos = list_size(direcciones_registros);
-	uint32_t dato_reconstruido = malloc(sizeof(uint32_t));
-	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
-
 	t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
-	
 	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
-		uint32_t size_leido=0;
-		uint32_t size_registro_pagina_actual;
-
-    uint32_t registro_ecx = atoi(registro_dato);
-    uint32_t registro_ecx_reconstruido;
-    
-	//void* registro_ecx_puntero_char = &registro_dato;
-    void* registro_ecx_puntero = &registro_ecx;
-    void* registro_ecx_reconstruido_puntero = &registro_ecx_reconstruido;
-    
-		void _enviar_direcciones_memoria(void* element){
-			char* valor_memoria = string_new();
-			
-			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
-			size_registro_pagina_actual = direccion_registro->size_registro_pagina;
-			
-			void* dato_parcial = malloc(size_registro_pagina_actual);
-
-			memcpy(dato_parcial, registro_ecx_puntero + size_leido,size_registro_pagina_actual);
-
-			//PRUEBA
-			//memcpy(registro_ecx_reconstruido_puntero + size_leido, registro_ecx_puntero + size_leido, size_registro_pagina_actual);
-			memcpy(registro_ecx_reconstruido_puntero + size_leido,dato_parcial, size_registro_pagina_actual);
-			
-			acceso_espacio_usuario =  acceso_espacio_usuario_create(
-			pcb_recibido->PID,
-			direccion_registro->direccion_fisica,
-			direccion_registro-> size_registro_pagina,
-			dato_parcial);
-			
-			
-			size_leido += size_registro_pagina_actual;
-			
-			enviar_acceso_espacio_usuario(acceso_espacio_usuario,ESCRITURA_MEMORIA,conexion_memoria);
-			
-
-
-			operacion_ok = recibir_operacion(conexion_memoria);
-			
-			if(operacion_ok==MOV_OUT_OK){
-				valor_memoria =recibir_mensaje(conexion_memoria);
-
-			}
-			
-			
-			loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>",
-			pid_size_total.PID,direccion_registro->direccion_fisica,registro_dato + size_leido);
-			free(dato_parcial);
-			free(valor_memoria);
-			//free(registro_ecx_parte);
-		};
-		
-		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
-		loguear("Valor post a reconstruir <%d>",registro_ecx_reconstruido);
-		uint32_t _nro_valor = atoi(registro_dato);
-		loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>",
-		pid_size_total.PID,
+	
+	
+	escribir_memoria(direcciones_fisicas_registros,registro_dato);
+	
+		loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>",
+		pcb_recibido->PID,
 		direccion_registro_inicial->direccion_fisica,
-		_nro_valor);
+		registro_dato);
 
 
 		registros_cpu->PC++;
@@ -701,32 +606,108 @@ bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 bool exe_copy_string(t_pcb* pcb,t_param tamanio){
 	
 	uint32_t tamanio_valor = *(uint32_t*) tamanio.string_valor;
-	t_direcciones_proceso* direcciones_origen = obtener_paquete_direcciones(pcb,registros_cpu->SI,tamanio_valor);
-	t_direcciones_proceso* direcciones_destino = obtener_paquete_direcciones(pcb,registros_cpu->DI,tamanio_valor);
-	uint32_t size_registro = tamanio.size;
-	t_direccion_registro* direccion_tamaño_registro;
+	t_direcciones_proceso* direcciones_fisicas_registros_origen = obtener_paquete_direcciones(pcb,registros_cpu->SI,tamanio_valor);
+	t_direcciones_proceso* direcciones_fisicas_registros_origen_destino = obtener_paquete_direcciones(pcb,registros_cpu->DI,tamanio_valor);
 	
-	uint32_t size_direcciones = list_size(direcciones_origen);
+	loguear_direccion_proceso(direcciones_fisicas_registros_origen);
+	
+	t_acceso_espacio_usuario* acceso_espacio_usuario;
+	t_list* direcciones_registros =  direcciones_fisicas_registros_origen->direcciones;
+	t_pid_valor pid_size_total = direcciones_fisicas_registros_origen->pid_size_total;
 
+	t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
+	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
+	//void* obtener_lectura_memoria(direcciones_fisicas_registros_origen);
 
-
-	//
 	registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	return true;
 }
-// bool exe_stdin_read(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
-// 	loguear_warning("STDIN_READ no implementado");
-// 	(uint32_t)registros_cpu->PC++;
-// 	actualizar_contexto(pcb);
-// 	return true;
-// }
-// bool exe_stdout_write(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
-// 	loguear_warning("STDOUT_WRITE no implementado");
-// 	(uint32_t)registros_cpu->PC++;
-// 	actualizar_contexto(pcb);
-// 	return true;
-// }
+void escribir_memoria(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato){
+	int operacion_ok;
+	t_acceso_espacio_usuario* acceso_espacio_usuario;
+	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
+	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
+	uint32_t size_leido=0;
+	uint32_t size_registro_pagina_actual;
+   // int registro_int = atoi(registro_dato);
+    void* registro_puntero = registro_dato;
+    
+		void _enviar_direcciones_memoria(void* element){
+		
+			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
+			size_registro_pagina_actual = direccion_registro->size_registro_pagina;
+			
+			void* dato_parcial = malloc(size_registro_pagina_actual);
+
+			memcpy(dato_parcial, registro_puntero + size_leido,size_registro_pagina_actual);
+
+			acceso_espacio_usuario =  acceso_espacio_usuario_create(
+			pid_size_total.PID,
+			direccion_registro->direccion_fisica,
+			direccion_registro-> size_registro_pagina,
+			dato_parcial);
+			
+			size_leido += size_registro_pagina_actual;	
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,ESCRITURA_MEMORIA,conexion_memoria);
+			
+			operacion_ok = recibir_operacion(conexion_memoria);
+			
+			if(operacion_ok==MOV_OUT_OK){
+				char * valor_memoria =recibir_mensaje(conexion_memoria);
+				free(valor_memoria);
+			}
+				
+			loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>",
+			pid_size_total.PID,direccion_registro->direccion_fisica,registro_dato + size_leido);
+			free(dato_parcial);
+			
+			//free(registro_ecx_parte);
+		};
+		
+		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
+}
+
+t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros){
+	
+	int response;
+	t_acceso_espacio_usuario* acceso_espacio_usuario;
+	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
+	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
+	uint32_t size_leido=0;
+	uint32_t size_registro_pagina_actual;
+    t_buffer* dato_final_puntero = crear_buffer(pid_size_total.valor);
+	
+	void _enviar_direcciones_memoria(void* element){	
+			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
+			size_registro_pagina_actual = direccion_registro->size_registro_pagina;
+			
+			void* dato_parcial = malloc(size_registro_pagina_actual);
+			acceso_espacio_usuario =  acceso_espacio_usuario_create(
+			pid_size_total.valor,
+			direccion_registro->direccion_fisica,
+			direccion_registro->size_registro_pagina,
+			NULL);		
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion_memoria);
+			response = recibir_operacion(conexion_memoria);
+			
+			if(response == VALOR_LECTURA_MEMORIA){
+
+				void* dato_parcial = recibir_buffer(&size_registro_pagina_actual,conexion_memoria);		
+				
+				memcpy(dato_final_puntero->stream + size_leido,dato_parcial, size_registro_pagina_actual);
+				
+				size_leido += size_registro_pagina_actual;
+				
+				free(dato_parcial);
+		}
+			//loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
+			//pid_size_total.PID,direccion_registro->direccion_fisica,dato_parcial);
+		}
+		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
+
+	return dato_final_puntero;
+}
 bool exe_wait(t_pcb* pcb,t_param recurso){
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
