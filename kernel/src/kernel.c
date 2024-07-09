@@ -783,6 +783,21 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	if(!existe_interfaz(nombre_interfaz)){
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
+		switch(cod_op_io){
+		case IO_GEN_SLEEP:
+			recibir_operacion(cpu_dispatch); // NECESARIO PARA QUE NO ROMPA
+			char* peticion = recibir_mensaje(cpu_dispatch);
+			loguear("SEGUNDO MENSAJE RECIBIDO: %s", peticion);
+			break;
+		case IO_STDIN_READ:
+			t_paquete* paquete_ior = recibir_paquete(cpu_dispatch);
+			break;
+		case IO_STDOUT_WRITE:
+			t_paquete* paquete_iow = recibir_paquete(cpu_dispatch);
+			break;
+		default:			
+			break;
+	}
 		pasar_a_exit(pcb_recibido);		
 		//paquete_destroy(paquete_IO);
 		return;
@@ -806,7 +821,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
-			int jijo_jijo_jijoo = recibir_operacion(cpu_dispatch); // NECESARIO PARA QUE NO ROMPA
+			recibir_operacion(cpu_dispatch); // NECESARIO PARA QUE NO ROMPA
 			char* peticion = recibir_mensaje(cpu_dispatch);
 			loguear("SEGUNDO MENSAJE RECIBIDO: %s", peticion);
 			char** splitter = string_split(peticion," ");

@@ -521,7 +521,7 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 	loguear("PRIMER MENSAJE A KERNEL: %s",interfaz.string_valor);
 	sprintf(texto,"%s %s",interfaz.string_valor,unidades_de_trabajo.string_valor);
 	loguear("SEGUNDO MENSAJE A KERNEL: %s", texto);
-	enviar_texto(texto,IO_GEN_SLEEP,kernel_dispatch);
+	enviar_texto(texto,IO_HANDLER,kernel_dispatch);
 	
 	free(texto);
 	return true;
