@@ -51,7 +51,7 @@ typedef struct
 	t_config* config;
 } t_config_io;
 
-void ejecutar_selector_io();
+
 
 
 
@@ -61,10 +61,7 @@ typedef struct{
     char* peticion;
 }t_peticion_io;
 
-int ejecutar_op_io_stdin();
-int ejecutar_op_io_stdout();
-int ejecutar_op_io_generica();
-int ejecutar_op_io_dialfs();
+
 
 
 
@@ -87,7 +84,13 @@ void loguear_config_generica();
 void loguear_config_stdin();
 void loguear_config_stdout();
 void loguear_config_dialfs();
+void ejecutar_selector_io();
 void recibir_io();
-int ejecutar_op_io();
+//int ejecutar_op_io();
+int ejecutar_op_io_stdin();
+int ejecutar_op_io_stdout();
+int ejecutar_op_io_generica();
+int ejecutar_op_io_dialfs();
+
 void finalizar_io();
 #endif

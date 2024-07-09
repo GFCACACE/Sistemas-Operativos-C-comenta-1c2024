@@ -605,6 +605,7 @@ void io_gen_sleep(int pid,char** splitter){
 				IO_GEN_SLEEP,
 				conexion_io);
 	loguear_warning("Peticion a IO enviada");
+	free(splitter);
 }
 
 void io_std(int pid,t_paquete* paquete_IO, char* nombre_interfaz){
@@ -612,6 +613,7 @@ void io_std(int pid,t_paquete* paquete_IO, char* nombre_interfaz){
 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
 	int conexion_io = *(int *)ptr_conexion;
 	enviar_paquete(paquete_IO,conexion_io);
+	paquete_destroy(paquete_IO);
 	loguear_warning("Peticion a IO enviada");
 }
 
@@ -758,13 +760,14 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);		
 	char* nombre_interfaz = recibir_mensaje(cpu_dispatch);
-	t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
+	//t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
+
 	char* tipo_interfaz = string_new();
 	if(!existe_interfaz(nombre_interfaz)){
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		pasar_a_exit(pcb_recibido);		
-		paquete_destroy(paquete_IO);
+		//paquete_destroy(paquete_IO);
 		return;
 	}
 
@@ -776,24 +779,31 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,nombre_interfaz); // LOG MINIMO Y OBLIGATORIO
 	if(!admite_operacion(cod_op_io, tipo_interfaz)){ loguear("NO SE ADMITE OPERACION.");
+		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		pasar_a_exit(pcb_recibido);
-		return; }
+		return; 
+	}
 		//proceso_estado();
-
 
 
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
-				//io_gen_sleep(pcb_recibido->PID,splitter);
+			char* peticion = recibir_mensaje(cpu_dispatch);
+			char** splitter = string_split(peticion," ");
+			io_gen_sleep(pcb_recibido->PID,splitter);
+
+			//free(splitter);
+			//free(peticion)?
 			break;
 		case IO_STDIN_READ:
-				io_std(pcb_recibido->PID, paquete_IO,nombre_interfaz);
+			t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
+			io_std(pcb_recibido->PID, paquete_IO,nombre_interfaz);
 			break;
 		case IO_STDOUT_WRITE:
-				io_std(pcb_recibido->PID, paquete_IO,nombre_interfaz);
+			t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
+			io_std(pcb_recibido->PID, paquete_IO,nombre_interfaz);
 			  	//io_stdout(pcb_recibido->PID, paquete_IO);
 			break;
-
 		default:
 			pasar_a_exit(pcb_recibido);			
 			break;
@@ -2050,29 +2060,29 @@ void iniciar_conexion_io(){
 
 		//char* nombre_interfaz = malloc(16);
 		if(aceptar_interfaz){
-		char** splitter_io = recibir_io(*fd_conexion_ptr);
-		char* nombre_interfaz = splitter_io[0];
-		char* tipo_interfaz = splitter_io[1];
-		if(nombre_interfaz !=NULL && !existe_interfaz(nombre_interfaz)){
-		 blocked_interfaz -> estado_blocked = queue_create();
-			blocked_interfaz->tipo_interfaz = tipo_interfaz;
-			char* string_conexion = string_itoa(*fd_conexion_ptr);
-			loguear("Se conecto la interfaz: %s",nombre_interfaz);
-			dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
-			dictionary_put(diccionario_nombre_qblocked,nombre_interfaz, blocked_interfaz);
-			dictionary_put(diccionario_conexion_qblocked,string_conexion, blocked_interfaz);
-			////
-			dictionary_put(estados_dictionary,nombre_interfaz,blocked_interfaz->estado_blocked);
-			dictionary_put(estados_mutexes_dictionary,nombre_interfaz,blocked_interfaz->mx_blocked);
-			////
+			char** splitter_io = recibir_io(*fd_conexion_ptr);
+			char* nombre_interfaz = splitter_io[0];
+			char* tipo_interfaz = splitter_io[1];
+			if(nombre_interfaz !=NULL && !existe_interfaz(nombre_interfaz)){
+			blocked_interfaz -> estado_blocked = queue_create();
+				blocked_interfaz->tipo_interfaz = tipo_interfaz;
+				char* string_conexion = string_itoa(*fd_conexion_ptr);
+				loguear("Se conecto la interfaz: %s",nombre_interfaz);
+				dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
+				dictionary_put(diccionario_nombre_qblocked,nombre_interfaz, blocked_interfaz);
+				dictionary_put(diccionario_conexion_qblocked,string_conexion, blocked_interfaz);
+				////
+				dictionary_put(estados_dictionary,nombre_interfaz,blocked_interfaz->estado_blocked);
+				dictionary_put(estados_mutexes_dictionary,nombre_interfaz,blocked_interfaz->mx_blocked);
+				////
 
-			//
-			list_add(lista_interfaces_blocked,blocked_interfaz);
-			//
-			pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
-			//							
-			pthread_detach(thread);
-			free(string_conexion);
+				//
+				list_add(lista_interfaces_blocked,blocked_interfaz);
+				//
+				pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
+				//							
+				pthread_detach(thread);
+				free(string_conexion);
 			
 		}
 		else if(nombre_interfaz){

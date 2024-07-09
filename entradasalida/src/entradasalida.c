@@ -183,30 +183,43 @@ void finalizar_io(){
 void recibir_io(){
 	loguear("IO conectada: Esperando ordenes");
 	
-	while(1){
-		//t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
-		//int cod_op_io = recibir_operacion(conexion_kernel);		
-
-		t_paquete* paquete = recibir_paquete(conexion_kernel);
-		int cod_op_io = paquete->codigo_operacion;
-		if(cod_op_io==-1){
-			loguear_warning("Kernel se desconectó.");
-			free(paquete);
-			return;
+	while(1){	
+		if(config->TIPO_INTERFAZ.id == GENERICA){
+			t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+			int cod_op_io = recibir_operacion(conexion_kernel);		
+			if(cod_op_io==-1){
+				loguear_warning("Kernel se desconectó.");
+				free(peticion_io);
+				return;
+			}
+			peticion_io->cod_op = cod_op_io;
+			char* _peticion;
+			_peticion = recibir_mensaje(conexion_kernel);
+			peticion_io->peticion = strdup(_peticion);
+			loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
+			pthread_mutex_lock(&mx_peticion);
+			queue_push(cola_peticiones_io, peticion_io);
+			pthread_mutex_unlock(&mx_peticion);
+			sem_post(&sem_bin_cola_peticiones);
+			free(_peticion);	
 		}
-//		peticion_io->cod_op = cod_op_io;
-		//char* _peticion;
 
-		t_direcciones_proceso* direcciones_proceso = recibir_direcciones_proceso(paquete);
-
-		//_peticion = recibir_mensaje(conexion_kernel);
-		//peticion_io->peticion = strdup(_peticion);
-		//loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
-		pthread_mutex_lock(&mx_peticion);
-		queue_push(cola_peticiones_io, direcciones_proceso);
-		pthread_mutex_unlock(&mx_peticion);
-		sem_post(&sem_bin_cola_peticiones);
-		free(paquete);	
+		else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT ){
+			t_paquete* paquete = recibir_paquete(conexion_kernel);
+			int cod_op_io = paquete->codigo_operacion;
+			if(cod_op_io==-1){
+				loguear_warning("Kernel se desconectó.");
+				free(paquete);
+				return;
+			}
+			peticion_io->cod_op = cod_op_io;
+			t_direcciones_proceso* direcciones_proceso = recibir_direcciones_proceso(paquete);
+			pthread_mutex_lock(&mx_peticion);
+			queue_push(cola_peticiones_io, direcciones_proceso);
+			pthread_mutex_unlock(&mx_peticion);
+			sem_post(&sem_bin_cola_peticiones);
+			free(paquete);	
+		}
 	}
 }
 
@@ -349,6 +362,7 @@ int ejecutar_op_io_stdout()
 // }
 
 int ejecutar_op_io_generica(){
+
 
 }
 int ejecutar_op_io_dialfs(){
