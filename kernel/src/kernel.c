@@ -824,9 +824,6 @@ void io_handler_exec(t_pcb* pcb_recibido){
 
 	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked,nombre_interfaz);
 	tipo_interfaz = interfaz->tipo_interfaz;
-	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
-	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
-	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,nombre_interfaz); // LOG MINIMO Y OBLIGATORIO
 	if(!admite_operacion(cod_op_io, tipo_interfaz)){ 
 		loguear("NO SE ADMITE OPERACION.");
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
@@ -834,6 +831,10 @@ void io_handler_exec(t_pcb* pcb_recibido){
 		pasar_a_exit(pcb_recibido);
 		return; 
 	}
+	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
+	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
+	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,nombre_interfaz); // LOG MINIMO Y OBLIGATORIO
+	
 		//proceso_estado();
 
 
