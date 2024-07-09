@@ -48,9 +48,16 @@ t_config_io* iniciar_config_io(char* path_config,char* nombre){
 	config_io->NOMBRE = string_new();
 	config_io->NOMBRE = string_duplicate(nombre);
 	config_io->config = _config;
+	if(config_io->TIPO_INTERFAZ.seleccionar_io ==NULL)
+	{	
+		free(config_io->NOMBRE);
+		config_io_destroy(config_io);
+		return NULL;
+	}
 
 	return config_io;
 }
+
 
 
 void loguear_config(){
@@ -296,13 +303,50 @@ int ejecutar_op_io_stdin()
 		enviar_texto("OK",TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDIN_READ.");
 		}
-
-
 }
 
-int ejecutar_op_io_stdout(){
+
+int ejecutar_op_io_stdout()
+{
+	
+	loguear("Ejecuta operacion de entrada salida");
+	while (1)
+	{
+		sem_wait(&sem_bin_cola_peticiones);
+		pthread_mutex_lock(&mx_peticion);
+		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
+		pthread_mutex_unlock(&mx_peticion);
+		//sprintf(mensaje,"PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
+
+
 		
+		t_pid_valor pid_valor = direcciones_proceso->pid_size_total;
+		t_list* direcciones_registros =  direcciones_proceso->direcciones;
+		uint32_t cantidad_elementos = list_size(direcciones_registros);
+		
+		t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
+		uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
+
+		void _enviar_direcciones_io_stdin(void* element){
+			t_direccion_registro* dir_reg = (t_direccion_registro*) element;
+			io_stdout_write(pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
+			loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
+			pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
+		};
+		
+		
+		list_iterate(direcciones_registros, &_enviar_direcciones_io_stdin);
+		loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - Direccion: %d Tamanio: %d",
+		pid_valor.PID,direccion_fisica_inicial,pid_valor.valor);
+		
+		enviar_texto("OK",TERMINO_IO,conexion_kernel);
+		loguear_warning("Termino el IO_STDOUT_WRITE.");
+		}
 }
+
+// int ejecutar_op_io_stdout(){
+		
+// }
 
 int ejecutar_op_io_generica(){
 
