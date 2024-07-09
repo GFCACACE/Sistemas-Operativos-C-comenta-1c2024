@@ -795,7 +795,8 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
 	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,nombre_interfaz); // LOG MINIMO Y OBLIGATORIO
-	if(!admite_operacion(cod_op_io, tipo_interfaz)){ loguear("NO SE ADMITE OPERACION.");
+	if(!admite_operacion(cod_op_io, tipo_interfaz)){ 
+		loguear("NO SE ADMITE OPERACION.");
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		pasar_a_exit(pcb_recibido);
 		return; 
@@ -805,7 +806,9 @@ void io_handler_exec(t_pcb* pcb_recibido){
 
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
+			int jijo_jijo_jijoo = recibir_operacion(cpu_dispatch); // NECESARIO PARA QUE NO ROMPA
 			char* peticion = recibir_mensaje(cpu_dispatch);
+			loguear("SEGUNDO MENSAJE RECIBIDO: %s", peticion);
 			char** splitter = string_split(peticion," ");
 			io_gen_sleep(pcb_recibido->PID,splitter);
 			break;

@@ -517,9 +517,11 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
-	//enviar_texto(interfaz.string_valor, IO_GEN_SLEEP,kernel_dispatch);
+	enviar_texto(interfaz.string_valor, IO_GEN_SLEEP,kernel_dispatch);
+	loguear("PRIMER MENSAJE A KERNEL: %s",interfaz.string_valor);
 	sprintf(texto,"%s %s",interfaz.string_valor,unidades_de_trabajo.string_valor);
-	enviar_mensaje(texto,kernel_dispatch);
+	loguear("SEGUNDO MENSAJE A KERNEL: %s", texto);
+	enviar_texto(texto,IO_GEN_SLEEP,kernel_dispatch);
 	
 	free(texto);
 	return true;
