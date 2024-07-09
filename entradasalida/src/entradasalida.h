@@ -72,6 +72,7 @@ t_selector_io get_tipo_io(char* nombre);
 bool iniciar_io(char*,char*);
 bool iniciar_semaforo_y_cola();
 void config_io_destroy(t_config_io*);
+char* devuelve_tipo_en_char(t_interfaz tipo_interfaz);
 void loguear_config();
 void loguear_config_generica();
 void loguear_config_stdin();

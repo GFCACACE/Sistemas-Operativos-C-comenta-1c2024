@@ -59,11 +59,21 @@ t_config_io* iniciar_config_io(char* path_config,char* nombre){
 }
 
 
+char* devuelve_tipo_en_char(t_interfaz tipo_interfaz){
+	if(tipo_interfaz == GENERICA)
+		return "GENERICA";
+	else if(tipo_interfaz == STDIN)
+		return "STDIN";
+	else if(tipo_interfaz == STDOUT)
+		return "STDOUT";
+	else if(tipo_interfaz == DIALFS)
+		return "DIALFS";
+}
 
 void loguear_config(){
 
 	loguear("NOMBRE INTERFAZ: %s", config->NOMBRE);
-	loguear("TIPO_INTERFAZ: %s",config->TIPO_INTERFAZ);
+	loguear("TIPO_INTERFAZ: %s",devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
 	loguear("IP_KERNEL: %s",config->IP_KERNEL);
     loguear("PUERTO_KERNEL: %d",config->PUERTO_KERNEL);
 	if (GENERICA==config->TIPO_INTERFAZ.id) loguear_config_generica();
@@ -122,7 +132,7 @@ bool iniciar_conexion_kernel(){
 		return false;
 	}
 
-	sprintf(texto,"%s %s",config->NOMBRE,config->TIPO_INTERFAZ);
+	sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
 	enviar_texto(texto,NUEVA_IO,conexion_kernel);
     free(texto);
 	return true;

@@ -761,9 +761,10 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);		
 	char* nombre_interfaz = recibir_mensaje(cpu_dispatch);
 	//t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
-
 	char* tipo_interfaz = string_new();
+	loguear_warning("NOMBRE DE LA INTERFAZ: %s", nombre_interfaz);
 	if(!existe_interfaz(nombre_interfaz)){
+		loguear_warning("NOMBRE INCORRECTO.");
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		pasar_a_exit(pcb_recibido);		
@@ -779,6 +780,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,nombre_interfaz); // LOG MINIMO Y OBLIGATORIO
 	if(!admite_operacion(cod_op_io, tipo_interfaz)){ loguear("NO SE ADMITE OPERACION.");
+		loguear_warning("NO SE ADMITE OPERACION.");
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		pasar_a_exit(pcb_recibido);
 		return; 
