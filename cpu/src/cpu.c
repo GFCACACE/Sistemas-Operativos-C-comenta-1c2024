@@ -569,7 +569,7 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
 	
 	
-	escribir_memoria(direcciones_fisicas_registros,registro_dato);
+	escribir_memoria(direcciones_fisicas_registros,registro_dato,conexion_memoria);
 	
 		loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>",
 		pcb_recibido->PID,
@@ -813,7 +813,7 @@ t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros){
 	return dato_final_puntero;
 }
 
-void escribir_memoria(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato){
+void escribir_memoria(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion){
 	int operacion_ok;
 	t_acceso_espacio_usuario* acceso_espacio_usuario;
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
@@ -844,13 +844,13 @@ void escribir_memoria(t_direcciones_proceso* direcciones_fisicas_registros, char
 			dato_parcial);
 			
 			
-			enviar_acceso_espacio_usuario(acceso_espacio_usuario,ESCRITURA_MEMORIA,conexion_memoria);
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,ESCRITURA_MEMORIA,conexion);
 			size_leido += size_registro_pagina_actual;	
 
-			operacion_ok = recibir_operacion(conexion_memoria);
+			operacion_ok = recibir_operacion(conexion);
 			
 			if(operacion_ok==MOV_OUT_OK){
-				char* valor_memoria =recibir_mensaje(conexion_memoria);
+				char* valor_memoria =recibir_mensaje(conexion);
 				free(valor_memoria);
 			}
 			
