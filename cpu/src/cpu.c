@@ -786,7 +786,7 @@ t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros){
 			free(acceso_espacio_usuario);
 			response = recibir_operacion(conexion_memoria);
 				
-			if(response == VALOR_LECTURA_MEMORIA){
+		//	if(response == VALOR_LECTURA_MEMORIA){
 				
 				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion_memoria);		
 
@@ -798,16 +798,17 @@ t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros){
 				
 				size_leido += size_registro_pagina_actual;
 	
-				free(dato_recibido);
-				loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
-		    pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
-			}
+				
+			//	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
+		   // pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
+			free(dato_recibido);
+			//}
 			
 			
 		}
 		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
 		/////BORRAR
-		loguear("Valor leido: <%d>",registro_reconstr);
+		//loguear("Valor leido: <%d>",registro_reconstr);
 		/////BORRAR
 	return dato_final_puntero;
 }

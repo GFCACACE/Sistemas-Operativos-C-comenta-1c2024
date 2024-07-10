@@ -464,13 +464,16 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		/////BORRAR
 			
 			
-			
+
 			//dato_leido[acceso_espacio_usuario->size_registro] = '\0';
 			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
-			//loguear("LEER BYTES <%s>, Tamanio <%d>",dato_leido, sizeof(dato_leido));
-			enviar_stream(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
-			//enviar_texto(dato_leido,VALOR_LECTURA_MEMORIA,conexion);
+			
+			
+			_enviar_stream_(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
+			//
+		//enviar_texto(dato_leido,VALOR_LECTURA_MEMORIA,conexion);
 			free(dato_leido);
+		//	free(dato_prueba);
 		break;
 	case ESCRITURA_MEMORIA:
 		escribir_memoria(direccion_real,acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);

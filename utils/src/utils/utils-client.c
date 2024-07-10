@@ -78,6 +78,38 @@ void _enviar_texto(char* texto,op_code operacion,int socket){
 	enviar_stream(texto,size,socket,operacion);
 
 }
+
+void _enviar_stream_(void* texto,int size,int socket,op_code operacion){
+
+																					 
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+
+	paquete->codigo_operacion = operacion;
+	paquete->buffer = malloc(sizeof(t_buffer));
+	paquete->buffer->size = size;
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+	memcpy(paquete->buffer->stream, texto, paquete->buffer->size);
+
+	int bytes = paquete->buffer->size + 2*sizeof(int);
+
+	void* a_enviar = serializar_paquete(paquete, bytes);
+	
+	//int valor_int;
+	//void* valor_int_puntero= &valor_int;
+	//memcpy(valor_int_puntero,texto,size);
+
+	//loguear("Valor entero: <%d>",valor_int);
+	
+	
+	send(socket, a_enviar, bytes, 0);
+
+	free(a_enviar);
+	eliminar_paquete(paquete);
+
+}
+
+
+
 void enviar_texto(char* texto,op_code operacion,int socket){
 
 																					 
