@@ -34,7 +34,7 @@ bool io_fs_create(char* nombre_archivo){
     path_metadata = path_resolve(config->PATH_BASE_DIALFS,DIR_METADATA);
     path_metadata = path_resolve(path_metadata,nombre_archivo);
     
-    t_dialfs_metadata* metadata = create_metadata();
+    t_dialfs_metadata* metadata = create_metadata(nombre_archivo);
     list_add(lista_archivos, metadata);
     // fwrite(&metadata,sizeof(t_dialfs_metadata),1,archivo_metadata);
     editar_archivo_metadata(path_metadata,metadata);
@@ -59,7 +59,7 @@ bool io_fs_delete(char* nombre_archivo){
     truncar_bitmap(metadata_delete,0);
     list_remove_element(lista_archivos,metadata_delete);
     remove(path_metadata);
-    free(metadata_delete->nombre_archivo);
+    // free(metadata_delete->nombre_archivo);
     free(metadata_delete);
     return true;
 }
@@ -93,6 +93,12 @@ bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
     for(uint32_t i=posicion_final;i <= posicion_inicial;i++)
         bitarray_clean_bit(bitmap,i);
     actualizar_bitmap(bitmap);
+    int i;
+    while(i< config->BLOCK_COUNT){
+
+        loguear_warning("BLOQUE %d | VALOR %d",i,bitarray_test_bit(bitmap,i));
+        i++;
+    }
     return true;
 
 
@@ -109,10 +115,11 @@ bool editar_archivo_metadata(char* path_metadata,t_dialfs_metadata* metadata){
 }
 
 
-t_dialfs_metadata* create_metadata(){
+t_dialfs_metadata* create_metadata(char* nombre_archivo){
     t_dialfs_metadata* metadata = malloc(sizeof(t_dialfs_metadata));
     metadata->bloque_inicial= (uint32_t)asignar_bloque_inicial();
     metadata->cantidad_bloques = 1;
+    metadata->nombre_archivo=nombre_archivo;
     return metadata;
 
 }
