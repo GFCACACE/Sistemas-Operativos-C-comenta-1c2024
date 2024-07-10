@@ -22,7 +22,7 @@ bool iniciar_archivos_dialfs();//Control de bloques de datos
 // bool compactacion();
 bool io_fs_create(char* nombre_archivo);
 bool io_fs_delete(char* nombre_archivo);
-bool io_fs_truncate(char* nombre_archivo);
+bool io_fs_truncate(char* nombre_archivo, uint32_t tamanio_final);
 // bool io_fs_write();
 // bool io_fs_read();
 

@@ -46,16 +46,16 @@ bool io_fs_create(char* nombre_archivo){
 
 bool io_fs_delete(char* nombre_archivo){
     
-    t_dialfs_metadata* buscar_archivo(void* elem){
+    bool buscar_archivo(void* elem){
         t_dialfs_metadata* metadata = (t_dialfs_metadata*) elem;
         if(!strcmp(nombre_archivo, metadata->nombre_archivo))
-            return metadata;
+            return true;
     };
 
     char* path_metadata =string_new();
     path_metadata = path_resolve(config->PATH_BASE_DIALFS,DIR_METADATA);
     path_metadata = path_resolve(path_metadata,nombre_archivo);
-    t_dialfs_metadata* metadata_delete = list_iterate(lista_archivos,&buscar_archivo);
+    t_dialfs_metadata* metadata_delete = (t_dialfs_metadata*)list_find(lista_archivos,&buscar_archivo);
     truncar_bitmap(metadata_delete,0);
     list_remove_element(lista_archivos,metadata_delete);
     remove(path_metadata);
@@ -66,20 +66,21 @@ bool io_fs_delete(char* nombre_archivo){
 
 bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final){
 
-    t_dialfs_metadata* buscar_archivo(void* elem){
+    bool buscar_archivo(void* elem){
         t_dialfs_metadata* metadata = (t_dialfs_metadata*) elem;
         if(!strcmp(nombre_archivo, metadata->nombre_archivo))
-            return metadata;
+            return true;
+        return false;
     };
     char* path_metadata =string_new();
     path_metadata = path_resolve(config->PATH_BASE_DIALFS,DIR_METADATA);
     path_metadata = path_resolve(path_metadata,nombre_archivo);
-    t_dialfs_metadata* metadata_delete = list_iterate(lista_archivos,&buscar_archivo);
+    t_dialfs_metadata* metadata_delete = (t_dialfs_metadata*)list_find(lista_archivos,&buscar_archivo);
     truncar_bitmap(metadata_delete,tamanio_final);
     metadata_delete->cantidad_bloques = tamanio_final;
     editar_archivo_metadata(path_metadata,metadata_delete);
 
-
+    return true;
 
 }
 
