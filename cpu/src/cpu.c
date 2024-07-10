@@ -536,7 +536,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	int registro_reconstruido;
 	void* registro_reconstruido_puntero =  &registro_reconstruido;
 
-	t_buffer* buffer_lectura = leer_memoria(direcciones_fisicas_registros,conexion_memoria);
+	t_buffer* buffer_lectura = leer_memoria_completa(direcciones_fisicas_registros,conexion_memoria);
 
 	int registro_valor = 0;
 	void* registro_valor_puntero = &registro_valor;
@@ -569,7 +569,7 @@ bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registr
 	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
 	
 	
-	escribir_memoria(direcciones_fisicas_registros,registro_dato,conexion_memoria);
+	escribir_memoria_completa(direcciones_fisicas_registros,registro_dato,conexion_memoria);
 	
 		loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>",
 		pcb_recibido->PID,
@@ -755,7 +755,7 @@ t_direcciones_proceso* obtener_paquete_direcciones(t_pcb* pcb,uint32_t direccion
 	return direcciones_registros;
 } 
 
-t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros,int conexion){
+t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion){
 	
 	int response;
 	t_acceso_espacio_usuario* acceso_espacio_usuario;
@@ -813,7 +813,7 @@ t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros,int 
 	return dato_final_puntero;
 }
 
-void escribir_memoria(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion){
+void escribir_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion){
 	int operacion_ok;
 	t_acceso_espacio_usuario* acceso_espacio_usuario;
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
