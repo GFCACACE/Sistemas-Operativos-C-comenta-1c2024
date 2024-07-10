@@ -536,7 +536,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	int registro_reconstruido;
 	void* registro_reconstruido_puntero =  &registro_reconstruido;
 
-	t_buffer* buffer_lectura = leer_memoria(direcciones_fisicas_registros);
+	t_buffer* buffer_lectura = leer_memoria(direcciones_fisicas_registros,conexion_memoria);
 
 	int registro_valor = 0;
 	void* registro_valor_puntero = &registro_valor;
@@ -755,7 +755,7 @@ t_direcciones_proceso* obtener_paquete_direcciones(t_pcb* pcb,uint32_t direccion
 	return direcciones_registros;
 } 
 
-t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros){
+t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros,int conexion){
 	
 	int response;
 	t_acceso_espacio_usuario* acceso_espacio_usuario;
@@ -781,14 +781,14 @@ t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros){
 			direccion_registro->direccion_fisica,
 			direccion_registro->size_registro_pagina,
 			NULL);		
-			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion_memoria);
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion);
 			
 			free(acceso_espacio_usuario);
-			response = recibir_operacion(conexion_memoria);
+			response = recibir_operacion(conexion);
 				
 		//	if(response == VALOR_LECTURA_MEMORIA){
 				
-				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion_memoria);		
+				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion);		
 
 				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
 				
