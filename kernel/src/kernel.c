@@ -881,18 +881,18 @@ void io_handler_exec(t_pcb* pcb_recibido){
 		// Para crear o eliminar un archivo kernel solo necesita enviarle su nombre al FS.
 		case IO_FS_CREATE:
 			recibir_operacion(cpu_dispatch);
-			char* nombre_archivo = recibir_mensaje(cpu_dispatch);
-			io_fs_create(pcb_recibido->PID,nombre_archivo, nombre_interfaz);
+			char* nombre_archivo_c = recibir_mensaje(cpu_dispatch);
+			io_fs_create(pcb_recibido->PID,nombre_archivo_c, nombre_interfaz);
 			break;
 		case IO_FS_DELETE:
 			recibir_operacion(cpu_dispatch);
-			char* nombre_archivo = recibir_mensaje(cpu_dispatch);
-			io_fs_delete(pcb_recibido->PID,nombre_archivo, nombre_interfaz);
-			break;
-		case IO_FS_READ:
-			//TODO
+			char* nombre_archivo_d = recibir_mensaje(cpu_dispatch);
+			io_fs_delete(pcb_recibido->PID,nombre_archivo_d, nombre_interfaz);
 			break;
 		case IO_FS_TRUNCATE:
+			//TODO
+			break;
+		case IO_FS_READ:
 			//TODO
 			break;
 		case IO_FS_WRITE:
