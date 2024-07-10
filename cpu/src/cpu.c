@@ -533,13 +533,17 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	
 	t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
 	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
-	uint32_t registro_reconstruido;
+	int registro_reconstruido;
 	void* registro_reconstruido_puntero =  &registro_reconstruido;
 
 	t_buffer* buffer_lectura = leer_memoria(direcciones_fisicas_registros);
 
-	memcpy(registro_reconstruido_puntero,buffer_lectura->stream,buffer_lectura->size);
-		
+	int registro_valor = 0;
+	void* registro_valor_puntero = &registro_valor;
+	memcpy(registro_valor_puntero,buffer_lectura->stream,buffer_lectura->size);
+
+	memcpy(registro_reconstruido_puntero,registro_valor_puntero,buffer_lectura->size);
+	
 	loguear("Valor post a reconstruir <%d>",registro_reconstruido);
 
 	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
@@ -761,11 +765,17 @@ t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros){
 	uint32_t size_registro_pagina_actual;
     t_buffer* dato_final_puntero = crear_buffer(pid_size_total.valor);
 	
+	/////BORRAR
+	int registro_reconstr;
+    void* registro_puntero_recons = &registro_reconstr;
+	/////BORRAR
+
+
 	void _enviar_direcciones_memoria(void* element){	
 			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
 			size_registro_pagina_actual = direccion_registro->size_registro_pagina;
 			
-			//void* dato_parcial = malloc(size_registro_pagina_actual);
+			
 			acceso_espacio_usuario =  acceso_espacio_usuario_create(
 			pid_size_total.PID,
 			direccion_registro->direccion_fisica,
@@ -773,27 +783,32 @@ t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros){
 			NULL);		
 			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion_memoria);
 			
-
-			//free(dato_parcial);
 			free(acceso_espacio_usuario);
 			response = recibir_operacion(conexion_memoria);
 				
 			if(response == VALOR_LECTURA_MEMORIA){
-				int reg =size_registro_pagina_actual;
-				void* dato_recibido = recibir_buffer(&reg,conexion_memoria);		
+				
+				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion_memoria);		
 
 				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
+				
+				/////BORRAR
+				memcpy(registro_puntero_recons + size_leido, dato_recibido ,size_registro_pagina_actual);
+				/////BORRAR
 				
 				size_leido += size_registro_pagina_actual;
 	
 				free(dato_recibido);
+				loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
+		    pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
 			}
 			
-			//loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
-			//pid_size_total.PID,direccion_registro->direccion_fisica,dato_parcial);
+			
 		}
 		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
-
+		/////BORRAR
+		loguear("Valor leido: <%d>",registro_reconstr);
+		/////BORRAR
 	return dato_final_puntero;
 }
 

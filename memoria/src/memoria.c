@@ -1,5 +1,14 @@
 #include "memoria.h"
 
+/////BORRAR
+int registro_reconstr;
+int registro_reconstr_leer;
+void* registro_puntero_recons = &registro_reconstr;
+void* registro_puntero_recons_leer = &registro_reconstr_leer;
+uint32_t  size_leido=0;
+uint32_t size_leido_leer=0;
+/////BORRAR
+
 
 /* Cuando tengamos que recorrer la memoria, o hacer algo,
 nos paramos en memoriaPrincipal + nroMarco * tam_marco + offset 
@@ -341,6 +350,9 @@ int buscar_instrucciones(){
 			case ESCRITURA_MEMORIA:	
 				t_acceso_espacio_usuario* acceso_espacio_usuario_escritura = recibir_acceso_espacio_usuario(paquete);		
 				acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_escritura,conexion_cpu);
+
+
+
 				break;
 			case ACCESO_TABLA_PAGINAS:
 				loguear("TABLA PAGINAS \n");				
@@ -441,6 +453,18 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	case LECTURA_MEMORIA:
 			void* dato_leido = malloc(acceso_espacio_usuario->size_registro);
 			leer_memoria(direccion_real,dato_leido,acceso_espacio_usuario->size_registro);
+			
+		/////BORRAR
+		memcpy(registro_puntero_recons_leer + size_leido_leer, dato_leido ,acceso_espacio_usuario->size_registro);
+		size_leido_leer = size_leido_leer + acceso_espacio_usuario->size_registro;
+		/////BORRAR
+
+		/////BORRAR
+		loguear("Valor leido: <%d>",registro_reconstr_leer);
+		/////BORRAR
+			
+			
+			
 			//dato_leido[acceso_espacio_usuario->size_registro] = '\0';
 			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
 			//loguear("LEER BYTES <%s>, Tamanio <%d>",dato_leido, sizeof(dato_leido));
@@ -450,6 +474,18 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		break;
 	case ESCRITURA_MEMORIA:
 		escribir_memoria(direccion_real,acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
+
+
+
+	/////BORRAR
+	memcpy(registro_puntero_recons + size_leido, direccion_real ,acceso_espacio_usuario->size_registro);
+	size_leido = size_leido + acceso_espacio_usuario->size_registro;
+	/////BORRAR
+
+			/////BORRAR
+		loguear("Valor leido: <%d>",registro_reconstr);
+	/////BORRAR
+
 		loguear("PID: <%d> - Accion: <ESCRIBIR> - Direccion fisica: <%d> - Tamaño: <%d>",
 		 acceso_espacio_usuario->PID,
 		 acceso_espacio_usuario->direccion_fisica,
