@@ -192,6 +192,8 @@ void asignar_recurso(t_pcb* pcb,t_recurso* recurso);
 void io_handler_exec(t_pcb* pcb_recibido);
 void io_handler(int* conexion);
 void io_gen_sleep(int pid,char** splitter);
+void io_fs_create(uint32_t pid, char* nombre_archivo,char* nombre_interfaz);
+void io_fs_delete(uint32_t pid, char* nombre_archivo,char* nombre_interfaz);
 void io_std(int pid,t_paquete* paquete, char* nombre_interfaz);
 void io_stdout(int pid, char** splitter);
 bool le_queda_quantum(t_pcb* pcb);
