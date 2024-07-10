@@ -443,7 +443,6 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 			leer_memoria(direccion_real,dato_leido,acceso_espacio_usuario->size_registro);
 			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
 			
-			
 			enviar_stream(dato_leido,acceso_espacio_usuario->size_registro,VALOR_LECTURA_MEMORIA,conexion);
 			free(dato_leido);
 

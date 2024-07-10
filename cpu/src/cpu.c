@@ -524,7 +524,7 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 	return true;
 }
 bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_direccion){
-	int response;
+	
 	uint32_t size_registro = (uint32_t)registro_datos.size;
 	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb_recibido,direccion_logica,size_registro);
@@ -630,8 +630,8 @@ void escribir_memoria(t_direcciones_proceso* direcciones_fisicas_registros, char
 	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
 	uint32_t size_leido=0;
 	uint32_t size_registro_pagina_actual;
-   // int registro_int = atoi(registro_dato);
-    void* registro_puntero = registro_dato;
+    int registro_int = atoi(registro_dato);
+    void* registro_puntero = &registro_int;
     
 		void _enviar_direcciones_memoria(void* element){
 		
@@ -654,12 +654,13 @@ void escribir_memoria(t_direcciones_proceso* direcciones_fisicas_registros, char
 			operacion_ok = recibir_operacion(conexion_memoria);
 			
 			if(operacion_ok==MOV_OUT_OK){
-				char * valor_memoria =recibir_mensaje(conexion_memoria);
+				char* valor_memoria =recibir_mensaje(conexion_memoria);
 				free(valor_memoria);
 			}
-				
-			loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>",
-			pid_size_total.PID,direccion_registro->direccion_fisica,registro_dato + size_leido);
+			
+	//		loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>",
+	//		pid_size_total.PID,direccion_registro->direccion_fisica,registro_dato + size_leido);
+			free(acceso_espacio_usuario);
 			free(dato_parcial);
 			
 			//free(registro_ecx_parte);
@@ -684,23 +685,26 @@ t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros){
 			
 			void* dato_parcial = malloc(size_registro_pagina_actual);
 			acceso_espacio_usuario =  acceso_espacio_usuario_create(
-			pid_size_total.valor,
+			pid_size_total.PID,
 			direccion_registro->direccion_fisica,
 			direccion_registro->size_registro_pagina,
 			NULL);		
 			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion_memoria);
+			
 			response = recibir_operacion(conexion_memoria);
 			
 			if(response == VALOR_LECTURA_MEMORIA){
 
-				void* dato_parcial = recibir_buffer(&size_registro_pagina_actual,conexion_memoria);		
-				
-				memcpy(dato_final_puntero->stream + size_leido,dato_parcial, size_registro_pagina_actual);
+				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion_memoria);		
+
+				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
 				
 				size_leido += size_registro_pagina_actual;
-				
-				free(dato_parcial);
+
+				free(dato_recibido);
 		}
+			free(acceso_espacio_usuario);
+			free(dato_parcial);
 			//loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
 			//pid_size_total.PID,direccion_registro->direccion_fisica,dato_parcial);
 		}
