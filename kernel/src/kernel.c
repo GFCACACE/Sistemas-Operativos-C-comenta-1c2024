@@ -179,7 +179,6 @@ t_recurso* crear_recurso(char* nombre, int instancias){
 
 
 bool iniciar_recursos(){
-
 	int cantidad_recursos = string_array_size(config->RECURSOS);
 	lista_recursos = list_create();
 	char* key;
@@ -758,7 +757,7 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 			
 			t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
 			asignar_recurso(pcb_liberado,recurso);
-			a_ready(pcb_liberado);
+			a_ready_sin_mutex(pcb_liberado);
 			
 			
 		}
@@ -2053,28 +2052,39 @@ void devolver_recursos(t_pcb* pcb_saliente){
 		};
 		return list_any_satisfy(recurso->lista_procesos_asignados,&pcb_del_recurso);
 	};
-	t_list* lista_filtrada_recursos = list_filter(lista_recursos,&tiene_pcb_saliente);
-	if(!list_is_empty(lista_filtrada_recursos)){
-		void restaurar_recursos(void* elem){
+	void restaurar_recursos(void* elem){
 			t_recurso* recurso = (t_recurso*)elem;
 			liberar_recurso(pcb_saliente,recurso);
 			
+			if(!queue_is_empty(recurso->cola_procesos_esperando)){
+				
+				
+				t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
+				
+				asignar_recurso(pcb_liberado,recurso);
 
-		};
+				a_ready_sin_mutex(pcb_liberado);
+				
+				
+			}
+			
+	};
+	t_list* lista_filtrada_recursos = list_filter(lista_recursos,&tiene_pcb_saliente);
+	if(!list_is_empty(lista_filtrada_recursos))
 		list_iterate(lista_filtrada_recursos,&restaurar_recursos);
-	// for(int i=0;i<list_size(lista_filtrada_recursos);i++){
-	// 	t_recurso* recurso = list_get(lista_filtrada_recursos,i);
-		
-	// 	// if(!queue_is_empty(recurso->cola_procesos_esperando)){
-	// 	// 	t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
-	// 	// 	if(pcb_liberado != pcb_saliente){
-	// 	// 		asignar_recurso(pcb_liberado,recurso);
-	// 	// 		a_ready(pcb_liberado);
-	// 	// 	}
-	// 	// }
-	// 	// liberar_recurso(pcb_saliente,recurso);
-	// }
+
+}
+
+void a_ready_sin_mutex(t_pcb* pcb){
+	if(es_vrr()){
+		if(le_queda_quantum(pcb))
+			queue_push(estado_ready_plus,pcb);
+		else
+			queue_push(estado_ready,pcb);
 	}
+	else
+		queue_push(estado_ready,pcb);
+	sem_post(&sem_bin_ready);
 }
 
 bool iniciar_threads_io(){

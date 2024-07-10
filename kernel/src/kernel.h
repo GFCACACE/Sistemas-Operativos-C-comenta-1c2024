@@ -126,6 +126,7 @@ bool inicializar_comandos();
 
 bool iniciar_recursos();
 void liberar_recurso(t_pcb* pcb_recibido,t_recurso* recurso);
+void liberar_instancia(t_pcb* pcb_recibido,t_recurso* recurso);
 ///////////////////////
 char* leer_texto_consola();
 char *recibir_nombre(int);
@@ -186,6 +187,8 @@ bool iniciar_threads_io();
 void iniciar_conexion_io();
 
 void rec_handler_exec(t_pcb* pcb_recibido);
+void a_ready_sin_mutex(t_pcb* pcb);
+void asignar_recurso(t_pcb* pcb,t_recurso* recurso);
 void io_handler_exec(t_pcb* pcb_recibido);
 void io_handler(int* conexion);
 void io_gen_sleep(int pid,char** splitter);
