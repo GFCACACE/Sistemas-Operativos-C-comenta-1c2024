@@ -23,9 +23,10 @@ int main(int argc, char* argv[]) {
     iniciar_archivos_dialfs();
     io_fs_create("fede_crack.txt");
     io_fs_create("fede_crack_II.txt");
-    // io_fs_delete("fede_crack.txt");
+    io_fs_delete("fede_crack.txt");
+    io_fs_create("fede_crack_III.txt");
     io_fs_delete("fede_crack_II.txt");
-    // io_fs_create("fede_crack_III.txt");
+    loguear_bitmap(bitarray_bitmap);
     return EXIT_SUCCESS;
 }
 
