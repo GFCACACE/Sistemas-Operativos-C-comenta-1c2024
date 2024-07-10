@@ -447,27 +447,6 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 			enviar_stream(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
 			//enviar_texto(dato_leido,VALOR_LECTURA_MEMORIA,conexion);
 			free(dato_leido);
-		//char* dato_consultado = malloc((int)bytes_restantes_en_frame);		
-		/*
-		if(acceso_espacio_usuario->size_registro==sizeof(uint8_t)){
-		uint8_t dato_1_byte;
-		leer_memoria(direccion_real,(char*)& dato_1_byte,acceso_espacio_usuario->size_registro);
-		char* dato_leido_1_byte=  string_itoa(dato_1_byte);
-		enviar_texto(dato_leido_1_byte,VALOR_LECTURA_MEMORIA,conexion);
-		loguear("Se leyó: <%d>. Tamaño: <%d>",dato_1_byte,acceso_espacio_usuario->size_registro);
-		}
-		
-		if(acceso_espacio_usuario->size_registro==sizeof(uint32_t)){
-		uint32_t dato_4_byte;
-		leer_memoria(direccion_real,(char*)& dato_4_byte,acceso_espacio_usuario->size_registro);
-		char* dato_leido_4_byte=  string_itoa(dato_4_byte);
-		enviar_texto(dato_leido_4_byte,VALOR_LECTURA_MEMORIA,conexion);
-		loguear("Se leyó: <%d>. Tamaño: <%d>",dato_4_byte,acceso_espacio_usuario->size_registro);
-		}
-		
-		*/
-
-		/* code */
 		break;
 	case ESCRITURA_MEMORIA:
 		escribir_memoria(direccion_real,acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
