@@ -466,13 +466,13 @@ bool execute(t_pcb *pcb)
 	return false;
 }
 // INSTRUCCIONES PARA IO_FS_CREATE E IO_FS_DELETE
-bool exe_io_fs(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_tamanio){
+bool exe_io_fs(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param nombre_archivo){
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	enviar_texto(interfaz.string_valor,cod_op,kernel_dispatch);
-	enviar_mensaje(registro_tamanio.string_valor, kernel_dispatch);
+	enviar_mensaje(nombre_archivo.string_valor, kernel_dispatch);
 }
 
 

@@ -154,8 +154,8 @@ typedef struct t_direcciones_registros
 
 typedef struct t_direccion_registro
 {
- uint32_t direccion_fisica;
- uint32_t size_registro_pagina;
+	uint32_t direccion_fisica;
+	uint32_t size_registro_pagina;
 }t_direccion_registro;
 
 

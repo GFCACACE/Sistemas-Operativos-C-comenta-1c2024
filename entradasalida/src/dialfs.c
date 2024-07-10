@@ -148,20 +148,15 @@ t_dialfs_metadata* create_metadata(char* nombre_archivo){
 
 
 int asignar_bloque_inicial(){
-   
    int i;
    bool flag_test_bit;
    for(i=0;i<config->BLOCK_COUNT;i++){
-    flag_test_bit=bitarray_test_bit(bitarray_bitmap,i);
-    if(!flag_test_bit){
-        bitarray_set_bit(bitarray_bitmap,i);
-        return i;
-    }
-    
-    
+        flag_test_bit=bitarray_test_bit(bitarray_bitmap,i);
+        if(!flag_test_bit){
+            bitarray_set_bit(bitarray_bitmap,i);
+            return i;
+        }
    }
-
-
     return -1;
 
 }

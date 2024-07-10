@@ -228,6 +228,9 @@ void recibir_io(){
 			sem_post(&sem_bin_cola_peticiones);
 			free(paquete);	
 		}
+		else if(config->TIPO_INTERFAZ.id == DIALFS){
+			
+		}
 	}
 }
 
@@ -388,7 +391,9 @@ int ejecutar_op_io_generica(){
 	}
 }
 int ejecutar_op_io_dialfs(){
-	//TODO
+	while(1){
+
+	}
 }
 
 
