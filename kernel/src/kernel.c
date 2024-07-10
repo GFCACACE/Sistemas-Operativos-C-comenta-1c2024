@@ -1840,10 +1840,6 @@ void finalizar_kernel(){
 	if(config!=NULL) config_destroy_kernel(config);
 }
 
-
-
-
-
 bool iniciar_servidor_kernel(){
     //Iniciamos el servidor con el puerto indicado en la config
 	kernel_escucha = iniciar_servidor(config->PUERTO_ESCUCHA);
@@ -1854,26 +1850,6 @@ bool iniciar_servidor_kernel(){
 	loguear("El Servidor iniciado correctamente");
 	return true;
 }
-/*
-bool eliminar_proceso_(uint32_t pid){ // Al implementar en consola, hay q parsear el char* a uint32_t
-	
-	bool _eliminar_proceso_en_lista(t_queue* estado, pthread_mutex_t* mutex_estado){
-		if (!queue_is_empty(estado)) return eliminar_proceso_en_lista(pid, estado, mutex_estado);
-		return false;
-	};
-
-	if (es_vrr()){
-		return (_eliminar_proceso_en_lista(estado_new, &mx_new) || 
-	_eliminar_proceso_en_lista(estado_ready, &mx_ready) ||
-	eliminar_proceso_en_blocked(pid) ||   
-	_eliminar_proceso_en_lista(estado_ready_plus, &mx_ready_plus) ||
-	eliminar_proceso_en_exec(pid));
-	}
-	return (_eliminar_proceso_en_lista(estado_new, &mx_new) || 
-	_eliminar_proceso_en_lista(estado_ready, &mx_ready) || 
-	eliminar_proceso_en_blocked(pid) ||
-	eliminar_proceso_en_exec(pid));
-}*/
 
 void pasar_a_temp_sin_bloqueo(t_pcb_query* pcb_query){
 	if(pcb_query->estado)
@@ -1882,9 +1858,8 @@ void pasar_a_temp_sin_bloqueo(t_pcb_query* pcb_query){
 		pcb_exec = NULL;
 	
 	queue_push(estado_temp,pcb_query->pcb);
-
-	
 }
+
 bool eliminar_proceso(uint32_t* pid_ptr){
 	uint32_t pid = *pid_ptr;
 	free(pid_ptr);
@@ -1959,13 +1934,6 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 		
 	}	
 	else {	// CASO BLOCKED
-		//t_recurso* recurso = encontrar_recurso(pcb_query->pcb);
-		// if(recurso != NULL){
-		// 	loguear_warning("INSTANCIA: %s", recurso->recurso);
-		// 	liberar_instancia(pcb_query->pcb,recurso);
-		// 	loguear_warning("Libero la INSTANCIA.");
-		// }
-		
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
@@ -1975,21 +1943,9 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 	if(eliminado)
 		loguear("Finaliza el proceso <%d> - Motivo: Finalizado por consola",pid);
 	return eliminado;
-
 }
 
-/*
-bool eliminar_proceso_en_exec(uint32_t pid){
-	pthread_mutex_lock(&mx_pcb_exec);
-	if(pcb_exec->PID == pid){
-		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
-		pthread_mutex_unlock(&mx_pcb_exec);
-		return true;
-	}
-	pthread_mutex_unlock(&mx_pcb_exec);
-	return false;
-}
-*/
+
 bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
 	t_pcb* pcb_buscado;
 	if (encontrar_en_lista(pid_buscado,estado_buscado, mutex_estado_buscado)){
@@ -2002,24 +1958,6 @@ bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pth
 	}
 	return false;
 }
-/*
-bool eliminar_proceso_en_blocked(uint32_t pid){
-	bool _eliminar_proceso_en_lista(t_queue* estado, pthread_mutex_t* mutex_estado){
-		if (!queue_is_empty(estado)) return eliminar_proceso_en_lista(pid, estado, mutex_estado);
-		return false;
-	};
-	if(lista_interfaces_blocked == NULL || lista_interfaces_blocked->head == NULL){
-		return false;
-	}
-	for(t_link_element *nodo_interfaz_actual = lista_interfaces_blocked->head; nodo_interfaz_actual != NULL; nodo_interfaz_actual = nodo_interfaz_actual->next){
-			// Obtener el dato almacenado en el nodo actual
-        	t_blocked_interfaz *interfaz_blocked = (t_blocked_interfaz*)nodo_interfaz_actual->data;
-			if(_eliminar_proceso_en_lista(interfaz_blocked->estado_blocked,&interfaz_blocked->mx_blocked)) return true;
-		}
-	return false;
-	
-}*/
-
 
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado){
 
