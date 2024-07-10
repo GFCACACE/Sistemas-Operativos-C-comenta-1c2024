@@ -439,12 +439,13 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 			//loguear("Se leyó: <%s>. Tamaño: <%d>",acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
 		break;
 	case LECTURA_MEMORIA:
-			char* dato_leido = malloc(acceso_espacio_usuario->size_registro);
+			void* dato_leido = malloc(acceso_espacio_usuario->size_registro);
 			leer_memoria(direccion_real,dato_leido,acceso_espacio_usuario->size_registro);
-			dato_leido[acceso_espacio_usuario->size_registro] = '\0';
+			//dato_leido[acceso_espacio_usuario->size_registro] = '\0';
 			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
-			loguear("LEER BYTES <%s>, Tamanio <%d>",dato_leido, sizeof(dato_leido));
-			enviar_texto(dato_leido,VALOR_LECTURA_MEMORIA,conexion);
+			//loguear("LEER BYTES <%s>, Tamanio <%d>",dato_leido, sizeof(dato_leido));
+			enviar_stream(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
+			//enviar_texto(dato_leido,VALOR_LECTURA_MEMORIA,conexion);
 			free(dato_leido);
 		//char* dato_consultado = malloc((int)bytes_restantes_en_frame);		
 		/*
