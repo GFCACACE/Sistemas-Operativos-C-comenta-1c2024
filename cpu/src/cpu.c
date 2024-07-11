@@ -530,80 +530,69 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 	free(texto);
 	return true;
 }
+
 bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_direccion){
-	char* direccion_enviar = string_new();
-	char* valor_memoria = string_new();
 	
-	uint32_t direccion_fisica = mmu(pcb_recibido,*(uint32_t*)registro_direccion.puntero);
-	uint32_t bytes_restantes_frame = calcular_bytes_restantes(direccion_fisica);
-	char* registro_dato = (char*)registro_datos.string_valor;
 	uint32_t size_registro = (uint32_t)registro_datos.size;
-	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb_recibido->PID, direccion_fisica,size_registro,registro_dato);
+	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
+	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb_recibido,direccion_logica,size_registro);
+	loguear_direccion_proceso(direcciones_fisicas_registros);
+	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
 	
+	t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
+	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
+	int registro_reconstruido;
+	void* registro_reconstruido_puntero =  &registro_reconstruido;
 
-	sprintf(direccion_enviar,"%d",acceso_espacio_usuario->direccion_fisica);
-	enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion_memoria);
-	free(acceso_espacio_usuario);
+	t_buffer* buffer_lectura = leer_memoria_completa(direcciones_fisicas_registros,conexion_memoria);
 
-	int response = recibir_operacion(conexion_memoria);
-	if(response == VALOR_LECTURA_MEMORIA){
-		valor_memoria = recibir_mensaje(conexion_memoria);
+	int registro_valor = 0;
+	void* registro_valor_puntero = &registro_valor;
+	memcpy(registro_valor_puntero,buffer_lectura->stream,buffer_lectura->size);
 
-		registro_datos.string_valor = string_duplicate(valor_memoria);
-		
-		uint32_t* valor = malloc(registro_datos.size);
-		if(registro_datos.size == sizeof(uint8_t)){
-			*valor = (uint8_t*) atoi(valor_memoria);
-			*(uint8_t*)registro_datos.puntero =  *valor;
-		}
-		if(registro_datos.size == sizeof(uint32_t)){
-			*valor = (uint32_t*) atoi(valor_memoria);
-			*(uint32_t*)registro_datos.puntero =  *valor;
-		}
-				
-		
-		loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
-		pcb_recibido->PID,
-		direccion_fisica,
-		*valor);
-	}
+	memcpy(registro_reconstruido_puntero,registro_valor_puntero,buffer_lectura->size);
+	
+	loguear("Valor post a reconstruir <%d>",registro_reconstruido);
+
+	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
+	pcb_recibido->PID,
+	direccion_fisica_inicial,
+	registro_reconstruido);
+	buffer_destroy(buffer_lectura);
+	
 	registros_cpu->PC++;
 	actualizar_contexto(pcb_recibido);
-	free(direccion_enviar);
-	free(valor_memoria);
+	
 	return true;
 }
 
-bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registro_datos){
-	char* direccion_enviar = string_new();
-	char* valor_memoria = string_new();
-	uint32_t direccion_fisica = mmu(pcb_recibido,*(uint32_t*)registro_direccion.puntero);
-	u_int32_t bytes_restantes_frame = calcular_bytes_restantes(direccion_fisica);
 
-	char* registro_dato = (char*)registro_datos.string_valor;
+bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registro_datos){
+	uint32_t size_registro = (uint32_t)registro_datos.size; 
+	char* registro_dato = (char*)registro_datos.string_valor; 
+	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
+	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb_recibido,direccion_logica,size_registro);
+	loguear_direccion_proceso(direcciones_fisicas_registros);	
+	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
+	t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
+	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
 	
-	uint32_t size_registro = (uint32_t)registro_datos.size;
-	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb_recibido->PID, direccion_fisica,size_registro,registro_dato);
 	
-	sprintf(direccion_enviar,"%d %d %s",pcb_recibido->PID,direccion_fisica, registro_datos.string_valor);
+	escribir_memoria_completa(direcciones_fisicas_registros,registro_dato,conexion_memoria);
+	
 	loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>",
-		pcb_recibido->PID,
-		direccion_fisica,
-		registro_dato);
-	enviar_acceso_espacio_usuario(acceso_espacio_usuario,ESCRITURA_MEMORIA,conexion_memoria);
-	//enviar_texto(direccion_fisica,ESCRITURA_MEMORIA,conexion_memoria);
-	
-	free(acceso_espacio_usuario);
-	int operacion_ok = recibir_operacion(conexion_memoria);
-	if(operacion_ok== MOV_OUT_OK){
-		valor_memoria=recibir_mensaje(conexion_memoria);
-		
-		registros_cpu->PC++;
-		actualizar_contexto(pcb_recibido);
-		return true;
-	}
-	return false;
+	pcb_recibido->PID,
+	direccion_fisica_inicial,
+	registro_dato);
+
+
+	registros_cpu->PC++;
+	actualizar_contexto(pcb_recibido);
+	return true;
+//	}
+//	return false;
 }
+
 bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 //	enviar_texto(tamanio.string_valor,RESIZE,conexion_memoria);
 	uint32_t tamanio = atoi(p_tamanio.string_valor);
@@ -721,11 +710,116 @@ bool reemplazo_tlb(t_tlb* registro_nuevo){
 	return true;
 }
 
-uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica){
+uint32_t obtener_numero_pagina(uint32_t direccion_logica){
+	return  floor(direccion_logica/tamanio_pagina);
+}
+
+uint32_t obtener_desplazamiento(uint32_t direccion_logica,uint32_t numero_pagina){
+	return direccion_logica - numero_pagina * tamanio_pagina;
+}
+uint32_t obtener_cantidad_paginas(uint32_t desplazamiento,uint32_t size_registro){
+	return (int)ceil((double) (desplazamiento + size_registro) / tamanio_pagina);
+}
+
+t_direcciones_proceso* obtener_paquete_direcciones(t_pcb* pcb,uint32_t direccion_logica, uint32_t size_registro){
+	t_direcciones_proceso* direcciones_registros = direcciones_proceso_create(pcb->PID,size_registro);
+	uint32_t numero_pagina = obtener_numero_pagina(direccion_logica);
+	uint32_t desplazamiento = obtener_desplazamiento(direccion_logica,numero_pagina);
+	uint32_t cantidad_paginas = obtener_cantidad_paginas(desplazamiento,size_registro);
+	
 	uint32_t direccion_fisica;
-	uint32_t numero_pagina = floor(direccion_logica/tamanio_pagina);
+	uint32_t size_restante_registro = size_registro;
+	uint32_t indice_pagina;
+	uint32_t size_registro_pagina_actual;
+	
+	for (indice_pagina=numero_pagina;indice_pagina < numero_pagina + cantidad_paginas;indice_pagina++){
+
+		desplazamiento = obtener_desplazamiento(direccion_logica,indice_pagina);
+		
+		direccion_fisica = mmu(pcb,direccion_logica);
+		
+		uint32_t bytes_restantes_pagina = tamanio_pagina - desplazamiento;
+	
+		if(size_restante_registro > bytes_restantes_pagina){
+			size_registro_pagina_actual = bytes_restantes_pagina;
+		}else{
+			size_registro_pagina_actual = size_restante_registro;
+		}
+		
+		t_direccion_registro* direccion_registro = direccion_registro_new(direccion_fisica,size_registro_pagina_actual);
+		
+		list_add(direcciones_registros->direcciones,direccion_registro);
+		direccion_logica = direccion_logica + size_registro_pagina_actual;
+
+		size_restante_registro = size_restante_registro - size_registro_pagina_actual; //Cantidad de bytes que restan consumir
+		
+	}
+	return direcciones_registros;
+} 
+t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion){
+	
+	int response;
+	t_acceso_espacio_usuario* acceso_espacio_usuario;
+	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
+	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
+	uint32_t size_leido=0;
+	uint32_t size_registro_pagina_actual;
+    t_buffer* dato_final_puntero = crear_buffer(pid_size_total.valor);
+	
+	/////BORRAR
+	int registro_reconstr;
+    void* registro_puntero_recons = &registro_reconstr;
+	/////BORRAR
+
+
+	void _enviar_direcciones_memoria(void* element){	
+			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
+			int size_registro_pagina_actual = direccion_registro->size_registro_pagina;
+			
+			
+			t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(
+			pid_size_total.PID,
+			direccion_registro->direccion_fisica,
+			direccion_registro->size_registro_pagina,
+			NULL);		
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion);
+			
+			free(acceso_espacio_usuario);
+			int response = recibir_operacion(conexion);
+				
+		//	if(response == VALOR_LECTURA_MEMORIA){
+				
+				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion);		
+
+				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
+				
+				/////BORRAR
+				//memcpy(registro_puntero_recons + size_leido, dato_recibido ,size_registro_pagina_actual);
+				/////BORRAR
+				
+				size_leido += size_registro_pagina_actual;
+	
+				
+			//	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
+		   // pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
+				free(dato_recibido);
+			//}
+			
+			
+		}
+		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
+		/////BORRAR
+		//loguear("Valor leido: <%d>",registro_reconstr);
+		/////BORRAR
+	return dato_final_puntero;
+}
+
+uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
+	uint32_t direccion_fisica;
+	uint32_t numero_pagina = obtener_numero_pagina(direccion_logica);
+	uint32_t desplazamiento = obtener_desplazamiento(direccion_logica,numero_pagina);
 	int registro_tlb = tlb_hit(pcb->PID,numero_pagina);
-	uint32_t desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
+	
 
 	if(registro_tlb != -1){
 		loguear("PID: <%d> - TLB HIT - Pagina: <%d>",pcb->PID,numero_pagina);
@@ -734,12 +828,17 @@ uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica){
 	}
 	loguear("PID: <%d> - TLB MISS - Pagina: <%d>",pcb->PID,numero_pagina);
 	char* nro_frame = string_new();
-	// Agrego el pcb y ple paso un proceso a la memoria para que pueda encontrar que proceso le está pidiendo la CPU
-	t_pid_valor* tamanio_proceso= pid_value_create(pcb->PID,numero_pagina); //Vamos con esta conversion?
+	// Agrego el pcb y le paso un proceso a la memoria para que pueda encontrar que proceso le está pidiendo la CPU
+	
+	
+	t_pid_valor* pid_nro_pagina= pid_value_create(pcb->PID,numero_pagina); //Vamos con esta conversion?
 	// FALTA LOGICA SEGUIR PIDIENDO FRAMES HASTA TENER UN FIN DE CADENA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	//Haciendo esta reutilización, capaz hay que cambiar el nombre de tamanio. Acá en tamanio le estamos pasando una página
-	enviar_pid_value(tamanio_proceso,ACCESO_TABLA_PAGINAS,conexion_memoria);
-	//enviar_texto(nro_pagina,ACCESO_TABLA_PAGINAS,conexion_memoria);
+	
+	//Start For -> Devolver paquete 
+	
+	enviar_pid_value(pid_nro_pagina,ACCESO_TABLA_PAGINAS,conexion_memoria);
+	
 
 	int response = recibir_operacion(conexion_memoria);
 	if(response == RESPUESTA_NRO_FRAME)
@@ -753,9 +852,9 @@ uint32_t mmu (t_pcb* pcb,uint32_t direccion_logica){
 	direccion_fisica = tamanio_pagina * (uint32_t)atoi(nro_frame) + desplazamiento;
 	actualizar_tlb(pcb->PID,numero_pagina,(uint32_t)atoi(nro_frame));
 
+	// End for
 	return direccion_fisica;
 }
-
 
 
 uint32_t calcular_bytes_restantes(uint32_t direcc_fisica){

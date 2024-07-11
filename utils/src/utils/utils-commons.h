@@ -11,6 +11,7 @@
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/string.h>
+#include <commons/collections/queue.h>
 #include <utils/utils-config.h>
 #include<string.h>
 #include <ctype.h>
@@ -158,6 +159,31 @@ typedef struct
 	
 }t_acceso_espacio_usuario;
 
+typedef struct t_direcciones_proceso
+{
+	t_pid_valor pid_size_total; 
+	t_list* direcciones; 
+}t_direcciones_proceso;
+
+
+typedef struct t_direcciones_registros
+{
+	t_pid_valor dir_proceso_id;
+	t_queue* direcciones;
+}t_direcciones_registros;
+
+
+typedef struct t_direccion_registro
+{
+ uint32_t direccion_fisica;
+ uint32_t size_registro_pagina;
+}t_direccion_registro;
+
+
+t_direccion_registro* direccion_registro_new(uint32_t direccion,uint32_t size);
+
+
+
 t_validacion* validacion_new();
 t_pcb* pcb_create(char*);
 t_pcb* pcb_create_copy(char*);
@@ -176,6 +202,16 @@ void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen);
 void loguear_pid_value(t_pid_valor* tamanio_proceso);
 t_pid_valor* pid_value_create(uint32_t pid, uint32_t valor);
 t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t bytes_restantes,char* valor);
+
+t_direccion_registro* direccion_registro_new(uint32_t direccion,uint32_t size);
+void direcciones_proceso_destroy(t_direcciones_proceso* direcciones_proceso);
+void loguear_direccion_proceso(t_direcciones_proceso* dir_proceso);
+t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio);
+t_id_valor* id_valor_new(uint32_t id,uint32_t valor);
+
+
+
+
 /**
  * @fn    list_find_index
  * @brief Retorna el índice del primer valor encontrado que haga que condition devuelva != 0

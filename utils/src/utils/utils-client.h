@@ -28,4 +28,6 @@ void enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usua
 void _enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,op_code operacion,int socket);
 void* _serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,int* size);
 void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,int* size);
+void _enviar_texto(char* texto,op_code operacion,int socket);
+void _enviar_stream_(void* texto,int size,int socket,op_code operacion);
 #endif /* utils_client_h */

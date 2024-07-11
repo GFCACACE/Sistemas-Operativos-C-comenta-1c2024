@@ -70,12 +70,12 @@ void liberar_frame(int nro_frame);
 int obtener_frame(t_list* tabla_de_paginas,int nro_pagina);
 uint32_t ejecutar_resize(t_pid_valor* tamanio_proceso);
 void acceder_tabla_de_paginas(t_pid_valor* pid_pagina);
-void acceder_a_espacio_usuario(op_code,t_acceso_espacio_usuario*,int conexion);
+void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario,int conexion);
 void liberar_proceso_de_memoria(uint32_t pid);
 int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,int tamanio_proceso);
 void efectuar_retardo();
-void escribir_memoria(char* direccion_real,char* dato,uint32_t size);
-void leer_memoria(char* direccion_real,char* buffer,uint32_t size);
+void escribir_memoria(void* direccion_fisica,void* dato,uint32_t size);
+void leer_memoria(void* direccion_fisica,void* buffer,uint32_t size);
 
 //TERMINAR
 void io_handler(int *ptr_conexion);

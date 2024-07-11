@@ -118,4 +118,13 @@ extern t_param PARAM2;
 extern t_param PARAM3;
 extern op_code cod_op_kernel_interrupt;
 extern t_list* lista_tlb;
+
+
+//AGREGADOS DE LA RAMA DE BRUNO
+t_direcciones_proceso* obtener_paquete_direcciones(t_pcb* pcb,uint32_t direccion_logica, uint32_t size_registro);
+uint32_t obtener_numero_pagina(uint32_t direccion_logica);
+uint32_t obtener_desplazamiento(uint32_t direccion_logica,uint32_t numero_pagina);
+uint32_t obtener_cantidad_paginas(uint32_t desplazamiento,uint32_t size_registro);
+t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion);
+
 #endif //cpu_h

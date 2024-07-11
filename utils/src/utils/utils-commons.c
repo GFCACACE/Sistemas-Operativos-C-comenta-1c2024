@@ -300,3 +300,46 @@ bool is_true(void* element){
 bool is_false(void* element){
    return !is_true(element);
 }
+
+
+t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio){
+	t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
+	direcciones_proceso->pid_size_total.PID = pid;
+	direcciones_proceso->pid_size_total.valor=tamanio;
+	direcciones_proceso->direcciones = list_create();
+	return direcciones_proceso;
+}
+
+t_id_valor* id_valor_new(uint32_t id,uint32_t valor){
+	t_id_valor* id_valor = malloc(sizeof(t_id_valor));
+	id_valor->id = id;
+	id_valor->valor =valor;
+
+	return id_valor;
+}
+
+t_direccion_registro* direccion_registro_new(uint32_t direccion,uint32_t size){
+	t_direccion_registro* direccion_registro = malloc(sizeof(t_direccion_registro));
+	direccion_registro->direccion_fisica = direccion;
+	direccion_registro->size_registro_pagina =size;
+
+	return direccion_registro;
+}
+
+void direcciones_proceso_destroy(t_direcciones_proceso* direcciones_proceso){
+	list_destroy_and_destroy_elements(direcciones_proceso->direcciones,free);
+	free(direcciones_proceso);
+}
+
+void loguear_direccion_proceso(t_direcciones_proceso* dir_proceso){
+
+	loguear("PID proceso:%d",dir_proceso->pid_size_total.PID);
+	loguear("Tam proceso:%d",dir_proceso->pid_size_total.valor);
+	loguear("--------%s--------","direcciones");
+	for(int i=0;i<list_size(dir_proceso->direcciones);i++){
+		t_direccion_registro* id_valor = (t_direccion_registro* )list_get(dir_proceso->direcciones,i);
+		loguear("Direcc: %d - Tam: %d", id_valor->direccion_fisica,id_valor->size_registro_pagina);
+	}
+	loguear("--------%s--------","fin direcciones");
+
+}

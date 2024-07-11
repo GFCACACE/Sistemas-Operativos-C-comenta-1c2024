@@ -1,5 +1,13 @@
 #include "memoria.h"
 
+/////BORRAR
+int registro_reconstr;
+int registro_reconstr_leer;
+void* registro_puntero_recons = &registro_reconstr;
+void* registro_puntero_recons_leer = &registro_reconstr_leer;
+uint32_t  size_leido=0;
+uint32_t size_leido_leer=0;
+/////BORRAR
 
 /* Cuando tengamos que recorrer la memoria, o hacer algo,
 nos paramos en memoriaPrincipal + nroMarco * tam_marco + offset 
@@ -410,16 +418,16 @@ uint32_t ejecutar_resize(t_pid_valor* tamanio_proceso){
 	return cod_op_a_devolver;
 }
 
-void escribir_memoria(char* direccion_real,char* dato,uint32_t size){
-	memcpy(direccion_real,dato,size);
+void escribir_memoria(void* direccion_fisica,void* dato,uint32_t size){
+	memcpy(direccion_fisica,dato,size);
 }
-void leer_memoria(char* direccion_real,char* buffer,uint32_t size){
-	memcpy(buffer,direccion_real,size);
+void leer_memoria(void* direccion_fisica,void* buffer,uint32_t size){
+	memcpy(buffer,direccion_fisica,size);
 }
+
 
 void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario,int conexion){
 	void* direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
-	
 	switch (tipo_acceso)
 	{
 	case PEDIDO_STDIN:
@@ -437,44 +445,52 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	
 			leer_memoria(direccion_real,acceso_espacio_usuario->registro_dato ,acceso_espacio_usuario->size_registro);
 			enviar_texto(acceso_espacio_usuario->registro_dato,RESPUESTA_STDOUT,conexion);
-			loguear("Se leyó: <%s>. Tamaño: <%d>",acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
+			//loguear("Se leyó: <%s>. Tamaño: <%d>",acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
 		break;
 	case LECTURA_MEMORIA:
-			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
-		//char* dato_consultado = malloc((int)bytes_restantes_en_frame);		
-		
-		if(acceso_espacio_usuario->size_registro==sizeof(uint8_t)){
-		uint8_t dato_1_byte;
-		leer_memoria(direccion_real,(char*)& dato_1_byte,acceso_espacio_usuario->size_registro);
-		char* dato_leido_1_byte=  string_itoa(dato_1_byte);
-		enviar_texto(dato_leido_1_byte,VALOR_LECTURA_MEMORIA,conexion);
-		loguear("Se leyó: <%d>. Tamaño: <%d>",dato_1_byte,acceso_espacio_usuario->size_registro);
-		}
-		
-		if(acceso_espacio_usuario->size_registro==sizeof(uint32_t)){
-		uint32_t dato_4_byte;
-		leer_memoria(direccion_real,(char*)& dato_4_byte,acceso_espacio_usuario->size_registro);
-		char* dato_leido_4_byte=  string_itoa(dato_4_byte);
-		enviar_texto(dato_leido_4_byte,VALOR_LECTURA_MEMORIA,conexion);
-		loguear("Se leyó: <%d>. Tamaño: <%d>",dato_4_byte,acceso_espacio_usuario->size_registro);
-		}
-		
+			void* dato_leido = malloc(acceso_espacio_usuario->size_registro);
+			leer_memoria(direccion_real,dato_leido,acceso_espacio_usuario->size_registro);
+			
+		/////BORRAR
+		memcpy(registro_puntero_recons_leer + size_leido_leer, dato_leido ,acceso_espacio_usuario->size_registro);
+		size_leido_leer = size_leido_leer + acceso_espacio_usuario->size_registro;
+		/////BORRAR
 
-		/* code */
+		/////BORRAR
+		loguear("Valor leido: <%d>",registro_reconstr_leer);
+		/////BORRAR
+			
+			
+
+			//dato_leido[acceso_espacio_usuario->size_registro] = '\0';
+			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
+			
+			
+			_enviar_stream_(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
+			//
+		//enviar_texto(dato_leido,VALOR_LECTURA_MEMORIA,conexion);
+			free(dato_leido);
+		//	free(dato_prueba);
 		break;
 	case ESCRITURA_MEMORIA:
-				
-		uint32_t registro_dato_int = atoi(acceso_espacio_usuario->registro_dato);
+		escribir_memoria(direccion_real,acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
 
-		escribir_memoria(direccion_real,(char*) &registro_dato_int,acceso_espacio_usuario->size_registro);
-		 loguear("PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d",
+
+
+	/////BORRAR
+	memcpy(registro_puntero_recons + size_leido, direccion_real ,acceso_espacio_usuario->size_registro);
+	size_leido = size_leido + acceso_espacio_usuario->size_registro;
+	/////BORRAR
+
+			/////BORRAR
+		loguear("Valor leido: <%d>",registro_reconstr);
+	/////BORRAR
+
+		loguear("PID: <%d> - Accion: <ESCRIBIR> - Direccion fisica: <%d> - Tamaño: <%d>",
 		 acceso_espacio_usuario->PID,
 		 acceso_espacio_usuario->direccion_fisica,
 		 acceso_espacio_usuario->size_registro);
-
 		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
-	
-		loguear("Se escribió: <%d>. Tamaño: <%d>",registro_dato_int,acceso_espacio_usuario->size_registro);
 		break;
 	default:
 		break;
