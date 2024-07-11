@@ -814,7 +814,8 @@ void io_handler_exec(t_pcb* pcb_recibido){
 
 	loguear("NOMBRE INT: %s", splitter[0]);
 
-	if(!existe_interfaz(splitter[0]/*Nombre*/){
+	if(!existe_interfaz(splitter[0]/*Nombre*/)){
+		loguear_warning("NO EXISTE EL NOMBRE"); /////BORRAR
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		pasar_a_exit(pcb_recibido);		
@@ -827,6 +828,8 @@ void io_handler_exec(t_pcb* pcb_recibido){
 
 	if(!admite_operacion(cod_op_io, tipo_interfaz)){
 		loguear("NO SE ADMITE OPERACION.");	
+		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
+		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_OPERATION>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		pasar_a_exit(pcb_recibido);
 		return;
 	}

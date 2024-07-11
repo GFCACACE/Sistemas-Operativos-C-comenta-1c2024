@@ -130,7 +130,7 @@ bool iniciar_conexion_kernel(){
 		loguear_error("No se pudo conectar kernel");
 		return false;
 	}
-	sprintf(texto,"%s %s",devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
+	sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
 	enviar_texto(texto,NUEVA_IO,conexion_kernel);
     return true;
 }
