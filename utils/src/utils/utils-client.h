@@ -31,6 +31,6 @@ void enviar_direcciones_proceso(t_direcciones_proceso* direcciones_proceso,op_co
 
 void enviar_stream(void*stream,int size,int socket,op_code codigo_operacion);
 void _enviar_stream_(void* texto,int size,int socket,op_code operacion);
-t_buffer* leer_memoria(t_direcciones_proceso* direcciones_fisicas_registros,int conexion);
+
 t_buffer* crear_buffer(size_t size);
 #endif /* utils_client_h */
