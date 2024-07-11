@@ -144,6 +144,13 @@ typedef struct t_direcciones_proceso
 	t_list* direcciones; 
 }t_direcciones_proceso;
 
+typedef struct t_direccion_fs
+{
+	char* nombre_archivo; 
+	uint32_t direccion;
+	uint32_t tamanio;
+	uint32_t puntero_archivo;
+}t_direccion_fs;
 
 typedef struct t_direcciones_registros
 {
@@ -200,6 +207,9 @@ t_id_valor* id_valor_new(uint32_t id,uint32_t valor);
 t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio);
 void direcciones_proceso_destroy(t_direcciones_proceso* direcciones_proceso);
 void loguear_direccion_proceso(t_direcciones_proceso* direcciones_proceso);
+t_direccion_fs* direccion_fs_create(char* nombre_archivo);
+void loguear_direccion_fs(t_direccion_fs* dir_fs);
+void direccion_fs_destroy(t_direccion_fs* dir_fs);
 t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t bytes_restantes,void* valor);
 t_direccion_registro* generar_direccion_registro(uint32_t direccion_fisica,uint32_t size_registro_pagina);
 /**

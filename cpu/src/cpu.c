@@ -965,9 +965,9 @@ int ejecutar_proceso_cpu()
 				paquete_destroy(paquete);
                 break;	
 			case DIRECCIONES_PROCESO:
-			  	t_direcciones_proceso *dir_proceso = recibir_direcciones_proceso(paquete); 
-				loguear_direccion_proceso(dir_proceso);
-				direcciones_proceso_destroy(dir_proceso);
+			  	t_direccion_fs *dir_fs = recibir_direccion_fs(paquete); 
+				loguear_direccion_fs(dir_fs);
+				direccion_fs_destroy(dir_fs);
 				paquete_destroy(paquete);
                 break;
             case -1:

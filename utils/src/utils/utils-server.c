@@ -239,3 +239,25 @@ t_direcciones_proceso* recibir_direcciones_proceso(t_paquete* paquete)
 
 	return direcciones_proceso;
 }
+
+
+
+t_direccion_fs* recibir_direccion_fs(t_paquete* paquete)
+{
+	t_buffer* buffer = paquete->buffer;
+	buffer->desplazamiento = sizeof(uint32_t);
+	t_direccion_fs* direccion_fs = malloc(sizeof(t_direccion_fs));
+	void _recibir(void* lugar_destino,size_t tam){
+		recibir_de_buffer(lugar_destino,buffer,tam);
+	}
+	
+	uint32_t size_nombre;
+	_recibir(&size_nombre,sizeof(uint32_t));
+	direccion_fs->nombre_archivo = malloc(size_nombre);
+	_recibir(direccion_fs->nombre_archivo,size_nombre);
+	_recibir(&direccion_fs->direccion,sizeof(uint32_t));
+	_recibir(&direccion_fs->tamanio,sizeof(uint32_t));
+	_recibir(&direccion_fs->puntero_archivo,sizeof(uint32_t));
+
+	return direccion_fs;
+}

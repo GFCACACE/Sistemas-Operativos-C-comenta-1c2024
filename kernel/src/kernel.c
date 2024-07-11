@@ -211,13 +211,14 @@ bool iniciar_recursos(){
 }
 
 bool prueba(){
-	t_direcciones_proceso* dir_proceso = direcciones_proceso_create(1,20);
-	for(int i =0;i<10;i++){
-		list_add(dir_proceso->direcciones,id_valor_new(i,2*i));
-	};
-	loguear_direccion_proceso(dir_proceso);
-	enviar_direcciones_proceso(dir_proceso,DIRECCIONES_PROCESO,cpu_dispatch);
-	direcciones_proceso_destroy(dir_proceso);
+	t_direccion_fs* dir_fs = direccion_fs_create("hola!");
+	dir_fs->direccion = 56;
+	dir_fs->tamanio = 25;
+	dir_fs->puntero_archivo = 9;
+
+	loguear_direccion_fs(dir_fs);
+	enviar_direccion_fs(dir_fs,DIRECCIONES_PROCESO,cpu_dispatch);
+	direccion_fs_destroy(dir_fs);
 	return true;
 }
 
