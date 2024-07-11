@@ -794,7 +794,7 @@ void io_fs_delete(uint32_t pid, char* nombre_archivo,char* nombre_interfaz){
 	enviar_texto(nombre_archivo,
 				IO_FS_DELETE,
 				conexion_io);
-	enviar_paquete_fs();
+	//enviar_paquete_fs();
 	loguear_warning("Peticion a IO enviada");
 }
 
