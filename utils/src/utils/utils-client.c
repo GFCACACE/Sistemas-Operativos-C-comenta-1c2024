@@ -401,5 +401,3 @@ void enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usua
 
 				  
 											
-
- 
