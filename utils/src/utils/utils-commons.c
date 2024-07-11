@@ -342,3 +342,6 @@ void loguear_direccion_proceso(t_direcciones_proceso* dir_proceso){
 	loguear("--------%s--------","fin direcciones");
 
 }
+
+
+
