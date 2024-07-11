@@ -936,12 +936,12 @@ void loguear_config(){
 void loguear_pids(t_queue* cola,pthread_mutex_t* mx_estado){
 
 	pthread_mutex_lock(mx_estado);
-	char lista_pids[1000]= "[";
-	char* pid_string;
+	char lista_pids[1000]= "[";	
 	void _agregar_a_lista(void* elem){
 		t_pcb* pcb = (t_pcb*)elem;
-		pid_string = string_itoa(pcb->PID);
+		char* pid_string = string_itoa(pcb->PID);
 		strcat(lista_pids, pid_string);
+		free(pid_string);
 		strcat(lista_pids, ",");
 	}
 	list_iterate(cola->elements, _agregar_a_lista);
