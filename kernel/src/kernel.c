@@ -27,7 +27,6 @@ int conexion_memoria, cpu_dispatch,cpu_interrupt, kernel_escucha, conexion_io;
 int cod_op_dispatch,cod_op_interrupt,cod_op_memoria;
 bool planificacion_detenida = false;
 bool eliminar_proceso_en_FIN_QUANTUM = false, exec_recibido = false;
-//bool eliminar_proceso_en_FIN_QUANTUM2 = false;
 int grado_multiprog_de_mas =0;
 
 t_config_kernel* config;
@@ -423,10 +422,10 @@ t_pcb_query* buscar_pcb_sin_bloqueo(uint32_t pid){
 	else
 		pcb_query->pcb = esta_en_exec(pid)?pcb_exec:NULL;
 		
-	if(pcb_query->pcb)
-		loguear_warning("PID ENCONTRADO: %d", pcb_query->pcb->PID);
-	else
-		loguear_warning("PID NO ENCONTRADO: %d",pid);
+	// if(pcb_query->pcb)
+	// 	loguear_warning("PID ENCONTRADO: %d", pcb_query->pcb->PID);
+	// else
+	// 	loguear_warning("PID NO ENCONTRADO: %d",pid);
 	//pcb_query->pcb = cola!=NULL? buscar_pcb_en_cola(cola,pid):pcb_exec;	
 	return pcb_query;
 }
@@ -463,7 +462,7 @@ bool iniciar_planificadores(){
 	
 	pthread_detach(thread_plp_new);
 	if (thread_plp_new == -1){
-		loguear_error("No se pudo iniciar el planificador de largo plazo.");
+		loguear_error("No se pudo iniciar el planificador de largo plazo de procesos nuevos.");
 		return false;
 	}
 	pthread_detach(thread_plp_exit);
@@ -473,7 +472,7 @@ bool iniciar_planificadores(){
 	}
 	pthread_detach(thread_pcp);
 	if (thread_pcp == -1){
-		loguear_error("No se pudo iniciar el planificador de corto plazo.");
+		loguear_error("No se pudo iniciar el planificador de corto plazo de procesos finalizados.");
 		return false;
 	}
 	return true;
@@ -486,25 +485,25 @@ t_queue* get_cola_pcb(t_pcb* pcb){
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
 	while(1){		
-			loguear_warning("plp_procesos_nuevos - sem_wait &sem_bin_new");
+			//loguear_warning("plp_procesos_nuevos - sem_wait &sem_bin_new");
 			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
-			loguear_warning("plp_procesos_nuevos - sem_wait &sem_bin_plp_procesos_nuevos_iniciado)");
+			//loguear_warning("plp_procesos_nuevos - sem_wait &sem_bin_plp_procesos_nuevos_iniciado)");
 			sem_wait(&sem_bin_plp_procesos_nuevos_iniciado); 
-			loguear_warning("plp_procesos_nuevos - antes sem_wait &sem_cont_grado_mp):%d",get_sem_grado_value());
+			//loguear_warning("plp_procesos_nuevos - antes sem_wait &sem_cont_grado_mp):%d",get_sem_grado_value());
 			sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
-			loguear_warning("plp_procesos_nuevos - después sem_wait &sem_cont_grado_mp):%d",get_sem_grado_value());
-			loguear_warning("plp_procesos_nuevos - cambio_de_estado)");
+			//loguear_warning("plp_procesos_nuevos - después sem_wait &sem_cont_grado_mp):%d",get_sem_grado_value());
+			//loguear_warning("plp_procesos_nuevos - cambio_de_estado)");
 			bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
 			if(proceso_new_a_ready){
-				loguear_warning("plp_procesos_nuevos - sem_post(&sem_bin_ready)");
+				//loguear_warning("plp_procesos_nuevos - sem_post(&sem_bin_ready)");
 				sem_post(&sem_bin_ready);
-				loguear_warning("plp_procesos_nuevos - GMPDMás_%d",grado_multiprog_de_mas);
+				//loguear_warning("plp_procesos_nuevos - GMPDMás_%d",grado_multiprog_de_mas);
 				loguear("El proceso ingresó correctamente a la lista de ready");
 				
 			}
 			else {
 				loguear_warning("No hay procesos en New para plp_procesos_nuevos");
-				loguear_warning("plp_procesos_nuevos - GMPDMás_%d",grado_multiprog_de_mas);
+				//loguear_warning("plp_procesos_nuevos - GMPDMás_%d",grado_multiprog_de_mas);
 				//sem_post(&sem_bin_new);
 			}	
 			sem_post(&sem_bin_plp_procesos_nuevos_iniciado); 
@@ -514,23 +513,23 @@ void plp_procesos_nuevos(){
 
 void plp_procesos_finalizados(){
 	while(1){
-			loguear_warning("plp_procesos_finalizados - sem_wait(&sem_bin_exit)");			
+			//loguear_warning("plp_procesos_finalizados - sem_wait(&sem_bin_exit)");			
 			sem_wait(&sem_bin_exit);
-			loguear_warning("plp_procesos_finalizados - sem_wait(&sem_bin_plp_procesos_finalizados_iniciado)");
+			//loguear_warning("plp_procesos_finalizados - sem_wait(&sem_bin_plp_procesos_finalizados_iniciado)");
 			sem_wait(&sem_bin_plp_procesos_finalizados_iniciado); 
-			loguear_warning("Se va a sacar un PCB de temp");
+			//loguear_warning("Se va a sacar un PCB de temp");
 			t_pcb* pcb = pop_estado_get_pcb(estado_temp,&mx_temp);
-			loguear_warning("Se sacó el PCB: %d de cola temp para eliminar.", pcb->PID );
+			//loguear_warning("Se sacó el PCB: %d de cola temp para eliminar.", pcb->PID );
 			eliminar_proceso_en_memoria(pcb);
-			loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
+			//loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
 			push_proceso_a_estado(pcb,estado_exit,&mx_exit);
-			loguear_warning("plp_procesos_finalizados - pthread_mutex_lock(&mx_grado_mult_de_mas);");	
+			//loguear_warning("plp_procesos_finalizados - pthread_mutex_lock(&mx_grado_mult_de_mas);");	
 			pthread_mutex_lock(&mx_grado_mult_de_mas);
 			if(grado_multiprog_de_mas>0)
-			{	loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas--");	
+			{	//loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas--");	
 				grado_multiprog_de_mas--;
-				loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
-				loguear_warning("plp_procesos_finalizados - get_sem_grado_value:%d",get_sem_grado_value());
+				//loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+				//loguear_warning("plp_procesos_finalizados - get_sem_grado_value:%d",get_sem_grado_value());
 				// if(grado_multiprog_de_mas==0){
 				// 	sem_post(&sem_cont_grado_mp);
 				// 	loguear_warning("plp_procesos_finalizados -sem_post(&sem_cont_grado_mp) grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
@@ -538,20 +537,20 @@ void plp_procesos_finalizados(){
 			}
 			else
 				{	
-					loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas<=0. Grado actual:%d",get_sem_grado_value());
+					//loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas<=0. Grado actual:%d",get_sem_grado_value());
 					if(grado_multiprog_de_mas<0)
 					{	grado_multiprog_de_mas++;
-						loguear_warning("plp_procesos_finalizados - Se aumentó el grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+						//loguear_warning("plp_procesos_finalizados - Se aumentó el grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
 					}
 					else{ 
 						sem_post(&sem_cont_grado_mp);
-						loguear_warning("plp_procesos_finalizados -sem_post(&sem_cont_grado_mp) grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
-						loguear_warning("plp_procesos_finalizados - sem_cont_grado_mp:%d",get_sem_grado_value());
+						//loguear_warning("plp_procesos_finalizados -sem_post(&sem_cont_grado_mp) grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+						//loguear_warning("plp_procesos_finalizados - sem_cont_grado_mp:%d",get_sem_grado_value());
 					}
 				}
-			loguear_warning("plp_procesos_finalizados - pthread_mutex_unlock(&mx_grado_mult_de_mas)");
+			//loguear_warning("plp_procesos_finalizados - pthread_mutex_unlock(&mx_grado_mult_de_mas)");
 			pthread_mutex_unlock(&mx_grado_mult_de_mas);
-			loguear_warning("plp_procesos_finalizados -sem_post(&sem_bin_plp_procesos_finalizados_iniciado)");
+			//loguear_warning("plp_procesos_finalizados -sem_post(&sem_bin_plp_procesos_finalizados_iniciado)");
 			sem_post(&sem_bin_plp_procesos_finalizados_iniciado); 
 		
 	}
@@ -743,7 +742,8 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 	t_recurso *recurso = obtener_recurso(peticion);
 	if(recurso == NULL){
 		pasar_a_exit(pcb_recibido);
-		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>",pcb_recibido->PID);
+		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
+		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_RESOURCE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 		return;
 	}
 	switch(cod_op_rec){
@@ -752,12 +752,12 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 		if(recurso->instancias < 0){
 			// queue_push(recurso->cola_procesos_esperando, pcb_recibido);
 			proceso_a_estado(pcb_recibido,recurso->cola_procesos_esperando,dictionary_get(estados_mutexes_dictionary,recurso->recurso));
-			loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <%s - BLOCKED>",pcb_recibido->PID,recurso->recurso);
+			loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>",pcb_recibido->PID);// LOG MINIMO Y OBLIGATORIO
+			loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,recurso->recurso); // LOG MINIMO Y OBLIGATORIO
 			//Bloquear proceso
 		}
 		else{
 			//Devolver el proceso a ejecutar
-			loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <READY>",pcb_recibido->PID);
 			asignar_recurso(pcb_recibido,recurso);
 			a_ready(pcb_recibido);
 		}
@@ -815,7 +815,8 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	loguear("NOMBRE INT: %s", splitter[0]);
 
 	if(!existe_interfaz(splitter[0]/*Nombre*/)){
-		loguear("NO EXISTE LA INTERFAZ.");	
+		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
+		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		pasar_a_exit(pcb_recibido);		
 		return;
 	}
@@ -831,7 +832,8 @@ void io_handler_exec(t_pcb* pcb_recibido){
 		return;
 	}
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
-
+	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
+	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,splitter[0]); // LOG MINIMO Y OBLIGATORIO
 	//proceso_estado();
 
 	switch(cod_op_io){
@@ -864,6 +866,8 @@ void fin_de_quantum_exec(t_pcb* pcb_recibido,t_queue* estado){
 
 	if(exec_recibido)
 	{	pasar_a_exit(pcb_recibido);	
+		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO			
+		loguear("Finaliza el proceso <%d> - Motivo: <SUCCESS>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 		sem_post(&sem_bin_controlar_quantum);
 		return;
 	}
@@ -872,6 +876,13 @@ void fin_de_quantum_exec(t_pcb* pcb_recibido,t_queue* estado){
 		pcb_recibido->quantum = config->QUANTUM;
 	
 	proceso_a_estado(pcb_recibido, estado_ready,&mx_ready); 
+	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <READY>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
+	loguear("Cola Ready / Ready Prioridad");
+	loguear_pids(estado_ready,&mx_ready);
+	if(es_vrr()){
+		loguear("Cola Ready Plus / Ready Plus Prioridad");
+		loguear_pids(estado_ready_plus,&mx_ready_plus);		
+	}
 	sem_post(&sem_bin_ready);
 	sem_post(&sem_bin_controlar_quantum);
 }
@@ -881,21 +892,29 @@ void gestionar_operacion_de_cpu(op_code cod_op,t_pcb* pcb_recibido,t_queue* esta
 		{
 			case FINALIZAR_PROCESO_POR_CONSOLA:
 				finalizar_proceso_consola_exec(pcb_recibido);
+				loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
+				loguear("Finaliza el proceso <%d> - Motivo: <INTERRUPTED_BY_USER>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 				break;
 			case CPU_EXIT:
+				loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
+				loguear("Finaliza el proceso <%d> - Motivo: <SUCCESS>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 				pasar_a_exit(pcb_recibido);			 
 				break;
 			case FIN_QUANTUM:
-				fin_de_quantum_exec(pcb_recibido,estado);			
+				fin_de_quantum_exec(pcb_recibido,estado);
+				// LOGS ADENTRO DE FUNCION
 				break;
 			case IO_HANDLER:
 				io_handler_exec(pcb_recibido);
+				// LOGS ADENTRO DE FUNCION
 				break;
 			case REC_HANDLER:
 				rec_handler_exec(pcb_recibido);
+				// LOGS ADENTRO DE FUNCION
 				break;
 			case OUT_OF_MEMORY:
-				loguear_error("Finaliza el proceso <%d> - Motivo: <OUT_OF_MEMORY> ", pcb_recibido->PID);
+				loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
+				loguear_error("Finaliza el proceso <%d> - Motivo: <OUT_OF_MEMORY> ", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 				pasar_a_exit(pcb_recibido);
 				break;
 			default:
@@ -966,6 +985,39 @@ void loguear_config(){
 	loguear("CANT. RECURSOS: %d", string_array_size(config->RECURSOS));
 }
 
+void loguear_pids(t_queue* cola,pthread_mutex_t* mx_estado){
+
+	pthread_mutex_lock(mx_estado);
+	char lista_pids[1000]= "[";
+	char* pid_string;
+	void _agregar_a_lista(void* elem){
+		t_pcb* pcb = (t_pcb*)elem;
+		pid_string = string_itoa(pcb->PID);
+		strcat(lista_pids, pid_string);
+		strcat(lista_pids, ",");
+	}
+	list_iterate(cola->elements, _agregar_a_lista);
+	size_t len = strlen(lista_pids);
+	if(len > 1) lista_pids[len - 1] = '\0';
+	strcat(lista_pids, "]");
+	loguear("%s",lista_pids);
+	//free(pid_string);
+	pthread_mutex_unlock(mx_estado);
+}
+// void imprimir_cola(t_queue *cola, const char *estado) {
+
+// 	void _imprimir_estado(void* elem){
+// 		t_pcb* pcb = (t_pcb*)elem;
+// 		 printf("| %-10d | %-20s | %-15s |\n", pcb->PID,pcb->path ,estado);
+// 	}
+//     printf("Estado: %s\n", estado);
+//     printf("| %-10s | %-20s | %-15s |\n", "PID", "Nombre", "Estado");
+//     printf("|------------|----------------------|-----------------|\n");
+
+// 	list_iterate(cola->elements,_imprimir_estado);
+
+//     printf("|------------|----------------------|-----------------|\n");
+// }
 
 char* leer_texto_consola(){
 	
@@ -1004,7 +1056,7 @@ void imprimir_valores_leidos(char** substrings){
 
 	int index=0;
 	void imprimir_valor(char* leido){
-		loguear("substring[%d] vale:%s\n",index++,leido);
+		//loguear("substring[%d] vale:%s\n",index++,leido);
 	};
 	string_iterate_lines(substrings,imprimir_valor);
 }
@@ -1082,12 +1134,12 @@ bool crear_proceso_en_memoria(t_pcb* pcb){
 	{
 	case CREACION_PROCESO:
 		char* mensaje = recibir_mensaje(conexion_memoria);
-		loguear("OK: %s",mensaje);
+		//("OK: %s",mensaje);
 		free(mensaje);
 		break;
 	case CREACION_PROCESO_FALLIDO:
 		char* mensaje_falla = recibir_mensaje(conexion_memoria);
-		loguear_error("No se pudo crear el proceso: %s",mensaje_falla);
+		//loguear_error("No se pudo crear el proceso: %s",mensaje_falla);
 		free(mensaje_falla);
 		return false;
 		break;
@@ -1101,7 +1153,7 @@ bool crear_proceso_en_memoria(t_pcb* pcb){
 // Se pueden unificar estas dos funciones en un solo Switch??????
 
 bool eliminar_proceso_en_memoria(t_pcb* pcb){
-	loguear_warning("eliminar_proceso_en_memoria");
+	//loguear_warning("eliminar_proceso_en_memoria");
 	enviar_pcb(pcb,ELIMINACION_PROCESO,conexion_memoria); // Enviar proceso a memoria para que inicialice 
 	
 	op_code operacion = recibir_operacion(conexion_memoria);
@@ -1109,7 +1161,7 @@ bool eliminar_proceso_en_memoria(t_pcb* pcb){
 	{
 	case ELIMINACION_PROCESO:
 		char* mensaje = recibir_mensaje(conexion_memoria);
-		loguear("OK: %s",mensaje);
+		//loguear("OK: %s",mensaje);
 		free(mensaje);
 		break;
 	case ELIMINACION_PROCESO_FALLIDO:
@@ -1139,7 +1191,7 @@ bool iniciar_proceso(char** parametros){
 		return validado;
 	};
 
-	loguear("iniciando proceso...");
+	//loguear("iniciando proceso...");
 	imprimir_valores_leidos(parametros);	
 
 	bool parametros_validos = parametros_iniciar_proceso_validos(parametros);
@@ -1147,7 +1199,7 @@ bool iniciar_proceso(char** parametros){
 	if(parametros_validos){
 	
 		char *path = string_duplicate(parametros[1]);
-		loguear("PATH: %s",path);
+		//loguear("PATH: %s",path);
 		t_pcb* pcb = pcb_create(path);   // Se crea el PCB
 		if(maneja_quantum())
 			pcb->quantum = config->QUANTUM;
@@ -1156,6 +1208,7 @@ bool iniciar_proceso(char** parametros){
 		if(proceso_creado){
 			push_proceso_a_estado(pcb,estado_new,&mx_new); //Pasa el PCB a New
 			sem_post(&sem_bin_new);
+			loguear("Se crea el proceso <%d> en NEW", pcb->PID);// LOG MINIMO Y OBLIGATORIO
 		}
 		else pcb_destroy(pcb);
 
@@ -1274,46 +1327,46 @@ void* hilo_multiprogramacion_ajuste(void* diferencia_ptr){
 	pthread_mutex_lock(&mx_grado_mult_de_mas);
 	grado_multiprog_de_mas = grado_multiprog_de_mas - diferencia;
 	free(diferencia_ptr);
-	if (diferencia > 0)
-		loguear("hilo_multiprogramacion_ajuste - El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
-	else loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
+	// if (diferencia > 0)
+	// 	loguear("hilo_multiprogramacion_ajuste - El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
+	// else loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
 	
 	if (grado_multiprog_de_mas < 0){
-		loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas. Negativo: %d",grado_multiprog_de_mas);
+		//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas. Negativo: %d",grado_multiprog_de_mas);
 		
 		for( ;grado_multiprog_de_mas < 0 ; grado_multiprog_de_mas++){	
-			loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas antes sem_post sem_cont_grado_mp:%d",grado_multiprog_de_mas);
+			//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas antes sem_post sem_cont_grado_mp:%d",grado_multiprog_de_mas);
 			sem_post(&sem_cont_grado_mp);
-			loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas después sem_post sem_cont_grado_mp:%d",grado_multiprog_de_mas);	
+			//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas después sem_post sem_cont_grado_mp:%d",grado_multiprog_de_mas);	
 		}
 		// if(grado_multiprog_de_mas > 0)
 		// 	grado_multiprog_de_mas = 0;
 	
-		loguear("hilo_multiprogramacion_ajuste - Se terminó de ajustar. grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
-		loguear("hilo_multiprogramacion_ajuste -get_sem_grado_value %d: ",get_sem_grado_value());
+		// loguear("hilo_multiprogramacion_ajuste - Se terminó de ajustar. grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+		// loguear("hilo_multiprogramacion_ajuste -get_sem_grado_value %d: ",get_sem_grado_value());
 		pthread_mutex_unlock(&mx_grado_mult_de_mas);
 	}
 	else {		
-		loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas. Positivo: %d",grado_multiprog_de_mas);
+		//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas. Positivo: %d",grado_multiprog_de_mas);
 		//pthread_mutex_lock(&mx_grado_mult_de_mas);
 		for( ;grado_multiprog_de_mas >0; grado_multiprog_de_mas--){
 			
-			loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas antes sem_wait sem_cont_grado_mp:%d",grado_multiprog_de_mas);
-			loguear_warning("hilo_multiprogramacion_ajuste - antes sem_wait sem_cont_grado_mp:%d",get_sem_grado_value());
+			//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas antes sem_wait sem_cont_grado_mp:%d",grado_multiprog_de_mas);
+			//loguear_warning("hilo_multiprogramacion_ajuste - antes sem_wait sem_cont_grado_mp:%d",get_sem_grado_value());
 			pthread_mutex_unlock(&mx_grado_mult_de_mas);
 			sem_wait(&sem_cont_grado_mp);
 			pthread_mutex_lock(&mx_grado_mult_de_mas);
 			// if(grado_multiprog_de_mas>0)
 			// 	grado_multiprog_de_mas--;	
-			loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas después sem_wait sem_cont_grado_mp:%d",grado_multiprog_de_mas);		
-			loguear_warning("hilo_multiprogramacion_ajuste - después sem_wait sem_cont_grado_mp:%d",get_sem_grado_value());
+			//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas después sem_wait sem_cont_grado_mp:%d",grado_multiprog_de_mas);		
+			//loguear_warning("hilo_multiprogramacion_ajuste - después sem_wait sem_cont_grado_mp:%d",get_sem_grado_value());
 		}		
 		for( ;grado_multiprog_de_mas < 0 ; grado_multiprog_de_mas++)
-		{	loguear("hilo_multiprogramacion_ajuste - Reajustamos - grado_multiprog_de_mas: %d",grado_multiprog_de_mas);
+		{	//loguear("hilo_multiprogramacion_ajuste - Reajustamos - grado_multiprog_de_mas: %d",grado_multiprog_de_mas);
 			sem_post(&sem_cont_grado_mp);
-			loguear("hilo_multiprogramacion_ajuste - Reajustamos - get_sem_grado_value: %d",get_sem_grado_value());
+			//loguear("hilo_multiprogramacion_ajuste - Reajustamos - get_sem_grado_value: %d",get_sem_grado_value());
 		}
-		loguear("hilo_multiprogramacion_ajuste - Se terminó de reducir. grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+		//loguear("hilo_multiprogramacion_ajuste - Se terminó de reducir. grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
 		pthread_mutex_unlock(&mx_grado_mult_de_mas);
 	}
 	return NULL;
@@ -1406,6 +1459,7 @@ void imprimir_cola(t_queue *cola, const char *estado) {
 
     printf("|------------|----------------------|-----------------|\n");
 }
+
 /*
 void imprimir_cola_recursos(){
 	char* nombre_cola=malloc(30);
@@ -1417,7 +1471,9 @@ void imprimir_cola_recursos(){
 		
 	}
 	free(nombre_cola);
-}*/
+}
+*/
+
 bool es_planificacion(t_alg_planificador algoritmo){
 	return config->ALGORITMO_PLANIFICACION.id == algoritmo;
 }
@@ -1509,7 +1565,7 @@ void ejecutar_planificacion(){
 void ejecutar_proceso(){
 
 	if(pcb_exec){
-		loguear("Se debe enviar el pcb en exec a la cpu PID: %d",pcb_exec->PID);
+		//loguear("Se debe enviar el pcb en exec a la cpu PID: %d",pcb_exec->PID);
 		enviar_pcb(pcb_exec,EJECUTAR_PROCESO,cpu_dispatch);
 	}else
 	 loguear_warning("No hay ningún proceso para enviar a ejecutar.");
@@ -1529,15 +1585,15 @@ t_pcb* ready_a_exec(){
 	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
 	t_pcb* pcb = NULL;
 	int size = queue_size(estado_ready);
-	loguear_warning("La cola ready tiene: %d",size);
+	//loguear_warning("La cola ready tiene: %d",size);
 	pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
-
+	loguear("PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->PID); // LOG MINIMO Y OBLIGATORIO
 	pcb_a_exec(pcb);
 	return pcb;
 }
 
 void planificacion_FIFO(){
-	loguear("Planificando por FIFO");
+	//loguear("Planificando por Fpcb_enviadoIFO");
 	ready_a_exec();
 }
 
@@ -1548,14 +1604,14 @@ void controlar_quantum (t_pcb* pcb_enviado){
 	{	eliminar_proceso_en_FIN_QUANTUM=false;
 		//eliminar_proceso_en_FIN_QUANTUM2 = false;
 		usleep(pcb.quantum *1000);	
-		loguear("PID: <%d> - Esperando sem_wait(&sem_bin_controlar_quantum)",pcb.PID);
+		//loguear("PID: <%d> - Esperando sem_wait(&sem_bin_controlar_quantum)",pcb.PID);
 		sem_wait(&sem_bin_controlar_quantum);	
-		loguear("PID: <%d> - &sem_bin_controlar_quantum activado",pcb.PID);
-		if(!eliminar_proceso_en_FIN_QUANTUM /*|| !eliminar_proceso_en_FIN_QUANTUM2  */){
+		//loguear("PID: <%d> - &sem_bin_controlar_quantum activado",pcb.PID);
+		if(!eliminar_proceso_en_FIN_QUANTUM){
 			pthread_mutex_lock(&mx_pcb_exec);
 			if(pcb_exec != NULL && pcb_exec->PID==pcb.PID){
 				enviar_texto("FIN_QUANTUM",FIN_QUANTUM,cpu_interrupt);
-				loguear("PID: <%d> - Desalojado por fin de Quantum",pcb.PID);
+				loguear("PID: <%d> - Desalojado por fin de Quantum",pcb.PID);// LOG MINIMO Y OBLIGATORIO
 				
 			}
 			pthread_mutex_unlock(&mx_pcb_exec);
@@ -1606,7 +1662,7 @@ void interrumpir_por_fin_quantum(){
 
 
 void planificacion_RR(){
-	loguear("Planificando por Round Robbin");
+	//loguear("Planificando por Round Robbin");
 	t_pcb* pcb = ready_a_exec();
 	if(pcb)
 	crear_hilo_quantum(pcb);
@@ -1619,20 +1675,21 @@ void planificacion_RR(){
 
 t_pcb*  ready_plus_a_exec(){
 	t_pcb* pcb = pop_estado_get_pcb(estado_ready_plus,&mx_ready_plus);
+	loguear("PID: <%d> - Estado Anterior: <READY_PLUS> - Estado Actual: <EXEC>",pcb->PID); // LOG MINIMO Y OBLIGATORIO
 	pcb_a_exec(pcb);
 	return pcb;
 }
 
 
 void planificacion_VRR(){
-	loguear("Planificando por Virtual Round Robbin");	
+	//loguear("Planificando por Virtual Round Robbin");	
 	t_pcb* pcb;
 	if(!queue_is_empty(estado_ready_plus))
 		pcb = ready_plus_a_exec();	
 	else
 		pcb = ready_a_exec();
 	if(pcb)
-	crear_hilo_quantum(pcb); // Agregar diferencia timestamp!!
+	crear_hilo_quantum(pcb);
 }
 
 ////// MODIFICACIONES DE ESTADO
@@ -1644,7 +1701,15 @@ bool cambio_de_estado(t_queue* estado_origen, t_queue* estado_destino,pthread_mu
 
  		t_pcb* pcb = queue_pop(estado_origen);
 		push_proceso_a_estado(pcb,estado_destino,sem_destino);
-
+		if (estado_origen == estado_new){
+			loguear("PID: <%d> - Estado Anterior: <NEW> - Estado Actual: <READY>",pcb->PID); // LOG MINIMO Y OBLIGATORIO
+			loguear("Cola Ready / Ready Prioridad");
+			loguear_pids(estado_ready,&mx_ready);
+			if(es_vrr()){
+				loguear("Cola Ready Plus / Ready Plus Prioridad");
+				loguear_pids(estado_ready_plus,&mx_ready_plus);		
+			}
+		}
 		pthread_mutex_unlock(sem_origen);
 	}
 	return transicion;
@@ -1805,7 +1870,7 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 	uint32_t pid = *pid_ptr;
 	free(pid_ptr);
 	bool eliminado = true;
-	loguear_warning("grado de multiprogramación antes del if: %d\n", get_sem_grado_value());
+	//loguear_warning("grado de multiprogramación antes del if: %d\n", get_sem_grado_value());
 	bloquear_mutex_colas();
 
 	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
@@ -1817,12 +1882,12 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 		eliminado = false;
 		loguear_warning("PCB NO ENCONTRADO");
 	}
-	else if((pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)){		
+	else if((pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)){	 //SI YA FUE ELIMINADO	
 		desbloquear_mutex_colas();
 		free(pcb_query);	
 		eliminado = false;		
 	}
-	else if(pcb_exec!=NULL && pcb_query->estado==NULL){
+	else if(pcb_exec!=NULL && pcb_query->estado==NULL){ // SI ESTA EN EXEC
 		sem_wait(&sem_bin_controlar_quantum);
 		exec_recibido = true;
 		enviar_texto("FINALIZAR PROCESO",FINALIZAR_PROCESO_POR_CONSOLA,cpu_interrupt);
@@ -1830,30 +1895,36 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 		eliminar_proceso_en_FIN_QUANTUM = true;	
 		desbloquear_mutex_colas();
 	}
-	else if(pcb_query->estado==estado_ready||pcb_query->estado==estado_ready_plus){
+	else if(pcb_query->estado==estado_ready||pcb_query->estado==estado_ready_plus){ // SI ESTA EN READY O READY+
 
 		sem_wait(&sem_bin_ready);	
 		
 		pasar_a_temp_sin_bloqueo(pcb_query);
+		if(pcb_query->estado==estado_ready_plus){
+			loguear("PID: <%d> - Estado Anterior: <READY_PLUS> - Estado Actual: <EXIT>", pcb_query->pcb->PID); // LOG MINIMO Y OBLIGATORIO
+		}else{
+			loguear("PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXIT>", pcb_query->pcb->PID); // LOG MINIMO Y OBLIGATORIO
+		}
 		free(pcb_query);
 		desbloquear_mutex_colas();
 		sem_post(&sem_bin_exit);
-				
+		
 	}	
-	else if(pcb_query->estado==estado_new){
+	else if(pcb_query->estado==estado_new){ //SI ESTA EN NEW
 		//sem_post(&sem_bin_new);
 		list_remove_element(estado_new->elements,pcb_query->pcb);
 		queue_push(estado_exit,pcb_query->pcb);
+		loguear("PID: <%d> - Estado Anterior: <NEW> - Estado Actual: <EXIT>", pcb_query->pcb->PID); // LOG MINIMO Y OBLIGATORIO
 		free(pcb_query);
-		loguear_warning("grado de multiprogramación antes del if: %d\n", get_sem_grado_value());
+		//loguear_warning("grado de multiprogramación antes del if: %d\n", get_sem_grado_value());
 		//eliminar_proceso_en_memoria(pcb_query->pcb);
-		loguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
+		//oguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
 		
 		pthread_mutex_lock(&mx_grado_mult_de_mas);
-		loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+		//loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
 		if(grado_multiprog_de_mas>0)
 			{	//grado_multiprog_de_mas--;
-				loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+				//loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
 				pthread_mutex_unlock(&mx_grado_mult_de_mas);
 				//loguear_warning("eliminar_proceso - New sem_wait(&sem_bin_new)"  );
 				//sem_wait(&sem_bin_new);
@@ -1862,19 +1933,19 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 			else {
 				if(grado_multiprog_de_mas<0){
 					sem_post(&sem_cont_grado_mp);
-					loguear_warning("eliminar_proceso - New sem_post get_sem_grado_value:%d",get_sem_grado_value());
+					//loguear_warning("eliminar_proceso - New sem_post get_sem_grado_value:%d",get_sem_grado_value());
 					grado_multiprog_de_mas++;
-					loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+					//loguear_warning("eliminar_proceso - New grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
 				}
 				pthread_mutex_unlock(&mx_grado_mult_de_mas);
-				loguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
+				//loguear_warning("eliminar_proceso - New - get_sem_grado_value:%d",get_sem_grado_value());
 			}	
-		loguear_warning("eliminar_proceso - desbloquear_mutex_colas()");
+		//loguear_warning("eliminar_proceso - desbloquear_mutex_colas()");
 		desbloquear_mutex_colas();	
 		
 	}	
-	else {	
-		
+	else {	// SI ESTA EN BLOCKED? 
+		loguear("PID: <%d> - Estado Anterior: <BLOCKED> - Estado Actual: <EXIT>", pcb_query->pcb->PID); // LOG MINIMO Y OBLIGATORIO
 		pasar_a_temp_sin_bloqueo(pcb_query);
 		free(pcb_query);
 		desbloquear_mutex_colas();
@@ -1882,7 +1953,7 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 	}
 	
 	if(eliminado)
-	loguear("Finaliza el proceso <%d> - Motivo: Finalizado por consola",pid);
+		loguear("Finaliza el proceso <%d> - Motivo <INTERRUPTED_BY_USER>",pid);// LOG MINIMO Y OBLIGATORIO
 	return eliminado;
 
 }
@@ -2117,10 +2188,20 @@ bool le_queda_quantum(t_pcb* pcb){
 
 void a_ready(t_pcb* pcb){
 	if(es_vrr()){
-		if(le_queda_quantum(pcb))
+		if(le_queda_quantum(pcb)){
 			push_proceso_a_estado(pcb,estado_ready_plus,&mx_ready_plus);
-		else
+			loguear("PID: <%d> - Estado Anterior: <BLOCKED> - Estado Actual: <READY_PLUS>", pcb->PID); // LOG MINIMO Y OBLIGATORIO
+			loguear("Cola Ready / Ready Prioridad");
+			loguear_pids(estado_ready,&mx_ready);
+			loguear("Cola Ready Plus / Ready Plus Prioridad");
+			loguear_pids(estado_ready_plus,&mx_ready_plus);		
+		}
+		else{
 			push_proceso_a_estado(pcb,estado_ready,&mx_ready);
+			loguear("PID: <%d> - Estado Anterior: <BLOCKED> - Estado Actual: <READY>", pcb->PID); // LOG MINIMO Y OBLIGATORIO
+			loguear("Cola Ready / Ready Prioridad");
+			loguear_pids(estado_ready,&mx_ready);
+		}
 	}
 	else
 		push_proceso_a_estado(pcb,estado_ready,&mx_ready);
@@ -2141,15 +2222,15 @@ void io_handler(int *ptr_conexion){
 	while(1){
 		int conexion = *ptr_conexion;
 		int cod_operacion = recibir_operacion(conexion);
-		loguear_warning("LLego el cod op %d", cod_operacion);
+		loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
 		char* mensaje = recibir_mensaje(conexion);
-		loguear_warning("Llego el mensaje %s", mensaje);
+		loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR
 		t_pcb* pcb;
 		char** splitter = string_array_new();
 		splitter = string_split(mensaje," ");
 		int pid_a_manejar = atoi(splitter[0]);
 		char* string_conexion = string_itoa(conexion);
-		loguear_warning("Antes del get del diccionario");
+		//loguear_warning("Antes del get del diccionario");
 		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
 		free(string_conexion);
 		switch (cod_operacion){
@@ -2171,7 +2252,7 @@ void io_handler(int *ptr_conexion){
 			//	pthread_mutex_unlock(interfaz -> mx_blocked);
 				// pop_estado_get_pcb()
 				if(removido){
-					loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+					//loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
 					a_ready(pcb);
 				}
 				free(pcb_query);

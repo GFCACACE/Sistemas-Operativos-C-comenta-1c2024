@@ -153,6 +153,7 @@ bool finalizar_consola(char**);
 void listar_comandos();
 t_list* get_comandos();
 void loguear_config();
+void loguear_pids(t_queue* cola,pthread_mutex_t* mx_estado);
 void finalizar_kernel();
 int ejecutar_comando_consola(char*params);
 bool ejecutar_scripts_de_archivo(char** parametros);
@@ -209,10 +210,10 @@ t_pcb* buscar_pcb_en_cola(t_queue* cola,uint32_t pid);
 t_pcb_query* buscar_pcb(uint32_t pid);
 t_list* get_estados();
 t_list* get_estados_inicializados();
-
+void controlar_quantum (t_pcb* pcb_enviado);
 void bloquear_mutex_colas();
 void desbloquear_mutex_colas();
-
+void devolver_recursos(t_pcb* pcb_saliente);
 void modificar_quantum_restante(t_pcb* pcb);
 void blocked_interfaz_destroy(void* elemento );
 bool maneja_quantum();
@@ -220,6 +221,7 @@ bool es_rr();
 void hilo_multiprogramacion(int);
 void* hilo_multiprogramacion_wrapper(void* arg);
 int get_sem_grado_value();
+
 #endif /* kernel.h*/
 
 

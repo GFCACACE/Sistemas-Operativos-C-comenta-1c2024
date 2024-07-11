@@ -202,15 +202,15 @@ bool iniciar_memoria_instrucciones(){
 	pthread_t thread_controlador_io;//Inicializo el thread
 
 	pthread_create(&thread_memoria_procesos,NULL, (void*)recibir_procesos,NULL); //KERNEL
-	pthread_create(&thread_memoria_instrucciones,NULL,(void*)buscar_instrucciones,NULL); //CPU
 	pthread_create(&thread_controlador_io,NULL,(void*)iniciar_conexion_io,NULL); //CONTROLAR IO
+	pthread_create(&thread_memoria_instrucciones,NULL,(void*)buscar_instrucciones,NULL); //CPU
 	
 	pthread_detach(thread_memoria_procesos);
 	if (thread_memoria_procesos == -1){
 		loguear_error("No se pudo iniciar la memoria de procesos.");
 		return false;
 	}
-	pthread_join(thread_controlador_io,NULL);
+	pthread_detach(thread_controlador_io);
 	if (thread_controlador_io == -1){
 		loguear_error("No se pudo iniciar el controlador de ios.");
 		return false;

@@ -175,7 +175,12 @@ void recibir_io(){
 	
 	while(1){
 		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
-		int cod_op_io = recibir_operacion(conexion_kernel);
+		int cod_op_io = recibir_operacion(conexion_kernel);		
+		if(cod_op_io==-1){
+			loguear_warning("Kernel se desconectó.");
+			free(peticion_io);
+			return;
+		}
 		peticion_io->cod_op = cod_op_io;
 		char* _peticion;
 		_peticion = recibir_mensaje(conexion_kernel);
@@ -185,10 +190,7 @@ void recibir_io(){
 		queue_push(cola_peticiones_io, peticion_io);
 		pthread_mutex_unlock(&mx_peticion);
 		sem_post(&sem_bin_cola_peticiones);
-
-
-		free(_peticion);
-		
+		free(_peticion);	
 	}
 
 }
@@ -243,9 +245,11 @@ int ejecutar_op_io()
                 break;	
             case -1:
 				loguear_error("Problemas en la comunicacion con el servidor. Cerrando conexion...");
+				free(peticion_io);
 				return EXIT_FAILURE;
 			default:
 				log_warning(logger, "Operacion desconocida. No quieras meter la pata");
+				free(peticion_io);
 				return EXIT_FAILURE;
 		}
 		free(peticion_io);
