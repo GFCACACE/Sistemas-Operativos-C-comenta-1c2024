@@ -221,6 +221,7 @@ bool es_rr();
 void hilo_multiprogramacion(int);
 void* hilo_multiprogramacion_wrapper(void* arg);
 int get_sem_grado_value();
+void limpiar_buffer(int cod_op_io);
 
 #endif /* kernel.h*/
 

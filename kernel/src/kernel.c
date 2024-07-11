@@ -806,6 +806,39 @@ bool admite_operacion(op_code cod, char* interfaz){
 	free(clave);
 	return false;
 }
+void limpiar_buffer(int cod_op_io){
+	switch(cod_op_io){
+		case IO_GEN_SLEEP:
+			recibir_operacion(cpu_dispatch); 
+			char* peticion = recibir_mensaje(cpu_dispatch);
+			break;
+		case IO_STDIN_READ:
+			t_paquete* paquete_ior = recibir_paquete(cpu_dispatch);
+			paquete_destroy(paquete_ior);
+			break;
+		case IO_STDOUT_WRITE:
+			t_paquete* paquete_iow = recibir_paquete(cpu_dispatch);
+			paquete_destroy(paquete_iow);
+			break;
+		case IO_FS_CREATE:
+			//TODO
+			break;
+		case IO_FS_DELETE:
+			//TODO
+			break;
+		case IO_FS_READ:
+			//TODO
+			break;
+		case IO_FS_TRUNCATE:
+			//TODO
+			break;
+		case IO_FS_WRITE:
+			//TODO
+			break;
+		default:			
+			break;
+	}
+}
 void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);		
 	char* peticion = recibir_mensaje(cpu_dispatch);
@@ -818,6 +851,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 		loguear_warning("NO EXISTE EL NOMBRE"); /////BORRAR
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
+		limpiar_buffer(cod_op_io);
 		pasar_a_exit(pcb_recibido);		
 		return;
 	}
@@ -830,6 +864,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 		loguear("NO SE ADMITE OPERACION.");	
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_OPERATION>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
+		limpiar_buffer(cod_op_io);
 		pasar_a_exit(pcb_recibido);
 		return;
 	}
