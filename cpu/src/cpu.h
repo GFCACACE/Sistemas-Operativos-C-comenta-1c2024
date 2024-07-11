@@ -107,7 +107,7 @@ int tlb_hit(uint32_t pid, uint32_t numero_pagina);
 bool actualizar_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame);
 bool reemplazo_tlb(t_tlb* registro_nuevo);
 
-t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion);
+
 //////////////////////////////////
 extern int tamanio_pagina;
 extern t_log* logger;

@@ -6,5 +6,5 @@
 #include<utils/utils-client.h>
 
 void escribir_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion);
-
+t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion);
 #endif /* utils_interfaz_h */
