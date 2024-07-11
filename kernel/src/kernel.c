@@ -1809,7 +1809,8 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 	bloquear_mutex_colas();
 
 	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
-	devolver_recursos(pcb_query->pcb);
+	if(pcb_query->pcb!=NULL)
+		devolver_recursos(pcb_query->pcb);
 	if(pcb_query->pcb==NULL){
 		free(pcb_query);
 		desbloquear_mutex_colas();
