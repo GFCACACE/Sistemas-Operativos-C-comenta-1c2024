@@ -6,11 +6,11 @@
 #include<commons/string.h>
 #include<math.h>
 #include<commons/collections/queue.h>
+#include<commons/collections/list.h>
 #include<commons/collections/dictionary.h>
-#include "utils/utils-server.h"
-#include "utils/utils-client.h"
 #include "utils/utils-config.h"
 #include "utils/utils-commons.h"
+#include "utils/utils-interfaz.h"
 #include <stdint.h>
 #define MODULO "cpu"
 typedef struct
@@ -107,6 +107,8 @@ t_tlb* crear_registro_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_
 int tlb_hit(uint32_t pid, uint32_t numero_pagina);
 bool actualizar_tlb(uint32_t PID, uint32_t numero_pagina, uint32_t numero_frame);
 bool reemplazo_tlb(t_tlb* registro_nuevo);
+
+
 //////////////////////////////////
 extern int tamanio_pagina;
 extern t_log* logger;

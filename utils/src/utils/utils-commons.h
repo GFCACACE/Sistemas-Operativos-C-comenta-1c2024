@@ -9,6 +9,7 @@
 #include<sys/socket.h>
 #include<netdb.h>
 #include<commons/collections/queue.h>
+#include<commons/collections/list.h>
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/string.h>
@@ -218,6 +219,7 @@ void loguear_direccion_fs(t_direccion_fs* dir_fs);
 void direccion_fs_destroy(t_direccion_fs* dir_fs);
 t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t bytes_restantes,void* valor);
 t_direccion_registro* generar_direccion_registro(uint32_t direccion_fisica,uint32_t size_registro_pagina);
+
 /**
  * @fn    list_find_index
  * @brief Retorna el índice del primer valor encontrado que haga que condition devuelva != 0
