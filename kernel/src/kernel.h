@@ -126,6 +126,7 @@ bool inicializar_comandos();
 
 bool iniciar_recursos();
 void liberar_recurso(t_pcb* pcb_recibido,t_recurso* recurso);
+void liberar_instancia(t_pcb* pcb_recibido,t_recurso* recurso);
 ///////////////////////
 char* leer_texto_consola();
 char *recibir_nombre(int);
@@ -186,9 +187,13 @@ bool iniciar_threads_io();
 void iniciar_conexion_io();
 
 void rec_handler_exec(t_pcb* pcb_recibido);
+void a_ready_sin_mutex(t_pcb* pcb);
+void asignar_recurso(t_pcb* pcb,t_recurso* recurso);
 void io_handler_exec(t_pcb* pcb_recibido);
 void io_handler(int* conexion);
 void io_gen_sleep(int pid,char** splitter);
+void io_fs_create(uint32_t pid, char* nombre_archivo,char* nombre_interfaz);
+void io_fs_delete(uint32_t pid, char* nombre_archivo,char* nombre_interfaz);
 void io_std(int pid,t_paquete* paquete, char* nombre_interfaz);
 void io_stdout(int pid, char** splitter);
 bool le_queda_quantum(t_pcb* pcb);
@@ -216,6 +221,7 @@ bool es_rr();
 void hilo_multiprogramacion(int);
 void* hilo_multiprogramacion_wrapper(void* arg);
 int get_sem_grado_value();
+void limpiar_buffer(int);
 
 #endif /* kernel.h*/
 

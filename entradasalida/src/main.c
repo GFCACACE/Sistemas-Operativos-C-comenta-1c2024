@@ -15,14 +15,18 @@ int main(int argc, char* argv[]) {
     }
     recibir_io();
 
-    //Si llega hasta acá es porque ya se ejecutó todo lo necesario
-    //Finalizamos memoria y salimos del programa
+    // //Si llega hasta acá es porque ya se ejecutó todo lo necesario
+    // //Finalizamos memoria y salimos del programa
     finalizar_io();
   
     // iniciar_log_config(argv[1],argv[2]);
     // iniciar_archivos_dialfs();
     // io_fs_create("fede_crack.txt");
     // io_fs_create("fede_crack_II.txt");
+    // io_fs_delete("fede_crack.txt");
+    // io_fs_create("fede_crack_III.txt");
+    // io_fs_delete("fede_crack_II.txt");
+    // loguear_bitmap(bitarray_bitmap);
     return EXIT_SUCCESS;
 }
 
