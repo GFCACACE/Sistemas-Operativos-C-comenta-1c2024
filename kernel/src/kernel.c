@@ -814,7 +814,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 
 	loguear("NOMBRE INT: %s", splitter[0]);
 
-	if(!existe_interfaz(splitter[0]/*Nombre*/)){
+	if(!existe_interfaz(splitter[0]/*Nombre*/){
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		pasar_a_exit(pcb_recibido);		
@@ -828,7 +828,6 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	if(!admite_operacion(cod_op_io, tipo_interfaz)){
 		loguear("NO SE ADMITE OPERACION.");	
 		pasar_a_exit(pcb_recibido);
-		
 		return;
 	}
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
@@ -846,7 +845,6 @@ void io_handler_exec(t_pcb* pcb_recibido){
 		case IO_STDOUT_WRITE:
 		//  io_stdout(pcb_recibido->PID, splitter);
 			break;
-
 		default:
 			pasar_a_exit(pcb_recibido);			
 			break;
@@ -854,6 +852,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	free(peticion);	
 	string_array_destroy(splitter);
 }
+
 
 void finalizar_proceso_consola_exec(t_pcb* pcb_recibido){
 	pasar_a_exit(pcb_recibido);	
@@ -2175,7 +2174,7 @@ char **recibir_io(int conexion){
 	}
 	else loguear_error("RECIBÍ VACÍO");
 	//free(mensaje);
-	//free(splitter);
+	free(splitter);
 	return NULL;
 }
 

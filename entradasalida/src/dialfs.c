@@ -7,7 +7,7 @@ char* bitmap;
 
 
 bool iniciar_archivos_dialfs(){
-    if(!strcmp("DIALFS",config->TIPO_INTERFAZ))
+    if(DIALFS==config->TIPO_INTERFAZ.id)
     {
     int i;
     
