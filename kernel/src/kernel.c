@@ -794,8 +794,22 @@ void io_fs_delete(uint32_t pid, char* nombre_archivo,char* nombre_interfaz){
 	enviar_texto(nombre_archivo,
 				IO_FS_DELETE,
 				conexion_io);
+	enviar_paquete_fs();
 	loguear_warning("Peticion a IO enviada");
 }
+
+// void io_fs_delete(uint32_t pid, char* nombre_archivo,char* nombre_interfaz){
+// 	loguear_warning("Entra al case");
+// 	loguear_warning("IO_FS_TRUNCATE -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, nombre_archivo);
+// 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
+// 	int conexion_io = *(int *)ptr_conexion;
+
+// 	enviar_texto(nombre_archivo,
+// 				IO_FS_TRUNCATE,
+// 				conexion_io);
+// 	enviar_paquete_fs();
+// 	loguear_warning("Peticion a IO enviada");
+// }
 
 void limpiar_buffer(int cod_op_io){
 	switch(cod_op_io){

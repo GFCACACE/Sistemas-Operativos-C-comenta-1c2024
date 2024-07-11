@@ -158,6 +158,12 @@ typedef struct t_direccion_registro
 	uint32_t size_registro_pagina;
 }t_direccion_registro;
 
+typedef struct t_operacion_fs{
+	char* nombre_archivo;
+	uint32_t registro_direccion;
+	uint32_t registro_tamanio;
+	uint32_t registro_puntero_archivo;
+}t_operacion_fs;
 
 t_direccion_registro* direccion_registro_new(uint32_t direccion,uint32_t size);
 

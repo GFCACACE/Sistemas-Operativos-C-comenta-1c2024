@@ -453,6 +453,14 @@ bool execute(t_pcb *pcb)
 		//liberar_param(PARAM3);
 		return true;
 	}
+	if(!strcmp(INSTID,"IO_FS_TRUNCATE")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor);
+		exe_io_fs_truncate(IO_FS_TRUNCATE, pcb,PARAM1,PARAM2,PARAM3);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
+		liberar_param(PARAM3);
+		return true;
+	}
 	if (es_exit(INSTID))
 	{	
 
@@ -466,13 +474,30 @@ bool execute(t_pcb *pcb)
 	return false;
 }
 // INSTRUCCIONES PARA IO_FS_CREATE E IO_FS_DELETE
-bool exe_io_fs(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param nombre_archivo){
+bool exe_io_fs(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_archivo){
+	
+	// char* nombre_archivo = _nombre_archivo.string_valor;
+	// t_operacion_fs* operacion = paquete_op_fs(nombre_archivo, NULL, NULL, NULL);  
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	enviar_texto(interfaz.string_valor,cod_op,kernel_dispatch);
-	enviar_mensaje(nombre_archivo.string_valor, kernel_dispatch);
+	enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
+}
+
+bool exe_io_fs_truncate(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param reg_tamanio){
+	
+	// char* nombre_archivo = _nombre_archivo.string_valor;
+	// t_operacion_fs* operacion = paquete_op_fs(nombre_archivo, NULL, NULL, NULL);  
+	(uint32_t)registros_cpu->PC++;
+	actualizar_contexto(pcb);
+	
+	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
+	enviar_texto(interfaz.string_valor,cod_op,kernel_dispatch);
+	// momentáneo... la idea es que estos datos se envien en un paquete.
+	enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
+	enviar_mensaje(reg_tamanio.string_valor, kernel_dispatch);
 }
 
 

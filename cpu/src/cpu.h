@@ -94,7 +94,7 @@ bool exe_exit(t_pcb*);
 bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 bool exe_io_fs(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_tamanio);
 bool exe_std(op_code cod_op, t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio);
-
+bool exe_io_fs_truncate(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param reg_tamanio);
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 /*MMU*/
