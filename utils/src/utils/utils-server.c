@@ -209,8 +209,9 @@ t_acceso_espacio_usuario* recibir_acceso_espacio_usuario(t_paquete* paquete)
 	//recibir_de_buffer(&acceso_espacio_usuario->bytes_restantes_en_frame,buffer,sizeof(uint32_t));
 	recibir_de_buffer(&acceso_espacio_usuario->size_registro,buffer,sizeof(uint32_t));
 
-	// if (acceso_espacio_usuario->size_registro)
-	recibir_de_buffer(acceso_espacio_usuario->registro_dato,buffer,strlen(acceso_espacio_usuario->registro_dato)+1);
+	if (acceso_espacio_usuario->size_registro)
+		recibir_de_buffer(acceso_espacio_usuario->registro_dato,buffer,acceso_espacio_usuario->size_registro);
+		//recibir_de_buffer(acceso_espacio_usuario->registro_dato,buffer,strlen(acceso_espacio_usuario->registro_dato)+1);
 	
 	return acceso_espacio_usuario;
 

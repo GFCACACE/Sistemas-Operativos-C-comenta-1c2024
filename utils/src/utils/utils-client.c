@@ -276,7 +276,8 @@ void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio
 	
 	*size = sizeof(uint32_t) * 3;
 	if (acceso_espacio_usuario->registro_dato!=NULL){
-	*size = *size +  (strlen(acceso_espacio_usuario->registro_dato)+1); 
+		// *size = *size +  (strlen(acceso_espacio_usuario->registro_dato)+1); 
+		*size = *size + acceso_espacio_usuario->size_registro;
 	}
 	t_buffer* buffer = crear_buffer(*size);
 	agregar_a_buffer(buffer, &acceso_espacio_usuario->PID, sizeof(uint32_t));
@@ -284,7 +285,7 @@ void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio
 	//agregar_a_buffer(buffer, &acceso_espacio_usuario->bytes_restantes_en_frame, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &acceso_espacio_usuario->size_registro, sizeof(uint32_t));
 	if( acceso_espacio_usuario->registro_dato!=NULL){
-	agregar_a_buffer(buffer, acceso_espacio_usuario->registro_dato, strlen(acceso_espacio_usuario->registro_dato)+1);
+	agregar_a_buffer(buffer, acceso_espacio_usuario->registro_dato, acceso_espacio_usuario->size_registro);
 	}
 	void * stream = buffer->stream;
 	free(buffer);

@@ -2371,7 +2371,7 @@ void io_handler(int *ptr_conexion){
 				default:
 					return;
 		}
-		free(mensaje);
+		free(pid_str);
 	}
 }
 
