@@ -199,7 +199,9 @@ bool iniciar_recursos(){
 	
 	for(int i=0;i < cantidad_recursos ;i++){
 		key = string_array_pop(config->RECURSOS);
-		value = atoi(string_array_pop(config->INSTANCIAS_RECURSOS));
+		char* instancia_recurso = string_array_pop(config->INSTANCIAS_RECURSOS);
+		value = atoi(instancia_recurso);
+		free(instancia_recurso);
 		if(string_contains(key,"]"))
 			key[string_length(key)-1]='\0';
 		loguear("RECURSO: %s - INSTANCIAS: %d",key,value);
@@ -339,11 +341,28 @@ void liberar_diccionario(t_dictionary* diccionario){
 	dictionary_destroy(diccionario);
 }
 
+void liberar_diccionario_mx_estados(){
+   t_dictionary* diccionario = estados_mutexes_dictionary;
+   t_list* nombres_recuros = get_nombres_recursos();
+	void _liberar(char*key,void* elem){
+		bool es_igual_a(void*elem){
+			return strcmp(key,elem)==0;
+		}
+		bool es_interfaz = dictionary_has_key(diccionario_nombre_conexion,key);
+		bool es_recurso =  list_any_satisfy(nombres_recuros,&es_igual_a);
+		
+		if(es_interfaz||es_recurso)
+		free(elem);
+	}
+	dictionary_iterator(diccionario,&_liberar);
+	liberar_diccionario(diccionario);
+	list_destroy(nombres_recuros);
+}
+
 
 void liberar_diccionario_colas(){
-	
-	liberar_diccionario(estados_dictionary);
-	liberar_diccionario(estados_mutexes_dictionary);
+	liberar_diccionario(estados_dictionary);		
+	liberar_diccionario_mx_estados();
 	liberar_diccionario(nombres_colas_dictionary);
 	liberar_diccionario(tipos_de_interfaces);
 
@@ -448,7 +467,12 @@ bool estado_inicializado(void* elem){
 /// @return 
 t_list* get_estados(){return dictionary_elements(estados_dictionary);}
 
-t_list* get_estados_inicializados(){return list_filter(dictionary_elements(estados_dictionary),&estado_inicializado);}
+t_list* get_estados_inicializados(){
+	t_list* estados = get_estados();
+	t_list* estados_filtrados = list_filter(estados,&estado_inicializado);
+	list_destroy(estados);
+	return estados_filtrados;
+}
 
 
 bool iniciar_planificadores(){
@@ -1803,7 +1827,9 @@ t_pcb* pop_estado_get_pcb(t_queue* estado,pthread_mutex_t* mx_estado){
 
 void config_destroy_kernel(t_config_kernel * config){
 	config_destroy(config->config);
+	if(config->INSTANCIAS_RECURSOS)
 	string_array_destroy(config->INSTANCIAS_RECURSOS);
+	if(config->RECURSOS)
 	string_array_destroy(config->RECURSOS);
 	free(config);
 }
@@ -2345,4 +2371,13 @@ void io_handler(int *ptr_conexion){
 		free(mensaje);
 	}
 	// envia a la interfaz correspodiente la operación que debe ejecutar
+}
+
+t_list* get_nombres_recursos(){	
+	void* _get_nombre(void* elem){
+		t_recurso* recurso = (t_recurso*)elem;
+		return recurso->recurso;
+	}
+	 
+	 return list_map(lista_recursos,&_get_nombre);
 }
