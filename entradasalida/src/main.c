@@ -21,12 +21,13 @@ int main(int argc, char* argv[]) {
   
     iniciar_log_config(argv[1],argv[2]);
     iniciar_archivos_dialfs();
-    // io_fs_create("fede_crack.txt");
-    // io_fs_truncate("fede_crack.txt",129);
-    // io_fs_create("fede_crack_II.txt");
+    io_fs_create("fede_crack.txt");
+    io_fs_create("fede_crack_II.txt");
+    io_fs_truncate("fede_crack.txt",129);
+    
     // io_fs_truncate("fede_crack_II.txt",255);
-    io_fs_delete("fede_crack.txt");
-    io_fs_create("fede_crack_III.txt");
+    // io_fs_delete("fede_crack.txt");
+    // io_fs_create("fede_crack_III.txt");
     // io_fs_delete("fede_crack_II.txt");
     loguear_bitmap(bitarray_bitmap);
     return EXIT_SUCCESS;

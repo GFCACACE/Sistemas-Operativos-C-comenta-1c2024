@@ -36,6 +36,8 @@ bool actualizar_bitmap(t_bitarray* bitmap);
 bool editar_archivo_metadata(char* path_metadata,t_dialfs_metadata* metadata);
 
 t_dialfs_metadata* create_metadata(char* nombre_archivo);
+t_dialfs_metadata* compactacion(t_dialfs_metadata* metadata);
+
 bool cargar_directorio_metadata();
 // t_bitarray* obtener_bitmap();
 int asignar_bloque_inicial();
@@ -45,6 +47,7 @@ extern FILE *archivo_bitmap,*archivo_metadata,*archivo_bloques;
 extern int tamanio_filesystem, tamanio_bitmap;
 extern void* bitmap, *data_bloques;
 extern char* path_bitmap, *path_bloques, *dir_metadata;
+extern char* swap;
 extern t_list* lista_archivos;
 extern t_bitarray* bitarray_bitmap;
 

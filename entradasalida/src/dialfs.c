@@ -1,24 +1,28 @@
 #include "dialfs.h"
 
 FILE *archivo_bitmap,*archivo_metadata,*archivo_bloques;
-int tamanio_filesystem, tamanio_bitmap;
+int tamanio_filesystem,tamanio_restante_filesystem, tamanio_bitmap;
 char* path_bitmap, *path_bloques, *dir_metadata;
 void* bitmap;
 void* data_bloques;
 t_bitarray* bitarray_bitmap;
 t_list* lista_archivos;
+char* swap;
 
 bool iniciar_archivos_dialfs(){
     if(DIALFS == config->TIPO_INTERFAZ.id)
     {
     int i;
+    swap = malloc(sizeof(tamanio_filesystem));
     tamanio_bitmap= ceil(((config->BLOCK_COUNT)/8.0));
     lista_archivos = list_create();
     dir_metadata = path_resolve(config->PATH_BASE_DIALFS,DIR_METADATA);
-    
-    tamanio_filesystem = config->BLOCK_SIZE * config->BLOCK_COUNT;
     path_bitmap = path_resolve(config->PATH_BASE_DIALFS,PATH_BITMAP);
     path_bloques = path_resolve(config->PATH_BASE_DIALFS,PATH_BLOQUES);
+
+    tamanio_filesystem = config->BLOCK_SIZE * config->BLOCK_COUNT;
+    tamanio_restante_filesystem = tamanio_filesystem;
+
     if(access(path_bloques,F_OK)!=0){
         archivo_bloques = fopen(path_bloques,"w");
         for(i=0;i<tamanio_filesystem;i++)
@@ -32,6 +36,7 @@ bool iniciar_archivos_dialfs(){
         for(i=0;i<config->BLOCK_COUNT;i++)
             bitarray_clean_bit(bitarray,i);
         fwrite(bitarray->bitarray,config->BLOCK_COUNT,1,archivo_bitmap);
+        bitarray_destroy(bitarray);
         fclose(archivo_bitmap);
         
     }
@@ -129,23 +134,106 @@ bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final){
 
 bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
 
+    //Le resto 1 byte al archivo para que no me cree bloques demás y que no reste negativo en caso de ser 0
     uint32_t tam_archivo = (metadata->tamanio_archivo == 0)? 0 : metadata->tamanio_archivo - 1;
     tamanio_final=(tamanio_final == 0)? 0: tamanio_final-1; 
+
+    //Calculo la posicion inicial y final de los bloques a asignar/desasignar
     uint32_t cantidad_bloques_inicial = tam_archivo/ config->BLOCK_SIZE;
     uint32_t cantidad_bloques_final = tamanio_final/ config->BLOCK_SIZE;
     uint32_t posicion_inicial=metadata->bloque_inicial + cantidad_bloques_inicial;
     uint32_t posicion_final= metadata->bloque_inicial + cantidad_bloques_final;
+
+    //Si se reduce el tamaño del archivo, le saco los bloques
     if(tamanio_final < metadata->tamanio_archivo){
         for(uint32_t i=posicion_final;i <= posicion_inicial;i++)
             bitarray_clean_bit(bitarray_bitmap,i);
-    }else if(tamanio_final > metadata->tamanio_archivo){
+    }
+    //Si se quiere ampliar el tamaño del archivo...
+    if(tamanio_final > metadata->tamanio_archivo){
+        //Primero tenemos que ver que haya espacio en el filesystem
+        if(tamanio_final > tamanio_restante_filesystem){
+            loguear_error("No hay espacio suficiente para ampliar el archivo <%s>",metadata->nombre_archivo);
+            return false;
+        }
+        //Luego que se le puedan asignar los bloques contiguos necesarios
+        for(uint32_t i=posicion_inicial;i <= posicion_final;i++){
+
+            //Si no se puede...
+            if(!bitarray_test_bit(bitarray_bitmap,i)){
+                //Compactamos
+                metadata = compactacion(metadata);
+                //Recalculamos las posiciones de los bloques
+                posicion_inicial=metadata->bloque_inicial + cantidad_bloques_inicial;
+                posicion_final= metadata->bloque_inicial + cantidad_bloques_final;
+                break;
+            }
+
+        }
+        //Luego agregamos los bloques 
         for(uint32_t i=posicion_inicial;i <= posicion_final;i++)
             bitarray_set_bit(bitarray_bitmap,i);
-    }else{
-        return true;
     }
+    
+    return true;
 
 }
+
+t_dialfs_metadata* compactacion(t_dialfs_metadata* metadata){
+
+
+    bool ordenar_por_bloque_inicial(void* elem1,void* elem2){
+        t_dialfs_metadata* metadata_sort_1 = (t_dialfs_metadata*) elem1;
+        t_dialfs_metadata* metadata_sort_2 = (t_dialfs_metadata*) elem2;
+        
+        return metadata_sort_1->bloque_inicial > metadata_sort_2->bloque_inicial;
+    };
+
+    void correr_archivos(void* elem){
+        t_dialfs_metadata* metadata_elem = (t_dialfs_metadata*) elem;
+        uint32_t tamanio_final_elem = (metadata_elem->tamanio_archivo==0)? 0: metadata->tamanio_archivo -1;
+        uint32_t bloque_final_elem= metadata_elem->bloque_inicial + (tamanio_final_elem / config->BLOCK_SIZE);
+        int bit_libre_inicial = asignar_bloque_inicial();
+        int bit_index = bit_libre_inicial;
+        void* puntero_destino;
+        void* puntero_origen;
+        int byte_destino,byte_origen;
+        if(bit_index < metadata_elem->bloque_inicial){
+            for(int bloque_index=(int)metadata_elem->bloque_inicial;bloque_index<=bloque_final_elem;bloque_index++){
+                byte_destino = (bit_index * config->BLOCK_SIZE);
+                byte_origen=(bloque_index * config->BLOCK_SIZE);
+                puntero_destino=&data_bloques[byte_destino];
+                puntero_origen=&data_bloques[byte_origen];
+                memcpy(puntero_destino,puntero_origen,config->BLOCK_SIZE);
+                bitarray_set_bit(bitarray_bitmap,bit_index);
+                bitarray_clean_bit(bitarray_bitmap,bloque_index);
+                bit_index++;
+            }
+
+            metadata_elem->bloque_inicial = (uint32_t) bit_libre_inicial;
+            editar_archivo_metadata(path_resolve(dir_metadata,metadata_elem->nombre_archivo),metadata_elem);
+        
+        }
+    };
+    uint32_t tamanio_final_metadata = (metadata->tamanio_archivo==0)? 0: metadata->tamanio_archivo -1;
+    uint32_t bloque_final_metadata= metadata->bloque_inicial + (tamanio_final_metadata / config->BLOCK_SIZE);
+    t_list* lista_ordenada = list_sorted(lista_archivos,&ordenar_por_bloque_inicial);
+    uint32_t i;
+    list_remove_element(lista_ordenada,metadata);
+    for(i=metadata->bloque_inicial;i<=bloque_final_metadata;i++){
+        bitarray_clean_bit(bitarray_bitmap,i);
+    }
+    memcpy(&swap, &data_bloques + (metadata->bloque_inicial * config->BLOCK_SIZE),metadata->tamanio_archivo);
+
+    list_iterate(lista_ordenada,&correr_archivos);
+    metadata->bloque_inicial = (uint32_t)asignar_bloque_inicial();
+    memcpy(&data_bloques + (metadata->bloque_inicial * config->BLOCK_SIZE),&swap,metadata->tamanio_archivo);
+    editar_archivo_metadata(path_resolve(dir_metadata,metadata->nombre_archivo),metadata);
+
+
+    return metadata;
+}
+
 
 bool editar_archivo_metadata(char* path_metadata,t_dialfs_metadata* metadata){
     archivo_metadata = fopen(path_metadata,"w");
