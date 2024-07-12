@@ -497,10 +497,6 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 	return true;
 }
 
-bool exe_fs_read{
-
-}
-
 
 bool exe_std(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_param registro_tamanio)
 {
