@@ -15,12 +15,7 @@ bool iniciar_archivos_dialfs(){
     tamanio_bitmap= ceil(((config->BLOCK_COUNT)/8.0));
     lista_archivos = list_create();
     dir_metadata = path_resolve(config->PATH_BASE_DIALFS,DIR_METADATA);
-    // DIR *dir = opendir(dir_metadata);
-    // struct dirent *entry;
-    // while ((entry = readdir(dir)) != NULL) {
-    //     t_dialfs_metadata* metadata=obtener_metadata_txt(entry->d_name);
-    //     list_add(lista_archivos,metadata);
-    // }
+    
     tamanio_filesystem = config->BLOCK_SIZE * config->BLOCK_COUNT;
     path_bitmap = path_resolve(config->PATH_BASE_DIALFS,PATH_BITMAP);
     path_bloques = path_resolve(config->PATH_BASE_DIALFS,PATH_BLOQUES);
@@ -38,7 +33,10 @@ bool iniciar_archivos_dialfs(){
             bitarray_clean_bit(bitarray,i);
         fwrite(bitarray->bitarray,config->BLOCK_COUNT,1,archivo_bitmap);
         fclose(archivo_bitmap);
+        
     }
+    cargar_directorio_metadata();
+
     int fd_bitmap = open(path_bitmap,O_RDWR);
     int fd_data = open(path_bloques,O_RDWR);
     bitmap = mmap(NULL, tamanio_bitmap, PROT_READ | PROT_WRITE, MAP_SHARED, fd_bitmap, 0);
@@ -49,15 +47,33 @@ bool iniciar_archivos_dialfs(){
 
 }
 
+bool cargar_directorio_metadata(){
+    DIR *dir = opendir(dir_metadata);
+    struct dirent *entry;
+    
+    while ((entry = readdir(dir)) != NULL) {
+      if(string_contains(entry->d_name,".txt")){
+        t_dialfs_metadata* metadata=obtener_metadata_txt(entry->d_name);
+        list_add(lista_archivos,metadata);
+      }
+    }
+    closedir(dir);
+}
+
 t_dialfs_metadata* obtener_metadata_txt(char* nombre_archivo){
     t_dialfs_metadata* metadata=malloc(sizeof(t_dialfs_metadata));
+    t_config* config_meta = config_create(path_resolve(dir_metadata,nombre_archivo));
 
+    metadata->bloque_inicial=(uint32_t)config_get_int_value(config_meta,"BLOQUE_INICIAL");
+    metadata->tamanio_archivo=(uint32_t)config_get_int_value(config_meta,"TAMANIO_ARCHIVO");
+    metadata->nombre_archivo=nombre_archivo;
 
-
+    config_destroy(config_meta);
     return metadata;
 }
 
 bool io_fs_create(char* nombre_archivo){
+    
     char* path_metadata =string_new();
     path_metadata = path_resolve(dir_metadata,nombre_archivo);
     
@@ -129,7 +145,7 @@ bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
 bool editar_archivo_metadata(char* path_metadata,t_dialfs_metadata* metadata){
     archivo_metadata = fopen(path_metadata,"w");
     char* txt = malloc(50);
-    sprintf(txt,"BLOQUE_INICIAL=%d TAMANIO_ARCHIVO=%d",metadata->bloque_inicial,metadata->tamanio_archivo);
+    sprintf(txt,"BLOQUE_INICIAL=%d\nTAMANIO_ARCHIVO=%d",metadata->bloque_inicial,metadata->tamanio_archivo);
     txt_write_in_file(archivo_metadata,txt);
     fclose(archivo_metadata);
     free(txt);

@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #define PATH_BITMAP "bitmap.dat"
 #define PATH_BLOQUES "bloques.dat"
@@ -35,6 +36,7 @@ bool actualizar_bitmap(t_bitarray* bitmap);
 bool editar_archivo_metadata(char* path_metadata,t_dialfs_metadata* metadata);
 
 t_dialfs_metadata* create_metadata(char* nombre_archivo);
+bool cargar_directorio_metadata();
 // t_bitarray* obtener_bitmap();
 int asignar_bloque_inicial();
 bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final);
