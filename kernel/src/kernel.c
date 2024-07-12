@@ -101,7 +101,7 @@ t_config_kernel* iniciar_config_kernel(char* path_config){
 
 	config_kernel->config = _config;
 	if(config_kernel->ALGORITMO_PLANIFICACION.planificar ==NULL)
-	{	config_kernel_destroy(config_kernel);
+	{	config_destroy_kernel(config_kernel);
 		return NULL;
 	}
 	return config_kernel;
@@ -629,6 +629,7 @@ void io_gen_sleep(int pid,char** splitter){
 				IO_GEN_SLEEP,
 				conexion_io);
 	loguear_warning("Peticion a IO enviada");
+	string_array_destroy(splitter);
 }
 
 void io_std(int pid,t_paquete* paquete_IO, char* nombre_interfaz){
@@ -806,24 +807,20 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 
 bool admite_operacion(op_code cod, char* interfaz){
 	char* clave = string_itoa(cod);
-	loguear("DICCIONARIO: %s", dictionary_get(tipos_de_interfaces, clave));
+	loguear("DICCIONARIO: %s", (char*)dictionary_get(tipos_de_interfaces, clave));
 	loguear("INTERFAZ: %s", interfaz);
-	char* key_d = string_new();
-	key_d = (char*)dictionary_get(tipos_de_interfaces, clave);
+	char* key_d = (char*)dictionary_get(tipos_de_interfaces, clave);
 	loguear("VALORRRR: %d", strcmp(key_d, clave));
-	if(strncmp(key_d, interfaz,4 ) == 0){
-		free(clave);
-		return true;
-	}
 	free(clave);
-	return false;
+
+	return strncmp(key_d, interfaz,4 ) == 0;
 }
 
 void limpiar_buffer(int cod_op_io){
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
 			recibir_operacion(cpu_dispatch); 
-			char* peticion = recibir_mensaje(cpu_dispatch);
+			recibir_mensaje(cpu_dispatch);
 			break;
 		case IO_STDIN_READ:
 			t_paquete* paquete_ior = recibir_paquete(cpu_dispatch);
@@ -857,9 +854,10 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_io = recibir_operacion(cpu_dispatch);		
 	char* nombre_interfaz = recibir_mensaje(cpu_dispatch);
 	//t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
-	char* tipo_interfaz = string_new();
+	//char* tipo_interfaz = string_new();
 	loguear_warning("NOMBRE DE LA INTERFAZ: %s", nombre_interfaz);
 	if(!existe_interfaz(nombre_interfaz)){
+		free(nombre_interfaz);
 		loguear_warning("NOMBRE INCORRECTO.");
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO	
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
@@ -872,7 +870,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 
 	
 	t_blocked_interfaz* interfaz = dictionary_get(diccionario_nombre_qblocked,nombre_interfaz);
-	tipo_interfaz = interfaz;
+	//char *tipo_interfaz = interfaz->tipo_de_interfaz;
 	proceso_a_estado(pcb_recibido, interfaz->estado_blocked, interfaz->mx_blocked);
 	loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <BLOCKED>", pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
 	loguear("PID: <%d> - Bloqueado por: <%s>", pcb_recibido->PID,nombre_interfaz); // LOG MINIMO Y OBLIGATORIO
@@ -881,6 +879,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 		loguear("Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO		
 		limpiar_buffer(cod_op_io);
 		pasar_a_exit(pcb_recibido);
+		free(nombre_interfaz);
 		return; 
 	}
 		//proceso_estado();
@@ -891,6 +890,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			recibir_operacion(cpu_dispatch);
 			char* peticion = recibir_mensaje(cpu_dispatch);
 			char** splitter = string_split(peticion," ");
+			free(peticion);
 			loguear_warning("ENTRO AL SWITCH, PID: %s",splitter[0]);
 			io_gen_sleep(pcb_recibido->PID,splitter);
 			break;
@@ -907,6 +907,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			pasar_a_exit(pcb_recibido);			
 			break;
 	}
+	free(nombre_interfaz);
 	//free(peticion);	
 	//string_array_destroy(splitter);
 }
@@ -1024,13 +1025,13 @@ void recibir_pcb_de_cpu(){
 }
 
 
-void config_kernel_destroy(t_config_kernel* config){
+// void config_kernel_destroy(t_config_kernel* config){
 
-	string_array_destroy(config->RECURSOS);
-	string_array_destroy(config->INSTANCIAS_RECURSOS);
-	config_destroy(config->config);
-	free(config);
-}
+// 	string_array_destroy(config->RECURSOS);
+// 	string_array_destroy(config->INSTANCIAS_RECURSOS);
+// 	config_destroy(config->config);
+// 	free(config);
+// }
 
 void loguear_config(){
 
@@ -1053,6 +1054,7 @@ void loguear_pids(t_queue* cola,pthread_mutex_t* mx_estado){
 		pid_string = string_itoa(pcb->PID);
 		strcat(lista_pids, pid_string);
 		strcat(lista_pids, ",");
+		free(pid_string);
 	}
 	list_iterate(cola->elements, _agregar_a_lista);
 	size_t len = strlen(lista_pids);
@@ -1111,8 +1113,7 @@ void agregar_comando(op_code_kernel code,char* nombre,char* params,bool(*funcion
 
 
 void imprimir_valores_leidos(char** substrings){
-
-	int index=0;
+	
 	void imprimir_valor(char* leido){
 		//loguear("substring[%d] vale:%s\n",index++,leido);
 	};
@@ -1642,7 +1643,7 @@ void pcb_a_exec(t_pcb* pcb){
 t_pcb* ready_a_exec(){	
 	sem_wait(&sem_bin_cpu_libre); // Verificamos que no haya nadie en CPU
 	t_pcb* pcb = NULL;
-	int size = queue_size(estado_ready);
+	//int size = queue_size(estado_ready);
 	//loguear_warning("La cola ready tiene: %d",size);
 	pcb = pop_estado_get_pcb(estado_ready,&mx_ready);
 	loguear("PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->PID); // LOG MINIMO Y OBLIGATORIO
@@ -2112,7 +2113,7 @@ void devolver_recursos(t_pcb* pcb_saliente){
 	t_list* lista_filtrada_recursos = list_filter(lista_recursos,&tiene_pcb_saliente);
 	if(!list_is_empty(lista_filtrada_recursos))
 		list_iterate(lista_filtrada_recursos,&restaurar_recursos);
-
+	list_destroy(lista_filtrada_recursos);
 }
 
 
@@ -2222,18 +2223,16 @@ t_recurso* obtener_recurso(char* recurso/*Nombre*/){
 }
 
 char **recibir_io(int conexion){
-	char* mensaje;
-	char** splitter = string_array_new();
 	
 	if(recibir_operacion(conexion) == NUEVA_IO){
-		mensaje = recibir_mensaje(conexion);
+		char* mensaje = recibir_mensaje(conexion);
 		loguear_warning("Llego el mensaje %s", mensaje);
-		splitter = string_split(mensaje," ");
+		char** splitter = string_split(mensaje," ");
+		free(mensaje);
 		return splitter;
 	}
 	else loguear_error("RECIBÍ VACÍO");
-	//free(mensaje);
-	free(splitter);
+	
 	return NULL;
 }
 
@@ -2284,9 +2283,9 @@ void io_handler(int *ptr_conexion){
 		char* mensaje = recibir_mensaje(conexion);
 		loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR
 		t_pcb* pcb;
-		char** splitter = string_array_new();
-		splitter = string_split(mensaje," ");
+		char** splitter = string_split(mensaje," ");
 		int pid_a_manejar = atoi(splitter[0]);
+		string_array_destroy(splitter);
 		char* string_conexion = string_itoa(conexion);
 		//loguear_warning("Antes del get del diccionario");
 		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);

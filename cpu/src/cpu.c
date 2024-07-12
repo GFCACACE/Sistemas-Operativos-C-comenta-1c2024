@@ -109,7 +109,7 @@ bool iniciar_conexion_memoria()
 	int codigo_operacion = recibir_operacion(conexion_memoria);
 	if(codigo_operacion == TAMANIO_PAGINA){
 		tamanio_pagina=atoi(recibir_mensaje(conexion_memoria));
-		loguear("TAM_PAGINA: %d B");
+		loguear("TAM_PAGINA: %d B", tamanio_pagina);
 	}
 
 	return true;
@@ -616,7 +616,8 @@ bool exe_copy_string(t_pcb* pcb,t_param tamanio){
 	uint32_t direccion_fisica_origen = mmu(pcb,registros_cpu->SI);
 	uint32_t direccion_fisica_destino = mmu(pcb,registros_cpu->DI);
 	//Falta Loop
-	t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(pcb->PID, direccion_fisica_destino,atoi(tamanio.string_valor),direccion_fisica_origen);
+	//t_acceso_espacio_usuario* acceso_espacio_usuario = 
+	 acceso_espacio_usuario_create(pcb->PID, direccion_fisica_destino,atoi(tamanio.string_valor),&direccion_fisica_origen);
 	registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	return true;
