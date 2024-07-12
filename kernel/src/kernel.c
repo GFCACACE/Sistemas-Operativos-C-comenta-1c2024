@@ -2308,12 +2308,13 @@ void io_handler(int *ptr_conexion){
 		int conexion = *ptr_conexion;
 		int cod_operacion = recibir_operacion(conexion);
 		loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
-		char* pid_str = recibir_mensaje(conexion);
-		loguear_warning("Llego el mensaje %s", pid_str); //COMENTAR
-		int pid_a_manejar = atoi(pid_str);
+		char* mensaje = recibir_mensaje(conexion);
+		loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR
 		t_pcb* pcb;
-		//char** splitter = string_split(mensaje," ");
-		//string_array_destroy(splitter);
+		char** splitter = string_split(mensaje," ");
+		int pid_a_manejar = atoi(splitter[0]);
+		loguear("PID RECIBIDO DE IO POST SPLITTER: %d",pid_a_manejar);
+		string_array_destroy(splitter);
 		char* string_conexion = string_itoa(conexion);
 		//loguear_warning("Antes del get del diccionario");
 		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
@@ -2371,7 +2372,7 @@ void io_handler(int *ptr_conexion){
 				default:
 					return;
 		}
-		free(pid_str);
+		free(mensaje);
 	}
 }
 

@@ -29,13 +29,25 @@ int main(int argc, char* argv[]) {
 
 // int main() {
 //     // Write C code here
-//     int t = 1;
-//     char* cadena = malloc(t);
-//     fgets(cadena,t,stdin);
-//     scanf("%s", cadena);
-//     printf("%s\n", cadena);
-//     printf("%d\n", sizeof(char));
-//     printf("%d", sizeof("hola"));
+//     char* texto = malloc(20);
+//     char* texto_a_enviar = malloc(4);
+//     //t_pid_valor pid_valor = direcciones_proceso.pid_size_total;
+//     texto = leer_texto_consola();
+//     while(strlen(texto)  < 4){
+//         //loguear_error("La cadena escrita es de %d bytes, debe ser de %d bytes.",(int)strlen(texto),4);
+//         printf("La cadena escrita es de %d bytes, debe ser de %d bytes.\n",(int)strlen(texto),4);
+//         texto = leer_texto_consola();
+//     }
+//     //loguear("TEXTO INGRESADO: %s",texto);}
+//     printf("TEXTO INGRESADO: %s \n",texto);
+//     memcpy(texto_a_enviar,texto,4);
+//     //loguear("TEXTO A ENVIAR: %s",texto_a_enviar);
+//     printf("TEXTO A ENVIAR: %s \n",texto_a_enviar);
+//     // int valor_falopa;
+//     // valor_falopa =(int) sizeof(texto_a_enviar);
+//     printf("Cantidad de bytes: %d \n",strlen(texto_a_enviar));
+//     free(texto);
+//     free(texto_a_enviar);
     
 //     return 0;
 // }
