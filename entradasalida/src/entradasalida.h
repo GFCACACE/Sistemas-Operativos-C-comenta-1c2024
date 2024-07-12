@@ -88,6 +88,4 @@ int ejecutar_op_io_dialfs();
 
 void finalizar_io();
 
-
-t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion);
 #endif
