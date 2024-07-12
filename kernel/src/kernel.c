@@ -777,6 +777,7 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 	int cod_op_rec = recibir_operacion(cpu_dispatch);		
 	char* peticion = recibir_mensaje(cpu_dispatch);
 	t_recurso *recurso = obtener_recurso(peticion);
+	free(peticion);
 	if(recurso == NULL){
 		pasar_a_exit(pcb_recibido);
 		loguear("PID: <%d> - Estado Anterior: <EXEC> - Estado Actual: <EXIT>",pcb_recibido->PID); // LOG MINIMO Y OBLIGATORIO
@@ -844,7 +845,8 @@ void limpiar_buffer(int cod_op_io){
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
 			recibir_operacion(cpu_dispatch); 
-			recibir_mensaje(cpu_dispatch);
+			char* mensaje = recibir_mensaje(cpu_dispatch);
+			free(mensaje);
 			break;
 		case IO_STDIN_READ:
 			t_paquete* paquete_ior = recibir_paquete(cpu_dispatch);
