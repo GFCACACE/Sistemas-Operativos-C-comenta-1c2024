@@ -31,4 +31,6 @@ void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio
 void _enviar_texto(char* texto,op_code operacion,int socket);
 void _enviar_stream_(void* texto,int size,int socket,op_code operacion);
 t_buffer* crear_buffer(size_t size);
+void enviar_direcciones_proceso(t_direcciones_proceso* direcciones_proceso,op_code operacion,int socket);
+void* serializar_direcciones_proceso(t_direcciones_proceso* direcciones_proceso,int* size);
 #endif /* utils_client_h */

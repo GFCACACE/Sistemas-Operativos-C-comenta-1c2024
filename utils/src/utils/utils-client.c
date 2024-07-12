@@ -362,6 +362,39 @@ void _enviar_stream_(void* texto,int size,int socket,op_code operacion){
 
 }
 
+void enviar_direcciones_proceso(t_direcciones_proceso* direcciones_proceso,op_code operacion,int socket){
+	int size;
+	void* stream = serializar_direcciones_proceso(direcciones_proceso,&size);									
+					 
+	enviar_stream(stream,size,socket,operacion);
+	free(stream);
+}
+void* serializar_direcciones_proceso(t_direcciones_proceso* direcciones_proceso,int* size){
+	
+	t_list* lista = direcciones_proceso->direcciones;
+	uint32_t cant_direcciones = list_size(lista);
+	*size = sizeof(uint32_t) * 4 + cant_direcciones * (2*sizeof(uint32_t));
+
+	t_buffer* buffer = crear_buffer(*size);
+	
+
+	agregar_a_buffer(buffer, &direcciones_proceso->pid_size_total.PID, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &direcciones_proceso->pid_size_total.valor, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t));
+	
+	for(int i=0;i<cant_direcciones;i++)
+	{	
+		t_id_valor* id_valor = (t_id_valor*)list_get(lista,i);
+		agregar_a_buffer(buffer, &id_valor->id, sizeof(uint32_t));
+		agregar_a_buffer(buffer, &id_valor->valor, sizeof(uint32_t));
+	
+	}
+	void * stream = buffer->stream;
+	free(buffer);
+	
+	return stream;
+}
+
 
 				  
 											

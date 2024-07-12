@@ -201,7 +201,7 @@ t_registros_cpu* inicializar_registros();
 void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen);
 void loguear_pid_value(t_pid_valor* tamanio_proceso);
 t_pid_valor* pid_value_create(uint32_t pid, uint32_t valor);
-t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t bytes_restantes,char* valor);
+t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t size_registro,void* valor);
 
 t_direccion_registro* direccion_registro_new(uint32_t direccion,uint32_t size);
 void direcciones_proceso_destroy(t_direcciones_proceso* direcciones_proceso);

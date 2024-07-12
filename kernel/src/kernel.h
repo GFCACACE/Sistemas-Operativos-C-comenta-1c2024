@@ -222,6 +222,9 @@ void hilo_multiprogramacion(int);
 void* hilo_multiprogramacion_wrapper(void* arg);
 int get_sem_grado_value();
 
+void limpiar_buffer(int cod_op_io);
+void io_std(int pid,t_paquete* paquete_IO, char* nombre_interfaz);
+
 #endif /* kernel.h*/
 
 

@@ -1,5 +1,13 @@
 #include "entradasalida.h"
 
+/////BORRAR
+int registro_reconstr;
+int registro_reconstr_leer;
+void* registro_puntero_recons = &registro_reconstr;
+void* registro_puntero_recons_leer = &registro_reconstr_leer;
+uint32_t  size_leido=0;
+uint32_t size_leido_leer=0;
+/////BORRAR
 
 int conexion_memoria, conexion_kernel;
 int cod_op_kernel,cod_op_memoria;
@@ -236,21 +244,21 @@ void recibir_io(){
 			free(_peticion);	
 		}
 
-		// else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT ){
-		// 	t_paquete* paquete = recibir_paquete(conexion_kernel);
-		// 	int cod_op_io = paquete->codigo_operacion;
-		// 	if(cod_op_io==-1){
-		// 		loguear_warning("Kernel se desconectó.");
-		// 		free(paquete);
-		// 		return;
-		// 	}
-		// 	t_direcciones_proceso* direcciones_proceso = recibir_direcciones_proceso(paquete);
-		// 	pthread_mutex_lock(&mx_peticion);
-		// 	queue_push(cola_peticiones_io, direcciones_proceso);
-		// 	pthread_mutex_unlock(&mx_peticion);
-		// 	sem_post(&sem_bin_cola_peticiones);
-		// 	free(paquete);	
-		// }
+		else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT ){
+			t_paquete* paquete = recibir_paquete(conexion_kernel);
+			int cod_op_io = paquete->codigo_operacion;
+			if(cod_op_io==-1){
+				loguear_warning("Kernel se desconectó.");
+				free(paquete);
+				return;
+			}
+			t_direcciones_proceso* direcciones_proceso = recibir_direcciones_proceso(paquete);
+			pthread_mutex_lock(&mx_peticion);
+			queue_push(cola_peticiones_io, direcciones_proceso);
+			pthread_mutex_unlock(&mx_peticion);
+			sem_post(&sem_bin_cola_peticiones);
+			free(paquete);	
+		}
 	}
 }
 
@@ -311,7 +319,13 @@ bool es_generica(){
 }
 
 int ejecutar_op_io_stdin(){
-
+	while(1){
+		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		sem_wait(&sem_bin_cola_peticiones);
+		pthread_mutex_lock(&mx_peticion);
+		peticion_io = queue_pop(cola_peticiones_io);
+		pthread_mutex_unlock(&mx_peticion);
+	}
 }
 int ejecutar_op_io_stdout(){
 
@@ -415,3 +429,60 @@ int ejecutar_op_io_generica(){
 // }
 
 
+t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion){
+	
+	int response;
+	t_acceso_espacio_usuario* acceso_espacio_usuario;
+	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
+	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
+	uint32_t size_leido=0;
+	uint32_t size_registro_pagina_actual;
+    t_buffer* dato_final_puntero = crear_buffer(pid_size_total.valor);
+	
+	/////BORRAR
+	int registro_reconstr;
+    void* registro_puntero_recons = &registro_reconstr;
+	/////BORRAR
+
+
+	void _enviar_direcciones_memoria(void* element){	
+			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
+			int size_registro_pagina_actual = direccion_registro->size_registro_pagina;
+			
+			
+			t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(
+			pid_size_total.PID,
+			direccion_registro->direccion_fisica,
+			direccion_registro->size_registro_pagina,
+			NULL);		
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion);
+			
+			free(acceso_espacio_usuario);
+			int response = recibir_operacion(conexion);
+				
+		//	if(response == VALOR_LECTURA_MEMORIA){
+				
+				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion);		
+
+				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
+				
+				/////BORRAR
+				//memcpy(registro_puntero_recons + size_leido, dato_recibido ,size_registro_pagina_actual);
+				/////BORRAR
+				
+				size_leido += size_registro_pagina_actual;
+	
+				
+			//	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
+		   // pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
+				free(dato_recibido);
+			//}
+			
+			
+		}
+		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
+		/////BORRAR
+		//loguear("Valor leido: <%d>",registro_reconstr);
+		/////BORRAR
+	return dato_final_puntero;
+}

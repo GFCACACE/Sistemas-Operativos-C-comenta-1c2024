@@ -498,22 +498,18 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 }
 
 bool exe_std(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_param registro_tamanio)
-{//IO_STDIN_READ TECLADO EAX EBX
-	char* texto = string_new();
+{
+	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
+	uint32_t tamanio = *(uint32_t*)registro_tamanio.string_valor;
+	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb,direccion_logica,tamanio);
 	
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
+	
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
-
-	uint32_t dir_logica = atoi(registro_direccion.string_valor);
-	uint32_t dir_fisica = mmu(pcb,dir_logica);
-	char* dir_fisica_str = string_itoa(dir_fisica);
+	enviar_texto(interfaz.string_valor,cod_op,kernel_dispatch);
+	enviar_direcciones_proceso(direcciones_fisicas_registros,cod_op,kernel_dispatch);
 	
-	sprintf(texto,"%s %s %s",interfaz.string_valor,dir_fisica_str,registro_tamanio.string_valor);
-	
-	enviar_texto(texto,cod_op,kernel_dispatch);
-	free(dir_fisica_str);
-	free(texto);
 	return true;
 }
 
@@ -524,6 +520,8 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
+	enviar_texto(interfaz.string_valor,IO_GEN_SLEEP,kernel_dispatch);
+	loguear_warning("Nombre interfaz: %s",interfaz.string_valor);
 	sprintf(texto,"%s %s",interfaz.string_valor,unidades_de_trabajo.string_valor);
 	enviar_texto(texto,IO_GEN_SLEEP,kernel_dispatch);
 	
@@ -756,63 +754,6 @@ t_direcciones_proceso* obtener_paquete_direcciones(t_pcb* pcb,uint32_t direccion
 	}
 	return direcciones_registros;
 } 
-t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion){
-	
-	int response;
-	t_acceso_espacio_usuario* acceso_espacio_usuario;
-	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
-	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
-	uint32_t size_leido=0;
-	uint32_t size_registro_pagina_actual;
-    t_buffer* dato_final_puntero = crear_buffer(pid_size_total.valor);
-	
-	/////BORRAR
-	int registro_reconstr;
-    void* registro_puntero_recons = &registro_reconstr;
-	/////BORRAR
-
-
-	void _enviar_direcciones_memoria(void* element){	
-			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
-			int size_registro_pagina_actual = direccion_registro->size_registro_pagina;
-			
-			
-			t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(
-			pid_size_total.PID,
-			direccion_registro->direccion_fisica,
-			direccion_registro->size_registro_pagina,
-			NULL);		
-			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion);
-			
-			free(acceso_espacio_usuario);
-			int response = recibir_operacion(conexion);
-				
-		//	if(response == VALOR_LECTURA_MEMORIA){
-				
-				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion);		
-
-				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
-				
-				/////BORRAR
-				//memcpy(registro_puntero_recons + size_leido, dato_recibido ,size_registro_pagina_actual);
-				/////BORRAR
-				
-				size_leido += size_registro_pagina_actual;
-	
-				
-			//	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
-		   // pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
-				free(dato_recibido);
-			//}
-			
-			
-		}
-		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
-		/////BORRAR
-		//loguear("Valor leido: <%d>",registro_reconstr);
-		/////BORRAR
-	return dato_final_puntero;
-}
 
 uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
 	uint32_t direccion_fisica;
