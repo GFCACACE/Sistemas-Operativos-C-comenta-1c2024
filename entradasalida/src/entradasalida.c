@@ -133,6 +133,7 @@ bool iniciar_log_config(char* path_config, char* nombre){
 bool iniciar_conexion_kernel(){
     conexion_kernel = crear_conexion(config->IP_KERNEL, config->PUERTO_KERNEL);
 	char* texto = string_new();
+
 	if(conexion_kernel ==-1){
 		
 		loguear_error("No se pudo conectar kernel");
@@ -145,13 +146,19 @@ bool iniciar_conexion_kernel(){
 
 
 bool iniciar_conexion_memoria(){
-    conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
-	if(conexion_memoria ==-1){
+	if(devuelve_tipo_en_char(config->TIPO_INTERFAZ.id) != "GENERICA"){
+		conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
+		char* texto = string_new();
 		
-		loguear_error("No se pudo conectar memoria");
-		return false;
-	} 
-    return true;
+		if(conexion_memoria ==-1){
+			loguear_error("No se pudo conectar memoria");
+			return false;
+		} 
+		sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
+		enviar_texto(texto,NUEVA_IO,conexion_memoria);
+		return true;
+	}
+	return true;
 }
 bool iniciar_semaforo_y_cola(){
 	sem_init(&sem_bin_cola_peticiones, 0, 0);
@@ -342,7 +349,7 @@ int ejecutar_op_io_stdout(){
 		direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 
-		io_stdout_write(direcciones_proceso);
+		io_stdout_write(direcciones_proceso, conexion_memoria);
 
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");

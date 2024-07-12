@@ -5,6 +5,7 @@ int registro_reconstr;
 int registro_reconstr_leer;
 void* registro_puntero_recons = &registro_reconstr;
 void* registro_puntero_recons_leer = &registro_reconstr_leer;
+t_dictionary* diccionario_interfaz_conexion;
 uint32_t  size_leido=0;
 uint32_t size_leido_leer=0;
 /////BORRAR
@@ -94,7 +95,7 @@ bool iniciar_logger_config(char* path_config){
 }
 
 bool iniciar_servidor_memoria(){
-
+		diccionario_interfaz_conexion = dictionary_create();
 		//Iniciamos el servidor con el puerto indicado en la config
 		memoria_escucha= iniciar_servidor(config_memoria->PUERTO_ESCUCHA);
 		if(memoria_escucha == -1){
@@ -131,6 +132,26 @@ bool iniciar_conexion_kernel(){
 		return true;
 }
 
+bool existe_interfaz(char* nombre_interfaz){
+	return (!dictionary_is_empty(diccionario_interfaz_conexion) && dictionary_has_key(diccionario_interfaz_conexion,nombre_interfaz));
+}
+
+char **recibir_io(int conexion){
+	
+	if(recibir_operacion(conexion) == NUEVA_IO){
+		char* mensaje = recibir_mensaje(conexion);
+		loguear_warning("Llego el mensaje %s", mensaje);
+		char** splitter = string_split(mensaje," ");
+		free(mensaje);
+		return splitter;
+	}
+	else loguear_error("RECIBÍ VACÍO");
+	
+	return NULL;
+}
+
+
+
 void iniciar_conexion_io(){
 	while (1){
 		bool aceptar_interfaz = true;
@@ -144,12 +165,18 @@ void iniciar_conexion_io(){
 			// return false;
 		}
 		//char* nombre_interfaz = malloc(16);
-		if(aceptar_interfaz){
+		char** splitter_io = recibir_io(*fd_conexion_ptr);
+		loguear_warning("NOMBRE DE LA IO: %s", splitter_io[0]);
+		loguear_warning("TIPO DE INTERFAZ: %s", splitter_io[1]);
+		char* nombre_interfaz = splitter_io[0];
+		char* tipo_interfaz = splitter_io[1]; 
+		if(aceptar_interfaz && !existe_interfaz(nombre_interfaz)){
 		//char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
 					
 			char* string_conexion = string_itoa(*fd_conexion_ptr);
+
 			//loguear("bienvenido %s",nombre_interfaz);
-			//dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
+			dictionary_put(diccionario_interfaz_conexion,nombre_interfaz,fd_conexion_ptr);
 			//
 			pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
 			//							

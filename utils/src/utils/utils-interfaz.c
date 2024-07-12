@@ -61,6 +61,7 @@
 
 t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion){
 	
+	// 
 	int response;
 	t_acceso_espacio_usuario* acceso_espacio_usuario;
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
