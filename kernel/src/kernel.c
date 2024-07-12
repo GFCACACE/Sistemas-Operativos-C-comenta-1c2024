@@ -2313,7 +2313,7 @@ void io_handler(int *ptr_conexion){
 		int pid_a_manejar = atoi(mensaje);
 		t_pcb* pcb;
 		char** splitter = string_split(mensaje," ");
-		int pid_a_manejar = atoi(splitter[0]);
+		
 		string_array_destroy(splitter);
 		char* string_conexion = string_itoa(conexion);
 		//loguear_warning("Antes del get del diccionario");

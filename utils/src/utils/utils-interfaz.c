@@ -8,7 +8,7 @@
 	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
 	uint32_t size_leido=0;
 	uint32_t size_registro_pagina_actual;
-    uint32_t registro_int = atoi(registro_dato);
+    int registro_int = atoi(registro_dato);
     void* registro_puntero = &registro_int;
 	int registro_reconstr;
     void* registro_puntero_recons = &registro_reconstr;

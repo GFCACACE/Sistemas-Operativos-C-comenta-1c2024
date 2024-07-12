@@ -539,16 +539,18 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	
 	t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
 	uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
-	int registro_reconstruido;
-	void* registro_reconstruido_puntero =  &registro_reconstruido;
+	
 
 	t_buffer* buffer_lectura = leer_memoria_completa(direcciones_fisicas_registros,conexion_memoria);
 
-	int registro_valor = 0;
-	void* registro_valor_puntero = &registro_valor;
-	memcpy(registro_valor_puntero,buffer_lectura->stream,buffer_lectura->size);
+	int registro_reconstruido;
+	void* registro_reconstruido_puntero =  &registro_reconstruido;
+	
+//	int registro_valor = 0;
+//	void* registro_valor_puntero = &registro_valor;
+//	memcpy(registro_valor_puntero,buffer_lectura->stream,buffer_lectura->size);
 
-	memcpy(registro_reconstruido_puntero,registro_valor_puntero,buffer_lectura->size);
+	memcpy(registro_reconstruido_puntero,buffer_lectura->stream,buffer_lectura->size);
 	
 	loguear("Valor post a reconstruir <%d>",registro_reconstruido);
 
@@ -622,18 +624,7 @@ bool exe_copy_string(t_pcb* pcb,t_param tamanio){
 	actualizar_contexto(pcb);
 	return true;
 }
-// bool exe_stdin_read(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
-// 	loguear_warning("STDIN_READ no implementado");
-// 	(uint32_t)registros_cpu->PC++;
-// 	actualizar_contexto(pcb);
-// 	return true;
-// }
-// bool exe_stdout_write(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio){
-// 	loguear_warning("STDOUT_WRITE no implementado");
-// 	(uint32_t)registros_cpu->PC++;
-// 	actualizar_contexto(pcb);
-// 	return true;
-// }
+
 bool exe_wait(t_pcb* pcb,t_param recurso){
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
@@ -770,14 +761,8 @@ uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
 	}
 	loguear("PID: <%d> - TLB MISS - Pagina: <%d>",pcb->PID,numero_pagina);
 	char* nro_frame = string_new();
-	// Agrego el pcb y le paso un proceso a la memoria para que pueda encontrar que proceso le está pidiendo la CPU
-	
 	
 	t_pid_valor* pid_nro_pagina= pid_value_create(pcb->PID,numero_pagina); //Vamos con esta conversion?
-	// FALTA LOGICA SEGUIR PIDIENDO FRAMES HASTA TENER UN FIN DE CADENA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	//Haciendo esta reutilización, capaz hay que cambiar el nombre de tamanio. Acá en tamanio le estamos pasando una página
-	
-	//Start For -> Devolver paquete 
 	
 	enviar_pid_value(pid_nro_pagina,ACCESO_TABLA_PAGINAS,conexion_memoria);
 	
@@ -794,7 +779,7 @@ uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
 	direccion_fisica = tamanio_pagina * (uint32_t)atoi(nro_frame) + desplazamiento;
 	actualizar_tlb(pcb->PID,numero_pagina,(uint32_t)atoi(nro_frame));
 
-	// End for
+	free(nro_frame);
 	return direccion_fisica;
 }
 
