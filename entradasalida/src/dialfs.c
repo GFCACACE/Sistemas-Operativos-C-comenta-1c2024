@@ -73,7 +73,7 @@ t_dialfs_metadata* obtener_metadata_txt(char* nombre_archivo){
 }
 
 bool io_fs_create(char* nombre_archivo){
-    
+
     char* path_metadata =string_new();
     path_metadata = path_resolve(dir_metadata,nombre_archivo);
     
@@ -116,12 +116,11 @@ bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final){
         return false;
     };
     char* path_metadata =string_new();
-    path_metadata = path_resolve(config->PATH_BASE_DIALFS,DIR_METADATA);
-    path_metadata = path_resolve(path_metadata,nombre_archivo);
-    t_dialfs_metadata* metadata_delete = (t_dialfs_metadata*)list_find(lista_archivos,&buscar_archivo);
-    truncar_bitmap(metadata_delete,tamanio_final);
-    metadata_delete->tamanio_archivo = tamanio_final;
-    editar_archivo_metadata(path_metadata,metadata_delete);
+    path_metadata = path_resolve(dir_metadata,nombre_archivo);
+    t_dialfs_metadata* metadata = (t_dialfs_metadata*)list_find(lista_archivos,&buscar_archivo);
+    truncar_bitmap(metadata,tamanio_final);
+    metadata->tamanio_archivo = tamanio_final;
+    editar_archivo_metadata(path_metadata,metadata);
 
     return true;
 
@@ -131,14 +130,20 @@ bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final){
 bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
 
     uint32_t tam_archivo = (metadata->tamanio_archivo == 0)? 0 : metadata->tamanio_archivo - 1;
-    uint32_t cantidad_bloques = tam_archivo/ config->BLOCK_SIZE;
-    uint32_t posicion_inicial=metadata->bloque_inicial + cantidad_bloques;
-    uint32_t posicion_final= metadata->bloque_inicial + tamanio_final;
-    for(uint32_t i=posicion_final;i <= posicion_inicial;i++)
-        bitarray_clean_bit(bitarray_bitmap,i);
-    
-    return true;
-
+    tamanio_final=(tamanio_final == 0)? 0: tamanio_final-1; 
+    uint32_t cantidad_bloques_inicial = tam_archivo/ config->BLOCK_SIZE;
+    uint32_t cantidad_bloques_final = tamanio_final/ config->BLOCK_SIZE;
+    uint32_t posicion_inicial=metadata->bloque_inicial + cantidad_bloques_inicial;
+    uint32_t posicion_final= metadata->bloque_inicial + cantidad_bloques_final;
+    if(tamanio_final < metadata->tamanio_archivo){
+        for(uint32_t i=posicion_final;i <= posicion_inicial;i++)
+            bitarray_clean_bit(bitarray_bitmap,i);
+    }else if(tamanio_final > metadata->tamanio_archivo){
+        for(uint32_t i=posicion_inicial;i <= posicion_final;i++)
+            bitarray_set_bit(bitarray_bitmap,i);
+    }else{
+        return true;
+    }
 
 }
 
