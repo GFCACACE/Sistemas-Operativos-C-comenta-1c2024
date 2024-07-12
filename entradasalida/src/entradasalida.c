@@ -334,7 +334,7 @@ int ejecutar_op_io_stdin(){
 		direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 
-		io_stdin_read(direcciones_proceso);
+		io_stdin_read(direcciones_proceso, conexion_memoria);
 
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDIN_READ.");
@@ -349,7 +349,7 @@ int ejecutar_op_io_stdout(){
 		direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 
-		io_stdout_write(direcciones_proceso, conexion_memoria);
+		io_stdout_write(direcciones_proceso,conexion_memoria);
 
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
