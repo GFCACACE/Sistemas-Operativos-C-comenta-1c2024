@@ -320,16 +320,34 @@ bool es_generica(){
 
 int ejecutar_op_io_stdin(){
 	while(1){
-		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
+		char* pid = string_itoa(direcciones_proceso->pid_size_total->PID);
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
-		peticion_io = queue_pop(cola_peticiones_io);
+		direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 
+		io_stdin_read(direcciones_proceso);
+
+		enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		loguear_warning("Termino el IO_STDIN_READ.");
 	}
 }
 int ejecutar_op_io_stdout(){
+	while(1){
+		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
+		char* pid = string_itoa(direcciones_proceso->pid_size_total->PID);
+		sem_wait(&sem_bin_cola_peticiones);
+		pthread_mutex_lock(&mx_peticion);
+		direcciones_proceso = queue_pop(cola_peticiones_io);
+		pthread_mutex_unlock(&mx_peticion);
 
+		io_stdout_write(direcciones_proceso);
+
+		enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		loguear_warning("Termino el IO_STDOUT_WRITE.");
+		free(direcciones_proceso);
+	}
 }
 
 int ejecutar_op_io_dialfs(){
@@ -357,7 +375,7 @@ int ejecutar_op_io_generica(){
 		loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]); // LOG MÍNIMO Y OBLIGATORIO
 		io_gen_sleep(atoi(splitter[1]));
 		//loguear_warning("Ya termino de dormir zzzzz");
-		enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
+		enviar_texto(splitter[0],TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_GEN_SLEEP.");
 
 		string_array_destroy(splitter);

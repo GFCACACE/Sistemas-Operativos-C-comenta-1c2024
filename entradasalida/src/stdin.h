@@ -3,7 +3,7 @@
 #include "entradasalida.h"
 
 
-void io_stdin_read(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio);
+void io_stdin_read(t_direcciones_proceso*);
 char* leer_texto_consola();
 
 #endif

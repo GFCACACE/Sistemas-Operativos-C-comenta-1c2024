@@ -2283,10 +2283,11 @@ void io_handler(int *ptr_conexion){
 		loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
 		char* mensaje = recibir_mensaje(conexion);
 		loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR
+		int pid_a_manejar = atoi(mensaje);
 		t_pcb* pcb;
-		char** splitter = string_array_new();
-		splitter = string_split(mensaje," ");
-		int pid_a_manejar = atoi(splitter[0]);
+		// char** splitter = string_array_new();
+		// splitter = string_split(mensaje," ");
+		
 		char* string_conexion = string_itoa(conexion);
 		//loguear_warning("Antes del get del diccionario");
 		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
@@ -2305,15 +2306,16 @@ void io_handler(int *ptr_conexion){
 				//mensaje = recibir_mensaje(conexion);
 				
 			//	pthread_mutex_lock(interfaz -> mx_blocked);
-				bool removido = list_remove_element(interfaz -> estado_blocked->elements,pcb);
+				bool proceso_sale_de_blocked = list_remove_element(interfaz -> estado_blocked->elements,pcb);
 			//	pcb = queue_pop(interfaz -> estado_blocked);
 			//	pthread_mutex_unlock(interfaz -> mx_blocked);
 				// pop_estado_get_pcb()
-				if(removido){
+				if(proceso_sale_de_blocked){
 					//loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
 					a_ready(pcb);
 				}
 				free(pcb_query);
+				free(pcb);
 
 				break;
 			
@@ -2345,5 +2347,4 @@ void io_handler(int *ptr_conexion){
 		}
 		free(mensaje);
 	}
-	// envia a la interfaz correspodiente la operación que debe ejecutar
 }
