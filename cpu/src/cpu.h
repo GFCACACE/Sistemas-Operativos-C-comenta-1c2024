@@ -6,8 +6,7 @@
 #include<commons/string.h>
 #include<math.h>
 #include<commons/collections/dictionary.h>
-#include "utils/utils-server.h"
-#include "utils/utils-client.h"
+#include "utils/utils-interfaz.h"
 #include "utils/utils-config.h"
 #include "utils/utils-commons.h"
 #include <stdint.h>
@@ -125,6 +124,4 @@ t_direcciones_proceso* obtener_paquete_direcciones(t_pcb* pcb,uint32_t direccion
 uint32_t obtener_numero_pagina(uint32_t direccion_logica);
 uint32_t obtener_desplazamiento(uint32_t direccion_logica,uint32_t numero_pagina);
 uint32_t obtener_cantidad_paginas(uint32_t desplazamiento,uint32_t size_registro);
-t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion);
-
 #endif //cpu_h

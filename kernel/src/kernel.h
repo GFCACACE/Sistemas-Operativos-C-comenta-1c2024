@@ -102,7 +102,7 @@ typedef struct
 
 
 t_config_kernel* iniciar_config_kernel(char*);
-void config_kernel_destroy(t_config_kernel*);
+void config_destroy_kernel(t_config_kernel*);
 extern t_log* logger;
 extern t_config_kernel* config;
 extern t_dictionary* diccionario_conexiones_io, *diccionario_struct_io;
@@ -224,6 +224,7 @@ int get_sem_grado_value();
 
 void limpiar_buffer(int cod_op_io);
 void io_std(int pid,t_paquete* paquete_IO, char* nombre_interfaz);
+t_list* get_nombres_recursos();
 
 #endif /* kernel.h*/
 

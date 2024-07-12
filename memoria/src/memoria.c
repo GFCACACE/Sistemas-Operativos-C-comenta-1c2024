@@ -181,7 +181,7 @@ void io_handler(int *ptr_conexion){
 			/*ENVIAR RESPUESTA DE OK A I/O*/
 			break;
 		case PEDIDO_STDOUT:
-			/*
+			
 			/*EFECTUAR PEDIDO*/
 			t_acceso_espacio_usuario* acceso_espacio_usuario_stdout = recibir_acceso_espacio_usuario(paquete);		
 
