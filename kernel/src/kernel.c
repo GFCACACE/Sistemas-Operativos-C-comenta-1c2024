@@ -2341,7 +2341,6 @@ void io_handler(int *ptr_conexion){
 					a_ready(pcb);
 				}
 				free(pcb_query);
-				free(pcb);
 
 				break;
 			

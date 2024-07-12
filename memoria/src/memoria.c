@@ -204,7 +204,7 @@ void io_handler(int *ptr_conexion){
 			
 			/*EFECTUAR PEDIDO*/
 			t_acceso_espacio_usuario* acceso_espacio_usuario_stdin = recibir_acceso_espacio_usuario(paquete);					
-			acceder_a_espacio_usuario(PEDIDO_STDIN,acceso_espacio_usuario_stdin,conexion_io);
+			acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_stdin,conexion_io);
 			/*ENVIAR RESPUESTA DE OK A I/O*/
 			break;
 		case PEDIDO_STDOUT:
@@ -214,7 +214,7 @@ void io_handler(int *ptr_conexion){
 
 			//FUNCION QUE RESUELVA ACCESO ESPACIO USUARIO
 			
-			acceder_a_espacio_usuario(PEDIDO_STDOUT,acceso_espacio_usuario_stdout,conexion_io);
+			acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_stdout,conexion_io);
 			
 			
 			
