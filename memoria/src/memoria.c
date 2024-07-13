@@ -1,13 +1,13 @@
 #include "memoria.h"
 
 /////BORRAR
-int registro_reconstr;
-int registro_reconstr_leer;
-void* registro_puntero_recons = &registro_reconstr;
-void* registro_puntero_recons_leer = &registro_reconstr_leer;
+//int registro_reconstr;
+//int registro_reconstr_leer;
+//void* registro_puntero_recons = &registro_reconstr;
+//void* registro_puntero_recons_leer = &registro_reconstr_leer;
 t_dictionary* diccionario_interfaz_conexion;
-uint32_t  size_leido=0;
-uint32_t size_leido_leer=0;
+//uint32_t  size_leido=0;
+//uint32_t size_leido_leer=0;
 /////BORRAR
 
 /* Cuando tengamos que recorrer la memoria, o hacer algo,
@@ -113,8 +113,7 @@ bool iniciar_conexion_cpu(){
 			loguear_error("Falló la conexión con cpu");
 			return false;
 		}
-		char* tamanio_pagina = string_new();
-		sprintf(tamanio_pagina,"%d",config_memoria->TAM_PAGINA);
+		char* tamanio_pagina = string_itoa(config_memoria->TAM_PAGINA);
 		enviar_texto(tamanio_pagina,TAMANIO_PAGINA,conexion_cpu);
 		free(tamanio_pagina);
 		return true;
@@ -169,7 +168,7 @@ void iniciar_conexion_io(){
 		loguear_warning("NOMBRE DE LA IO: %s", splitter_io[0]);
 		loguear_warning("TIPO DE INTERFAZ: %s", splitter_io[1]);
 		char* nombre_interfaz = splitter_io[0];
-		char* tipo_interfaz = splitter_io[1]; 
+		//char* tipo_interfaz = splitter_io[1]; 
 		if(aceptar_interfaz && !existe_interfaz(nombre_interfaz)){
 		//char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
 					
@@ -308,9 +307,16 @@ void proceso_destroy(void* elemento){
 
 	t_proceso* proceso = (t_proceso*)elemento;
 	if(proceso){
-		list_destroy(proceso->instrucciones);
+		if(proceso->instrucciones!=NULL){
+			if(list_is_empty(proceso->instrucciones))
+				list_destroy(proceso->instrucciones);
+			else
+			list_destroy_and_destroy_elements(proceso->instrucciones,free);
+		}
+		if(proceso->pcb)
 		pcb_destroy(proceso->pcb);
-		list_destroy_and_destroy_elements(proceso->tabla_paginas,free);
+		if(proceso->tabla_paginas)
+			list_destroy_and_destroy_elements(proceso->tabla_paginas,free);
 		free(proceso);
 	}
 
@@ -339,19 +345,22 @@ t_list* get_instrucciones_memoria(char* archivo){
 }
 
 char *proxima_instruccion_de(t_pcb *pcb){
-	t_proceso* proceso = dictionary_get(procesos,string_itoa(pcb->PID));
-	return list_get(proceso->instrucciones,pcb->program_counter);
 
+	t_proceso* proceso = get_proceso(pcb->PID);
+	return list_get(proceso->instrucciones,pcb->program_counter);
 }
 
 
 void enviar_proxima_instruccion (t_pcb* pcb){
 	char* instruccion = proxima_instruccion_de(pcb); 
+	loguear("Próxima instrucción PID <%d>: <%s>",pcb->PID,instruccion);
 	enviar_mensaje(instruccion,conexion_cpu);
 	pcb_destroy(pcb);	
 }
 void efectuar_retardo(){
+	loguear("Esperando %d milisegundos de retardo...",config_memoria->RETARDO_RESPUESTA);
 	usleep(config_memoria->RETARDO_RESPUESTA*1000);
+	loguear("Retardo cumplido");
 }
 
 int buscar_instrucciones(){
@@ -393,9 +402,11 @@ int buscar_instrucciones(){
 			break;
             case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");		
+			paquete_destroy(paquete);
 			return EXIT_FAILURE;
 		    default:
 			log_warning(logger,"Operación desconocida. No quieras meter la pata");	
+			paquete_destroy(paquete);
 			return EXIT_FAILURE;
 		}
 		paquete_destroy(paquete);
@@ -408,8 +419,8 @@ int buscar_instrucciones(){
 // result= 8.2
 // 8*cantFRames = 1024
 void acceder_tabla_de_paginas(t_pid_valor* pid_pagina){
-		t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(pid_pagina->PID));
-		proceso_en_memoria = dictionary_get(procesos,string_itoa(pid_pagina->PID));
+
+		t_proceso* proceso_en_memoria = get_proceso(pid_pagina->PID);	
 		t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
 		int nro_pagina = pid_pagina->valor;
 		int frame = obtener_frame(tabla_de_paginas_proceso, nro_pagina);
@@ -421,7 +432,7 @@ void acceder_tabla_de_paginas(t_pid_valor* pid_pagina){
 
 uint32_t ejecutar_resize(t_pid_valor* tamanio_proceso){
 	int cod_op_a_devolver = RESIZE_OK;
-	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(tamanio_proceso->PID));
+	t_proceso* proceso_en_memoria =get_proceso(tamanio_proceso->PID);
 	t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
 	int pag_solictadas_respecto_actual = diferencia_tamaño_nuevo_y_actual(tabla_de_paginas_proceso,tamanio_proceso->valor);   // Devuelve la diferencia entre la cantidad de paginas solicitadas y las que actualmente tiene el proceso
 	
@@ -479,12 +490,12 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 			leer_memoria(direccion_real,dato_leido,acceso_espacio_usuario->size_registro);
 			
 		/////BORRAR
-		memcpy(registro_puntero_recons_leer + size_leido_leer, dato_leido ,acceso_espacio_usuario->size_registro);
-		size_leido_leer = size_leido_leer + acceso_espacio_usuario->size_registro;
+	//	memcpy(registro_puntero_recons_leer + size_leido_leer, dato_leido ,acceso_espacio_usuario->size_registro);
+	//	size_leido_leer = size_leido_leer + acceso_espacio_usuario->size_registro;
 		/////BORRAR
 
 		/////BORRAR
-		loguear("Valor leido: <%d>",registro_reconstr_leer);
+	//	loguear("Valor leido: <%d>",registro_reconstr_leer);
 		/////BORRAR
 			
 			
@@ -505,12 +516,12 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 
 
 	/////BORRAR
-	memcpy(registro_puntero_recons + size_leido, direccion_real ,acceso_espacio_usuario->size_registro);
-	size_leido = size_leido + acceso_espacio_usuario->size_registro;
+	//memcpy(registro_puntero_recons + size_leido, direccion_real ,acceso_espacio_usuario->size_registro);
+//	size_leido = size_leido + acceso_espacio_usuario->size_registro;
 	/////BORRAR
 
 			/////BORRAR
-		loguear("Valor leido: <%d>",registro_reconstr);
+	//	loguear("Valor leido: <%d>",registro_reconstr);
 	/////BORRAR
 
 		loguear("PID: <%d> - Accion: <ESCRIBIR> - Direccion fisica: <%d> - Tamaño: <%d>",
@@ -523,7 +534,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		break;
 	} 
 	
-	
+	acceso_espacio_usuario_destroy(acceso_espacio_usuario);
 }
 	
 bool tiene_exit(t_list* instrucciones){
@@ -539,26 +550,31 @@ t_validacion* crear_proceso( t_pcb *pcb ){
 	t_validacion* validacion = validacion_new();
 	
 	if(proceso->instrucciones==NULL){
-		validacion->descripcion = "El programa asociado no existe: %s";
+		validacion->descripcion = "El programa asociado no existe: %s";		
 		loguear_error(validacion->descripcion,pcb->path);
+		proceso_destroy(proceso);
 		return validacion;
 	}
 
 	if(tiene_exit(proceso->instrucciones))
-	{	dictionary_put(procesos,string_itoa(pcb->PID),proceso);
+	{	char* id_char = string_itoa(pcb->PID);
+		dictionary_put(procesos,id_char,proceso);
+		free(id_char);
 		validacion->descripcion = "Programa cargado en memoria";
 		validacion->resultado = true;
 	}
 	else{
-		validacion->descripcion = "El programa asociado no tiene %s";
+		validacion->descripcion = "El programa asociado no tiene %s";		
 		loguear_error(validacion->descripcion,EXIT_PROGRAM);
+		proceso_destroy(proceso);
 	}
 	
 	return validacion;
 }
 
 t_validacion* eliminar_proceso( t_pcb *pcb ){
-	t_proceso* proceso = (t_proceso*)dictionary_get(procesos, string_itoa(pcb->PID));
+
+	t_proceso* proceso = get_proceso(pcb->PID);	
 	t_validacion* validacion = validacion_new();
 	if(proceso){
 		liberar_proceso_de_memoria(pcb->PID);
@@ -570,6 +586,7 @@ t_validacion* eliminar_proceso( t_pcb *pcb ){
 		validacion->descripcion = "El proceso %d no existe en memoria";
 		loguear_error(validacion->descripcion,pcb->PID,EXIT_PROGRAM);
 	}
+	pcb_destroy(pcb);
 
 	return validacion;
 }
@@ -578,9 +595,9 @@ void avisar_a_kernel(op_code codigo_operacion,char*texto){
 	enviar_texto(texto,codigo_operacion,conexion_kernel);
 }
 
-void notificar_proceso_am(t_validacion* validacion,t_paquete* paquete,t_pcb* pcb,op_code codigo_ok,op_code codigo_error){
+void notificar_proceso_am(t_validacion* validacion,t_paquete* paquete,op_code codigo_ok,op_code codigo_error){
 	void avisar(op_code codigo_operacion){
-		avisar_a_kernel(codigo_operacion,validacion->descripcion);
+		avisar_a_kernel(codigo_operacion,validacion->descripcion);		
 	}
 
 	if(validacion->resultado)	
@@ -588,32 +605,32 @@ void notificar_proceso_am(t_validacion* validacion,t_paquete* paquete,t_pcb* pcb
 	else	
 	{	
 		avisar(codigo_error);
-		pcb_destroy(pcb);
 		paquete_destroy(paquete);
 	}	
 
 	free(validacion);
 }
 
-void notificar_proceso_creado(t_validacion* validacion,t_paquete* paquete,t_pcb* pcb){
+void notificar_proceso_creado(t_validacion* validacion,t_paquete* paquete){
 
-	notificar_proceso_am(validacion,paquete,pcb,CREACION_PROCESO,CREACION_PROCESO_FALLIDO);
+	notificar_proceso_am(validacion,paquete,CREACION_PROCESO,CREACION_PROCESO_FALLIDO);
 }
 
 
-void notificar_proceso_eliminado(t_validacion* validacion,t_paquete* paquete,t_pcb* pcb){
+void notificar_proceso_eliminado(t_validacion* validacion,t_paquete* paquete){
 
-	notificar_proceso_am(validacion,paquete,pcb,ELIMINACION_PROCESO,ELIMINACION_PROCESO_FALLIDO);
+	notificar_proceso_am(validacion,paquete,ELIMINACION_PROCESO,ELIMINACION_PROCESO_FALLIDO);
 }
 
-void recibir_pcb_y_aplicar(t_paquete *paquete,t_validacion* (*accion)(t_pcb*),void (*notificador)(t_validacion*,t_paquete*,t_pcb*) ){
+void recibir_pcb_y_aplicar(t_paquete *paquete,t_validacion* (*accion)(t_pcb*),void (*notificador)(t_validacion*,t_paquete*) ){
 	 t_pcb *pcb = recibir_pcb(paquete); 
 	t_validacion* validacion = accion(pcb);
-	notificador(validacion,paquete,pcb);	
+	notificador(validacion,paquete);	
 }
 
 
 int recibir_procesos(){
+	bool exit_failure = false;
 	 while (1) {
 		t_paquete *paquete = recibir_paquete(conexion_kernel);
 		int cod_op =paquete->codigo_operacion;
@@ -621,22 +638,22 @@ int recibir_procesos(){
         switch (cod_op) {
 			case CREACION_PROCESO:
 			 	recibir_pcb_y_aplicar(paquete,crear_proceso,notificar_proceso_creado); 
-			break;
-			case ELIMINACION_PROCESO:
-				
+				break;
+			case ELIMINACION_PROCESO:				
 				recibir_pcb_y_aplicar(paquete,eliminar_proceso,notificar_proceso_eliminado); 
-			break;
+				break;
 			case -1:
-			loguear_error("el cliente se desconectó. Terminando servidor");
-			paquete_destroy(paquete);
-			return EXIT_FAILURE;
+				loguear_error("el cliente se desconectó. Terminando servidor");		
+				exit_failure = true;
+				break;
 		    default:
-			log_warning(logger,"Operación desconocida. No quieras meter la pata");
-			
-			return EXIT_FAILURE;
-
+				log_warning(logger,"Operación desconocida. No quieras meter la pata");		
+				exit_failure = true;
+				break;
 		}
-		// paquete_destroy(paquete);
+		paquete_destroy(paquete);
+		if(exit_failure)
+			return EXIT_FAILURE;
 	 }
 }
 
@@ -662,8 +679,16 @@ void imprimir_uso_frames(){
 	}
 }
 
+t_proceso* get_proceso(int pid){
+	char* pid_char = string_itoa(pid);
+	t_proceso* proceso_en_memoria = dictionary_get(procesos,pid_char);
+	free(pid_char);
+	return proceso_en_memoria;
+}
+
 void imprimir_tabla_paginas_proceso(int PID){
-	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(PID));
+	
+	t_proceso* proceso_en_memoria = get_proceso(PID);	
 	t_list* tabla_paginas =  proceso_en_memoria->tabla_paginas;
 	printf("Tabla de paginas del proceso %d\n", PID);
 	printf("| nro_pagina |   frame   |");
@@ -714,9 +739,11 @@ bool esIgualA0(void* elemento){
 
 bool validar_ampliacion_proceso(int cantidad_frames_a_agregar){
 
-int cant_paginas_disponibles = list_size(list_filter(frames,esIgualA0));
+	t_list* marcos_libres = list_filter(frames,esIgualA0);
+	int cant_paginas_disponibles = list_size(marcos_libres);
+	list_destroy(marcos_libres);
 
-return cant_paginas_disponibles > cantidad_frames_a_agregar;
+	return cant_paginas_disponibles > cantidad_frames_a_agregar;
 }
 int asignar_frame(){
 	
@@ -766,7 +793,9 @@ int obtener_frame(t_list* tabla_de_paginas,int nro_pagina){
 }
 void quitar_paginas_de_frame(uint32_t PID){
 		
-	t_proceso* proceso_en_memoria = dictionary_get(procesos,string_itoa(PID));
+
+	t_proceso* proceso_en_memoria = get_proceso(PID);
+
 	t_list* tabla_de_paginas_proceso = proceso_en_memoria->tabla_paginas;
 	
 	for (int i=0;i < list_size(tabla_de_paginas_proceso) ;i++){
@@ -778,7 +807,9 @@ void quitar_paginas_de_frame(uint32_t PID){
 
 void liberar_proceso_de_memoria(uint32_t PID){
 	quitar_paginas_de_frame(PID);
-	dictionary_remove_and_destroy(procesos,string_itoa(PID),proceso_destroy);
+	char* pid_char = string_itoa(PID);
+	dictionary_remove_and_destroy(procesos,pid_char,proceso_destroy);
+	free(pid_char);
 }
 
 

@@ -76,6 +76,7 @@ int diferencia_tamaño_nuevo_y_actual(t_list* tabla_paginas,int tamanio_proceso)
 void efectuar_retardo();
 void escribir_memoria(void* direccion_fisica,void* dato,uint32_t size);
 void leer_memoria(void* direccion_fisica,void* buffer,uint32_t size);
+t_proceso* get_proceso(int pid);
 
 //TERMINAR
 void io_handler(int *ptr_conexion);

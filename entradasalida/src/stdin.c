@@ -6,7 +6,7 @@ char* leer_texto_consola(){
 }
 
 
-void io_stdin_read(t_direcciones_proceso direcciones_proceso, int conexion){
+void io_stdin_read(t_direcciones_proceso *direcciones_proceso, int conexion){
     //leer_texto_consola();
     
     // char* entrada = malloc(tamanio-1); // compensa el byte que se usa en strlen +1

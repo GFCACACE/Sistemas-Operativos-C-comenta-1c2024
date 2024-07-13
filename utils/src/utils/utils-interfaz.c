@@ -62,17 +62,17 @@
 t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros,int conexion){
 	
 	// 
-	int response;
-	t_acceso_espacio_usuario* acceso_espacio_usuario;
+	//int response;
+	//t_acceso_espacio_usuario* acceso_espacio_usuario;
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
 	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
 	uint32_t size_leido=0;
-	uint32_t size_registro_pagina_actual;
+//	uint32_t size_registro_pagina_actual;
     t_buffer* dato_final_puntero = crear_buffer(pid_size_total.valor);
 	
 	/////BORRAR
-	int registro_reconstr;
-    void* registro_puntero_recons = &registro_reconstr;
+//	int registro_reconstr;
+   // void* registro_puntero_recons = &registro_reconstr;
 	/////BORRAR
 
 
@@ -89,7 +89,8 @@ t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_regis
 			enviar_acceso_espacio_usuario(acceso_espacio_usuario,LECTURA_MEMORIA,conexion);
 			
 			free(acceso_espacio_usuario);
-			int response = recibir_operacion(conexion);
+		//	int response = 
+			recibir_operacion(conexion);
 				
 		//	if(response == VALOR_LECTURA_MEMORIA){
 				

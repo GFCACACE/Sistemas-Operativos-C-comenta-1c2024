@@ -1,5 +1,4 @@
 #include "utils-commons.h"
-#
 int ultimo_pid=0;
 
 
@@ -44,6 +43,11 @@ t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t d
 	return acceso_espacio_usuario;
 }
 
+void acceso_espacio_usuario_destroy(t_acceso_espacio_usuario* acceso){
+	if(acceso->registro_dato)
+	free(acceso->registro_dato);
+	free(acceso);
+}
 
 t_registros_cpu* inicializar_registros(){
     t_registros_cpu* registros = calloc(1, sizeof(t_registros_cpu));
@@ -154,15 +158,16 @@ char* path = path_resolve(directorio,nombre_archivo);
 	FILE *archivo;
 
 	archivo = fopen(path, "r");
-	free(path);
+	
 
 	if (archivo == NULL)
 	{
 		perror("Error al abrir el archivo");
 		loguear_error("No se pudo abrir el archivo %s \n", path);
+		free(path);
 		return NULL;
 	}
-
+	free(path);
 	return archivo;
 }
 
@@ -173,24 +178,26 @@ t_list* get_instrucciones(char* directorio,char *nombre_archivo)
 	FILE *archivo = abrir_archivo(directorio,nombre_archivo);
 	
 	if (archivo == NULL)		
+	{	list_destroy(lista_instrucciones);
 		return NULL;
-	
-	size_t line_size = 0;
-
-	while (!feof(archivo))
-	{
-
-		char *linea = NULL;
-		
-		getline(&linea, &line_size, archivo);
-		quitar_salto_linea(linea);
-		if (linea != NULL)					
-			list_add(lista_instrucciones, linea);
 	}
-	
-	
-	fclose(archivo);
-	return lista_instrucciones;
+ 	char *linea = NULL;
+    size_t line_size = 0;
+    ssize_t read;
+
+    while ((read = getline(&linea, &line_size, archivo)) != -1) {
+        quitar_salto_linea(linea);
+        char *inst = string_duplicate(linea);
+        if (inst) {
+            list_add(lista_instrucciones, inst);
+        } else {
+            free(inst);
+        }
+    }
+
+    free(linea);
+    fclose(archivo);
+    return lista_instrucciones;
 }
 
 char *leer_linea_i(FILE *archivo, int posicion) {

@@ -328,7 +328,7 @@ bool es_generica(){
 int ejecutar_op_io_stdin(){
 	while(1){
 		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-		char* pid = string_itoa(direcciones_proceso->pid_size_total->PID);
+		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
 		direcciones_proceso = queue_pop(cola_peticiones_io);
@@ -343,7 +343,7 @@ int ejecutar_op_io_stdin(){
 int ejecutar_op_io_stdout(){
 	while(1){
 		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-		char* pid = string_itoa(direcciones_proceso->pid_size_total->PID);
+		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
 		direcciones_proceso = queue_pop(cola_peticiones_io);

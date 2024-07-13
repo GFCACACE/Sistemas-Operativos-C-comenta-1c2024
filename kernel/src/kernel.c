@@ -1962,7 +1962,7 @@ bool eliminar_proceso(uint32_t* pid_ptr){
 
 	t_pcb_query* pcb_query = buscar_pcb_sin_bloqueo(pid);	
 	if(pcb_query->pcb!=NULL)
-		devolver_recursos(pcb_query->pcb);
+		devolver_recursos(pcb_query->pcb,pcb_query->estado);
 	if(pcb_query->pcb==NULL){
 		free(pcb_query);
 		desbloquear_mutex_colas();
@@ -2100,21 +2100,33 @@ t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_
 }
 
 void pasar_a_exit(t_pcb* pcb){
-	loguear_warning("ESTOY POR DEVOLVER RECURSOS DEL PID <%d>",pcb->PID);
-	devolver_recursos(pcb);
+	//loguear_warning("ESTOY POR DEVOLVER RECURSOS DEL PID <%d>",pcb->PID);
+	t_pcb_query* pcb_query = buscar_pcb(pcb->PID);
+	t_queue* cola = NULL;
+	if(pcb_query->pcb)
+		cola = pcb_query->estado;
+
+	devolver_recursos(pcb,cola);
+	free(pcb_query);
 	proceso_a_estado(pcb, estado_temp,&mx_temp); 
-	
+
+	void loguear_cantidad(void* elem){
+		t_recurso* rec= (t_recurso*)elem;
+		loguear_warning("Recurso %s, cant: %d",rec->recurso,rec->instancias);
+	}
+
+	list_iterate(lista_recursos,&loguear_cantidad);
 	
 	sem_post(&sem_bin_exit);
 }
 
-void devolver_recursos(t_pcb* pcb_saliente){
+void devolver_recursos(t_pcb * pcb_saliente,t_queue* cola){	
 	bool tiene_pcb_saliente(void* elem){
 		t_recurso* recurso = (t_recurso*) elem;
 		bool pcb_del_recurso(void* elem){
 
-			t_proceso_instancia* pid_instacia = (t_proceso_instancia*) elem;
-			return pid_instacia->PID == pcb_saliente->PID;
+			t_proceso_instancia* pid_instancia = (t_proceso_instancia*) elem;
+			return pid_instancia->PID == pcb_saliente->PID;
 
 		};
 		return list_any_satisfy(recurso->lista_procesos_asignados,&pcb_del_recurso);
@@ -2138,6 +2150,16 @@ void devolver_recursos(t_pcb* pcb_saliente){
 			
 	};
 
+	bool esta_en_la_cola(void* elem){
+		t_recurso* recurso = (t_recurso*)elem;
+		return recurso->cola_procesos_esperando == cola;
+	};
+
+	if(cola){
+		t_recurso* recurso = list_find(lista_recursos,&esta_en_la_cola);
+		if(recurso)
+			recurso->instancias++;
+	}
 	t_list* lista_filtrada_recursos = list_filter(lista_recursos,&tiene_pcb_saliente);
 	if(!list_is_empty(lista_filtrada_recursos))
 		list_iterate(lista_filtrada_recursos,&restaurar_recursos);
@@ -2341,7 +2363,7 @@ void io_handler(int *ptr_conexion){
 					a_ready(pcb);
 				}
 				free(pcb_query);
-				free(pcb);
+				//free(pcb);
 
 				break;
 			
@@ -2380,6 +2402,12 @@ t_list* get_nombres_recursos(){
 		t_recurso* recurso = (t_recurso*)elem;
 		return recurso->recurso;
 	}
-	 
-	 return list_map(lista_recursos,&_get_nombre);
+
+	t_list* lista;
+	if(lista_recursos==NULL || list_is_empty(lista_recursos))
+		lista= list_create();
+	else 
+		lista=	list_map(lista_recursos,&_get_nombre);
+
+	 return lista;
 }
