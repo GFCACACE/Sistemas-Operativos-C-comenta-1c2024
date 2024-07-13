@@ -166,6 +166,12 @@ typedef struct t_direcciones_proceso
 }t_direcciones_proceso;
 
 
+typedef struct t_direcciones_fs{
+	char* nombre_archivo;
+	uint32_t puntero_archivo;
+	t_direcciones_proceso* direcciones_proceso;
+}t_direcciones_fs;
+
 typedef struct t_direcciones_registros
 {
 	t_pid_valor dir_proceso_id;
