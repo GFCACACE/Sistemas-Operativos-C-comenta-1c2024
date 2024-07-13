@@ -131,7 +131,16 @@ bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final){
 
 }
 
+// bool io_fs_write(t_peticion_fs* peticion_fs){
 
+
+//     return true;
+// }
+
+// bool io_fs_read(t_peticion_fs* peticion_fs){
+
+//     return true;
+// }
 bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
 
     //Le resto 1 byte al archivo para que no me cree bloques demás y que no reste negativo en caso de ser 0
@@ -157,10 +166,10 @@ bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
             return false;
         }
         //Luego que se le puedan asignar los bloques contiguos necesarios
-        for(uint32_t i=posicion_inicial;i <= posicion_final;i++){
+        for(uint32_t i=posicion_inicial+1;i <= posicion_final;i++){
 
             //Si no se puede...
-            if(!bitarray_test_bit(bitarray_bitmap,i)){
+            if(bitarray_test_bit(bitarray_bitmap,i)){
                 //Compactamos
                 metadata = compactacion(metadata);
                 //Recalculamos las posiciones de los bloques
@@ -191,15 +200,16 @@ t_dialfs_metadata* compactacion(t_dialfs_metadata* metadata){
 
     void correr_archivos(void* elem){
         t_dialfs_metadata* metadata_elem = (t_dialfs_metadata*) elem;
-        uint32_t tamanio_final_elem = (metadata_elem->tamanio_archivo==0)? 0: metadata->tamanio_archivo -1;
+        uint32_t tamanio_final_elem = (metadata_elem->tamanio_archivo==0)? 0: metadata_elem->tamanio_archivo -1;
         uint32_t bloque_final_elem= metadata_elem->bloque_inicial + (tamanio_final_elem / config->BLOCK_SIZE);
         int bit_libre_inicial = asignar_bloque_inicial();
         int bit_index = bit_libre_inicial;
         void* puntero_destino;
         void* puntero_origen;
         int byte_destino,byte_origen;
+        int bloque_index;
         if(bit_index < metadata_elem->bloque_inicial){
-            for(int bloque_index=(int)metadata_elem->bloque_inicial;bloque_index<=bloque_final_elem;bloque_index++){
+            for(bloque_index=(int)metadata_elem->bloque_inicial;bloque_index<=bloque_final_elem;bloque_index++){
                 byte_destino = (bit_index * config->BLOCK_SIZE);
                 byte_origen=(bloque_index * config->BLOCK_SIZE);
                 puntero_destino=&data_bloques[byte_destino];
