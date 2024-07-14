@@ -174,15 +174,16 @@ t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_regis
 			free(dato_parcial);
 			
 			
+			
 		};
 		
 	list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
 	((char*)dato_parcial_prueba)[pid_size_total.valor] = '\0';
 	loguear("Dato prueba <%s>",dato_parcial_prueba);
 //	loguear("Valor escrito: <%d>",registro_reconstr);
+	free(dato_parcial_prueba);
 
-
-		
+//free(registro_dato);		
 }
 
 
@@ -201,9 +202,10 @@ t_buffer* leer_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_re
 
 	void _enviar_direcciones_memoria(void* element){	
 			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
-			int size_registro_pagina_actual = direccion_registro->size_registro_pagina;
+			uint16_t size_registro_pagina_actual = direccion_registro->size_registro_pagina;
 
-
+			loguear("direccion_registro:<%d>",  direccion_registro->size_registro_pagina);
+			loguear("direccion_registro->direccion_fisica:<%d>", direccion_registro->direccion_fisica);
 			t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(
 			pid_size_total.PID,
 			direccion_registro->direccion_fisica,
@@ -219,9 +221,10 @@ t_buffer* leer_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_re
 				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion);		
 
 				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
-				char* val_parcial= malloc(3);
+				char* val_parcial= malloc(size_registro_pagina_actual+1);
 				memcpy(val_parcial + size_leido,dato_final_puntero->stream ,size_registro_pagina_actual);
 				((char*)val_parcial)[size_registro_pagina_actual] = '\0';
+				loguear("size_registro_pagina_actual <%d>",size_registro_pagina_actual);
 				loguear("Valor parcial: <%s>",val_parcial);
 				free(val_parcial);
 				/////BORRAR

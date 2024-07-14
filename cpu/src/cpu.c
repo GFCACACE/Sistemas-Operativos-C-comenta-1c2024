@@ -544,7 +544,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	
 
 	t_buffer* buffer_lectura = leer_memoria_completa(direcciones_fisicas_registros,conexion_memoria);
-/*
+	
 	int registro_reconstruido;
 	void* registro_reconstruido_puntero =  &registro_reconstruido;
 	
@@ -560,7 +560,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 		pcb_recibido->PID,
 	direccion_fisica_inicial,
 	registro_reconstruido);
-	*/
+/*
 
 	void* valor_reconstr = malloc(buffer_lectura->size+1);
 
@@ -572,7 +572,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	direccion_fisica_inicial,
 	valor_reconstr);
 
-
+*/
 	buffer_destroy(buffer_lectura);
 	
 	registros_cpu->PC++;
