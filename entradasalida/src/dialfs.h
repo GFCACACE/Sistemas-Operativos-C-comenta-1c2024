@@ -29,8 +29,8 @@ bool iniciar_archivos_dialfs();//Control de bloques de datos
 bool io_fs_create(char* nombre_archivo);
 bool io_fs_delete(char* nombre_archivo);
 bool io_fs_truncate(char* nombre_archivo, uint32_t tamanio_final);
-// bool io_fs_write(t_peticion_fs* peticion_fs);
-// bool io_fs_read(t_peticion_fs* peticion_fs);
+bool io_fs_write(t_peticion_fs* peticion_fs);
+bool io_fs_read(t_peticion_fs* peticion_fs);
 
 bool actualizar_bitmap(t_bitarray* bitmap);
 bool editar_archivo_metadata(char* path_metadata,t_dialfs_metadata* metadata);
