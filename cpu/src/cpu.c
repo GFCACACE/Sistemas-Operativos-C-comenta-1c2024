@@ -501,7 +501,7 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 bool exe_std(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_param registro_tamanio)
 {
 	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
-	uint32_t tamanio = *(uint32_t*)registro_tamanio.string_valor;
+	uint32_t tamanio = atoi(registro_tamanio.string_valor);
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb,direccion_logica,tamanio);
 	
 
@@ -544,7 +544,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	
 
 	t_buffer* buffer_lectura = leer_memoria_completa(direcciones_fisicas_registros,conexion_memoria);
-
+/*
 	int registro_reconstruido;
 	void* registro_reconstruido_puntero =  &registro_reconstruido;
 	
@@ -557,9 +557,22 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	loguear("Valor post a reconstruir <%d>",registro_reconstruido);
 
 	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
-	pcb_recibido->PID,
+		pcb_recibido->PID,
 	direccion_fisica_inicial,
 	registro_reconstruido);
+	*/
+
+	void* valor_reconstr = malloc(buffer_lectura->size+1);
+
+	memcpy(valor_reconstr,buffer_lectura->stream,buffer_lectura->size);
+	((char*)valor_reconstr)[buffer_lectura->size] = '\0';
+
+	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>",
+		pcb_recibido->PID,
+	direccion_fisica_inicial,
+	valor_reconstr);
+
+
 	buffer_destroy(buffer_lectura);
 	
 	registros_cpu->PC++;
@@ -753,15 +766,18 @@ uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
 	uint32_t direccion_fisica;
 	uint32_t numero_pagina = obtener_numero_pagina(direccion_logica);
 	uint32_t desplazamiento = obtener_desplazamiento(direccion_logica,numero_pagina);
-	int registro_tlb = tlb_hit(pcb->PID,numero_pagina);
 	
-
+	
+	if(config->CANTIDAD_ENTRADAS_TLB!=0){
+		int registro_tlb = tlb_hit(pcb->PID,numero_pagina);
 	if(registro_tlb != -1){
 		loguear("PID: <%d> - TLB HIT - Pagina: <%d>",pcb->PID,numero_pagina);
 		direccion_fisica = tamanio_pagina * (uint32_t)registro_tlb + desplazamiento;
 		return direccion_fisica;
 	}
+	
 	loguear("PID: <%d> - TLB MISS - Pagina: <%d>",pcb->PID,numero_pagina);
+	}
 	char* nro_frame = string_new();
 	
 	t_pid_valor* pid_nro_pagina= pid_value_create(pcb->PID,numero_pagina); //Vamos con esta conversion?
@@ -779,7 +795,10 @@ uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
 	);
 	
 	direccion_fisica = tamanio_pagina * (uint32_t)atoi(nro_frame) + desplazamiento;
+	if(config->CANTIDAD_ENTRADAS_TLB!=0){
+
 	actualizar_tlb(pcb->PID,numero_pagina,(uint32_t)atoi(nro_frame));
+	}
 
 	free(nro_frame);
 	return direccion_fisica;

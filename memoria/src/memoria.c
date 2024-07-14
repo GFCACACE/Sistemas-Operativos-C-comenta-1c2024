@@ -201,7 +201,7 @@ void io_handler(int *ptr_conexion){
 		{
 		case PEDIDO_STDIN:
 			
-			
+			loguear("Nro_conexion <%d>",PEDIDO_STDIN);
 			/*EFECTUAR PEDIDO*/
 			t_acceso_espacio_usuario* acceso_espacio_usuario_stdin = recibir_acceso_espacio_usuario(paquete);					
 			acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_stdin,conexion_io);
@@ -484,6 +484,13 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		/////BORRAR
 
 		/////BORRAR
+		char* val_parcial_lei=malloc(acceso_espacio_usuario->size_registro +1);
+		memcpy(val_parcial_lei, direccion_real ,acceso_espacio_usuario->size_registro);
+		((char*)val_parcial_lei)[acceso_espacio_usuario->size_registro] = '\0';
+		loguear("Valor leido: <%s>",val_parcial_lei);
+		free(val_parcial_lei);
+
+
 		loguear("Valor leido: <%d>",registro_reconstr_leer);
 		/////BORRAR
 			
@@ -510,14 +517,18 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	/////BORRAR
 
 			/////BORRAR
-		loguear("Valor leido: <%d>",registro_reconstr);
+		char* val_parcial=malloc(acceso_espacio_usuario->size_registro +1);
+		memcpy(val_parcial, direccion_real ,acceso_espacio_usuario->size_registro);
+		((char*)val_parcial)[acceso_espacio_usuario->size_registro] = '\0';
+		loguear("Valor leido: <%s>",val_parcial);
+		free(val_parcial);
 	/////BORRAR
 
 		loguear("PID: <%d> - Accion: <ESCRIBIR> - Direccion fisica: <%d> - Tamaño: <%d>",
 		 acceso_espacio_usuario->PID,
 		 acceso_espacio_usuario->direccion_fisica,
 		 acceso_espacio_usuario->size_registro);
-		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
+		enviar_texto("OK",MOV_OUT_OK,conexion);
 		break;
 	default:
 		break;

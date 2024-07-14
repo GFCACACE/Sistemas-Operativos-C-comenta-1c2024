@@ -4,6 +4,7 @@
 #include<commons/config.h>
 #include<commons/log.h>
 #include<commons/string.h>
+#include"utils/utils-logger.h"
 #include<math.h>
 #include<commons/collections/dictionary.h>
 #include "utils/utils-server.h"
