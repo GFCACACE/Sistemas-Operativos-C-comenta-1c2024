@@ -7,8 +7,9 @@
       "name": "run",
       "type": "cppdbg",
       "request": "launch",
+      
       "program": "${workspaceFolder}/bin/${workspaceFolderBasename}",
-      "args": ["${workspaceFolder}/${workspaceFolderBasename}.config", "SLP1"],
+      "args": ["${workspaceFolder}/MONITOR.config", "MONITOR"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

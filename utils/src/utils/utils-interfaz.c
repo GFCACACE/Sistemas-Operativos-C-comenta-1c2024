@@ -217,12 +217,12 @@ t_buffer* leer_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_re
 			int response = recibir_operacion(conexion);
 
 		//	if(response == VALOR_LECTURA_MEMORIA){
-
+			
 				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion);		
-
+			//|W____|WAR NEVER CHANGES|S...   
 				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
 				char* val_parcial= malloc(size_registro_pagina_actual+1);
-				memcpy(val_parcial + size_leido,dato_final_puntero->stream ,size_registro_pagina_actual);
+				memcpy(val_parcial  [size_leido],dato_final_puntero->stream ,size_registro_pagina_actual);
 				((char*)val_parcial)[size_registro_pagina_actual] = '\0';
 				loguear("size_registro_pagina_actual <%d>",size_registro_pagina_actual);
 				loguear("Valor parcial: <%s>",val_parcial);
