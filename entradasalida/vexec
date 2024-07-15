@@ -11,7 +11,7 @@ workspace_path="$PWD"
 workspace_basename=$(basename "$workspace_path")
 FILE=$workspace_basename
 BIN=./bin/$FILE
-config_file="./$FILE.config"
+config_file="./$second_param.config"
 log_file="v$FILE.log"
 valgrind_comando="valgrind --tool=memcheck --leak-check=yes --show-possibly-lost=no --show-reachable=no --num-callers=20 --track-origins=yes --log-file=$log_file -s"
 make $BIN

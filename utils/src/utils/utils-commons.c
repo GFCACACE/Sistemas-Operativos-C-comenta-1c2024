@@ -44,9 +44,11 @@ t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t d
 }
 
 void acceso_espacio_usuario_destroy(t_acceso_espacio_usuario* acceso){
-	if(acceso->registro_dato)
-	free(acceso->registro_dato);
-	free(acceso);
+	if(acceso !=NULL) {
+		if(acceso->registro_dato)
+			free(acceso->registro_dato);
+		free(acceso);
+	}
 }
 
 t_registros_cpu* inicializar_registros(){
