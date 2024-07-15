@@ -229,7 +229,19 @@ void recibir_io(){
 			free(paquete);	
 		}
 		else if(config->TIPO_INTERFAZ.id == DIALFS){
-			
+			t_paquete* paquete = recibir_paquete(conexion_kernel);
+			int cod_op_io = paquete->codigo_operacion;
+			if(cod_op_io==-1){
+				loguear_warning("Kernel se desconectó.");
+				free(paquete);
+				return;
+			}
+			//t_operacion_fs* operacion_fs = recibir_op_fs(paquete);
+			pthread_mutex_lock(&mx_peticion);
+			//queue_push(cola_peticiones_io, operacion_fs);
+			pthread_mutex_unlock(&mx_peticion);
+			sem_post(&sem_bin_cola_peticiones);
+			free(paquete);	
 		}
 	}
 }
@@ -305,7 +317,7 @@ int ejecutar_op_io_stdin()
 		pthread_mutex_unlock(&mx_peticion);
 
 		//io_stdin_read(direcciones_proceso,conexion_memoria);
-
+		loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - ", pid);
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
 		free(direcciones_proceso);
@@ -351,6 +363,8 @@ int ejecutar_op_io_stdout()
 
 		//io_stdout_write(direcciones_proceso,conexion_memoria);
 
+		loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - ", pid);
+		 //LOG MÍNIMO Y OBLIGATORIO
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
 		free(direcciones_proceso);
@@ -376,8 +390,7 @@ int ejecutar_op_io_stdout()
 		
 		
 		// list_iterate(direcciones_registros, &_enviar_direcciones_io_stdin);
-		// loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - Direccion: %d Tamanio: %d",
-		// pid_valor.PID,direccion_fisica_inicial,pid_valor.valor); //LOG MÍNIMO Y OBLIGATORIO
+		// 
 		
 		// enviar_texto("OK",TERMINO_IO,conexion_kernel);
 		// loguear_warning("Termino el IO_STDOUT_WRITE.");
@@ -414,7 +427,31 @@ int ejecutar_op_io_generica(){
 }
 int ejecutar_op_io_dialfs(){
 	while(1){
-
+		sem_wait(&sem_bin_cola_peticiones);
+		pthread_mutex_lock(&mx_peticion);
+		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
+		pthread_mutex_unlock(&mx_peticion);
+		int cod_op = operacion_fs->cod_op;
+		char* nombre_archivo = string_new();
+		nombre_archivo = operacion_fs->nombre_archivo;
+		switch(cod_op){
+			case IO_FS_CREATE:
+				io_fs_create(nombre_archivo);
+				break;
+			case IO_FS_DELETE:
+				io_fs_delete(nombre_archivo);
+				break;
+			case IO_FS_TRUNCATE:
+				io_fs_truncate(nombre_archivo,operacion_fs->direcciones_proceso->pid_size_total.valor);
+				break;
+			// case IO_FS_READ:
+			// 	io_fs_read(operacion_fs);
+			// 	break;
+			// case IO_FS_WRITE:
+			// 	io_fs_write(operacion_fs);
+			// 	break;
+		}
+		free(nombre_archivo);
 	}
 }
 

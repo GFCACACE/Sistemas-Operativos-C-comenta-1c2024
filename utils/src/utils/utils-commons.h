@@ -65,6 +65,7 @@ typedef enum
 	IO_FS_TRUNCATE,
 	IO_FS_READ,
 	IO_FS_WRITE,
+	FILE_SYSTEM,
 	//IO - Kernel
 	NUEVA_IO,
 	TERMINO_IO_GEN_SLEEP,
@@ -163,6 +164,7 @@ typedef struct t_operacion_fs{
 	char* nombre_archivo;
 	t_direcciones_proceso* direcciones_proceso;
 	uint32_t registro_puntero_archivo;
+	op_code cod_op;
 }t_operacion_fs;
 
 t_direccion_registro* direccion_registro_new(uint32_t direccion,uint32_t size);

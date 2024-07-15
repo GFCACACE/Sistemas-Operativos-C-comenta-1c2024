@@ -776,42 +776,45 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 
 }
 
-void io_fs_create(uint32_t pid, char* nombre_archivo,char* nombre_interfaz){
+// void io_fs_create(uint32_t pid, t_operacion_fs* operacion_fs,char* nombre_interfaz){
+// 	loguear_warning("Entra al case");
+// 	loguear_warning("IO_FS_CREATE -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, operacion_fs->nombre_archivo);
+// 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
+// 	int conexion_io = *(int *)ptr_conexion;
+// 	char* pid_aux = string_itoa(pid);
+// 	//enviar pid con cod op del tipo de operacion
+// 	enviar_texto(pid_aux, IO_FS_CREATE,conexion_io );
+
+// 	// enviar paquete con operacion_fs
+	
+// 	loguear_warning("Peticion a IO enviada");
+// }
+
+void io_fs(uint32_t pid, t_operacion_fs* operacion_fs,char* nombre_interfaz){
 	loguear_warning("Entra al case");
-	loguear_warning("IO_FS_CREATE -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, nombre_archivo);
+	loguear_warning("Uso del FS -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, operacion_fs->nombre_archivo);
 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
 	int conexion_io = *(int *)ptr_conexion;
+	char* pid_aux = string_itoa(pid);
 
-	enviar_texto(nombre_archivo,
-				IO_FS_CREATE,
-				conexion_io);
+	//enviar pid con cod op del tipo de operacion
+	//enviar_texto(pid_aux,operacion_fs->cod_op,conexion_io);
+	enviar_mensaje(pid_aux, conexion_io);
+	// enviar paquete con operacion_fs
+	// enviar_paquete(operacion_fs, operacion_fs->cod_op, conexion_kernel);
 	loguear_warning("Peticion a IO enviada");
 }
 
-void io_fs_delete(uint32_t pid, char* nombre_archivo,char* nombre_interfaz){
-	loguear_warning("Entra al case");
-	loguear_warning("IO_FS_delete -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, nombre_archivo);
-	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
-	int conexion_io = *(int *)ptr_conexion;
-
-	enviar_texto(nombre_archivo,
-				IO_FS_DELETE,
-				conexion_io);
-	//enviar_paquete_fs();
-	loguear_warning("Peticion a IO enviada");
-}
-
-// void io_fs_delete(uint32_t pid, char* nombre_archivo,char* nombre_interfaz){
+// void io_fs_truncate(uint32_t pid, t_operacion_fs* operacion_fs,char* nombre_interfaz){
 // 	loguear_warning("Entra al case");
 // 	loguear_warning("IO_FS_TRUNCATE -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, nombre_archivo);
 // 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
 // 	int conexion_io = *(int *)ptr_conexion;
 
-// 	enviar_texto(nombre_archivo,
-// 				IO_FS_TRUNCATE,
-// 				conexion_io);
-// 	enviar_paquete_fs();
-// 	loguear_warning("Peticion a IO enviada");
+//enviar pid con cod op del tipo de operacion
+//	enviar_texto(pid_aux, IO_FS_TRUNCATE,conexion_io );
+	// enviar paquete con operacion_fs
+//	loguear_warning("Peticion a IO enviada");
 // }
 
 void limpiar_buffer(int cod_op_io){
@@ -828,21 +831,23 @@ void limpiar_buffer(int cod_op_io){
 			t_paquete* paquete_iow = recibir_paquete(cpu_dispatch);
 			paquete_destroy(paquete_iow);
 			break;
-		case IO_FS_CREATE:
-			//TODO
+		case FILE_SYSTEM:
 			break;
-		case IO_FS_DELETE:
-			//TODO
-			break;
-		case IO_FS_READ:
-			//TODO
-			break;
-		case IO_FS_TRUNCATE:
-			//TODO
-			break;
-		case IO_FS_WRITE:
-			//TODO
-			break;
+		// case IO_FS_CREATE:
+		// 	//TODO
+		// 	break;
+		// case IO_FS_DELETE:
+		// 	//TODO
+		// 	break;
+		// case IO_FS_READ:
+		// 	//TODO
+		// 	break;
+		// case IO_FS_TRUNCATE:
+		// 	//TODO
+		// 	break;
+		// case IO_FS_WRITE:
+		// 	//TODO
+		// 	break;
 		default:			
 			break;
 	}
@@ -895,26 +900,36 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			t_paquete* paquete_iow = recibir_paquete(cpu_dispatch);
 			io_std(pcb_recibido->PID, paquete_iow,nombre_interfaz);
 			break;
-		// Para crear o eliminar un archivo kernel solo necesita enviarle su nombre al FS.
-		case IO_FS_CREATE:
-			// recibir_operacion(cpu_dispatch);
-			// char* nombre_archivo_c = recibir_mensaje(cpu_dispatch);
-			// io_fs_create(pcb_recibido->PID,nombre_archivo_c, nombre_interfaz);
+		case FILE_SYSTEM:
+			recibir_operacion(cpu_dispatch);
+			//t_operacion_fs* operacion_fs = recibir_op_fs(cpu_dispatch);
+			//io_fs(pcb_recibido->PID,  operacion_fs,nombre_interfaz);
 			break;
-		case IO_FS_DELETE:
-			// recibir_operacion(cpu_dispatch);
-			// char* nombre_archivo_d = recibir_mensaje(cpu_dispatch);
-			// io_fs_delete(pcb_recibido->PID,nombre_archivo_d, nombre_interfaz);
-			break;
-		case IO_FS_TRUNCATE:
-			//TODO
-			break;
-		case IO_FS_READ:
-			//TODO
-			break;
-		case IO_FS_WRITE:
-			//TODO
-			break;
+		// case IO_FS_CREATE:
+		// 	// recibir_operacion(cpu_dispatch);
+		// 	// t_operacion_fs operacion_fs = recibir_op_fs(paquete);
+		// 	// io_fs_create(pcb_recibido->PID,recibir_op_fs,nombre_interfaz);
+		// 	break;
+		// case IO_FS_DELETE:
+		// 	// recibir_operacion(cpu_dispatch);
+		// 	// t_operacion_fs operacion_fs = recibir_op_fs(paquete);
+		// 	// io_fs_delete(pcb_recibido->PID,recibir_op_fs,nombre_interfaz);
+		// 	break;
+		// case IO_FS_TRUNCATE:
+		// 	// recibir_operacion(cpu_dispatch);
+		// 	// t_operacion_fs operacion_fs = recibir_op_fs(paquete);
+		// 	// io_fs_truncate(pcb_recibido->PID,recibir_op_fs,nombre_interfaz);
+		// 	break;
+		// case IO_FS_READ:
+		// 	// recibir_operacion(cpu_dispatch);
+		// 	// t_operacion_fs operacion_fs = recibir_op_fs(paquete);
+		// 	// io_fs_read(pcb_recibido->PID,recibir_op_fs,nombre_interfaz);
+		// 	break;
+		// case IO_FS_WRITE:
+		// 	// recibir_operacion(cpu_dispatch);
+		// 	// t_operacion_fs operacion_fs = recibir_op_fs(paquete);
+		// 	// io_fs_write(pcb_recibido->PID,recibir_op_fs,nombre_interfaz);
+		// 	break;
 		default:
 			pasar_a_exit(pcb_recibido);			
 			break;

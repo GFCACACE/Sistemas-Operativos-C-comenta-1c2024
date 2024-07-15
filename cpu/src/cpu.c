@@ -482,8 +482,9 @@ bool exe_io_fs(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_archi
 	actualizar_contexto(pcb);
 	
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
-	enviar_texto(interfaz.string_valor,cod_op,kernel_dispatch);
-	enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
+	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
+	//la idea sería enviar un struct del tipo t_operacion_fs que contenga solamente el nombre del archivo
+	//enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
 }
 
 bool exe_io_fs_truncate(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param reg_tamanio){
