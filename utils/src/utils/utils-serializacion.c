@@ -11,12 +11,13 @@ void buffer_destroy(t_buffer* buffer){
 }
 void paquete_destroy(t_paquete* paquete) {
     if (paquete) {
-        if (paquete->buffer) {
+        buffer_destroy(paquete->buffer);
+       /* if (paquete->buffer) {
             if (paquete->buffer->stream) {
                 free(paquete->buffer->stream);
             }
             free(paquete->buffer);
-        }
+        }*/
         free(paquete);
     }
 }

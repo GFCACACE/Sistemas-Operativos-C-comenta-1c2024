@@ -128,7 +128,7 @@ bool inicializar_comandos();
 bool iniciar_recursos();
 void liberar_recurso(t_pcb* pcb_recibido,t_recurso* recurso);
 void asignar_recurso(t_pcb* pcb,t_recurso* recurso);
-void devolver_recursos(t_pcb* pcb_saliente);
+void devolver_recursos(t_pcb* pcb_saliente,t_queue* cola);
 void a_ready_sin_mutex(t_pcb* pcb);
 ///////////////////////
 char* leer_texto_consola();
@@ -213,7 +213,6 @@ t_list* get_estados_inicializados();
 void controlar_quantum (t_pcb* pcb_enviado);
 void bloquear_mutex_colas();
 void desbloquear_mutex_colas();
-void devolver_recursos(t_pcb* pcb_saliente);
 void modificar_quantum_restante(t_pcb* pcb);
 void blocked_interfaz_destroy(void* elemento );
 bool maneja_quantum();

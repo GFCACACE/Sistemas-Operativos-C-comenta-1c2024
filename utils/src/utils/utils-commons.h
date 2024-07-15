@@ -155,7 +155,7 @@ typedef struct
 	uint32_t direccion_fisica;
 	
 	uint32_t size_registro;
-	char* registro_dato;
+	void* registro_dato;
 	
 }t_acceso_espacio_usuario;
 
@@ -214,9 +214,8 @@ void direcciones_proceso_destroy(t_direcciones_proceso* direcciones_proceso);
 void loguear_direccion_proceso(t_direcciones_proceso* dir_proceso);
 t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio);
 t_id_valor* id_valor_new(uint32_t id,uint32_t valor);
-
-
-
+void validacion_destroy(t_validacion* validacion);
+void acceso_espacio_usuario_destroy(t_acceso_espacio_usuario* acceso);
 
 /**
  * @fn    list_find_index
