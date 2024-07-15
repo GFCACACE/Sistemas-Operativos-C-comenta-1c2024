@@ -431,18 +431,16 @@ int ejecutar_op_io_dialfs(){
 		pthread_mutex_lock(&mx_peticion);
 		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
-		int cod_op = operacion_fs->cod_op;
-		char* nombre_archivo = string_new();
-		nombre_archivo = operacion_fs->nombre_archivo;
-		switch(cod_op){
+		//int cod_op = operacion_fs->cod_op;
+		switch(operacion_fs->cod_op){
 			case IO_FS_CREATE:
-				io_fs_create(nombre_archivo);
+				io_fs_create(operacion_fs->nombre_archivo);
 				break;
 			case IO_FS_DELETE:
-				io_fs_delete(nombre_archivo);
+				io_fs_delete(operacion_fs->nombre_archivo);
 				break;
 			case IO_FS_TRUNCATE:
-				io_fs_truncate(nombre_archivo,operacion_fs->direcciones_proceso->pid_size_total.valor);
+				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->direcciones_proceso->pid_size_total.valor);
 				break;
 			// case IO_FS_READ:
 			// 	io_fs_read(operacion_fs);
@@ -451,7 +449,7 @@ int ejecutar_op_io_dialfs(){
 			// 	io_fs_write(operacion_fs);
 			// 	break;
 		}
-		free(nombre_archivo);
+
 	}
 }
 
