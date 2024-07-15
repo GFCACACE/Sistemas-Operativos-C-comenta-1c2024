@@ -210,14 +210,14 @@ bool iniciar_recursos(){
 }
 
 bool prueba(){
-	t_direccion_fs* dir_fs = direccion_fs_create("hola!");
-	dir_fs->direccion = 56;
-	dir_fs->tamanio = 25;
-	dir_fs->puntero_archivo = 9;
+	// t_direccion_fs* dir_fs = direccion_fs_create("hola!");
+	// dir_fs->direccion = 56;
+	// dir_fs->tamanio = 25;
+	// dir_fs->puntero_archivo = 9;
 
-	loguear_direccion_fs(dir_fs);
-	enviar_direccion_fs(dir_fs,DIRECCIONES_PROCESO,cpu_dispatch);
-	direccion_fs_destroy(dir_fs);
+	// loguear_direccion_fs(dir_fs);
+	// enviar_direccion_fs(dir_fs,DIRECCIONES_PROCESO,cpu_dispatch);
+	// direccion_fs_destroy(dir_fs);
 	return true;
 }
 
@@ -610,6 +610,8 @@ void io_gen_sleep(int pid,char** splitter){
 	sprintf(pid_mas_unidades,"%u",pid);
 	loguear_warning("El pid es %s", pid_mas_unidades);
 	strcat(pid_mas_unidades," ");
+	// Para que quede un poco mas claro...
+	// se necesita enviar el tiempo_unidad_trabajo y el pid; el splitter[1] representa al primero.
 	strcat(pid_mas_unidades, splitter[1]);
 	loguear_warning("El mensaje es %s", pid_mas_unidades);
 
@@ -895,14 +897,14 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			break;
 		// Para crear o eliminar un archivo kernel solo necesita enviarle su nombre al FS.
 		case IO_FS_CREATE:
-			recibir_operacion(cpu_dispatch);
-			char* nombre_archivo_c = recibir_mensaje(cpu_dispatch);
-			io_fs_create(pcb_recibido->PID,nombre_archivo_c, nombre_interfaz);
+			// recibir_operacion(cpu_dispatch);
+			// char* nombre_archivo_c = recibir_mensaje(cpu_dispatch);
+			// io_fs_create(pcb_recibido->PID,nombre_archivo_c, nombre_interfaz);
 			break;
 		case IO_FS_DELETE:
-			recibir_operacion(cpu_dispatch);
-			char* nombre_archivo_d = recibir_mensaje(cpu_dispatch);
-			io_fs_delete(pcb_recibido->PID,nombre_archivo_d, nombre_interfaz);
+			// recibir_operacion(cpu_dispatch);
+			// char* nombre_archivo_d = recibir_mensaje(cpu_dispatch);
+			// io_fs_delete(pcb_recibido->PID,nombre_archivo_d, nombre_interfaz);
 			break;
 		case IO_FS_TRUNCATE:
 			//TODO
@@ -2225,12 +2227,12 @@ void io_handler(int *ptr_conexion){
 		int conexion = *ptr_conexion;
 		int cod_operacion = recibir_operacion(conexion);
 		//loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
-		char* mensaje = recibir_mensaje(conexion);
+		char* pid_tipo_char = recibir_mensaje(conexion);
 		//loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR
 		t_pcb* pcb;
-		char** splitter = string_array_new();
-		splitter = string_split(mensaje," ");
-		int pid_a_manejar = atoi(splitter[0]);
+		//char** splitter = string_array_new();
+		//splitter = string_split(mensaje," ");
+		int pid_a_manejar = atoi(pid_tipo_char);
 		char* string_conexion = string_itoa(conexion);
 		//loguear_warning("Antes del get del diccionario");
 		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
@@ -2287,8 +2289,8 @@ void io_handler(int *ptr_conexion){
 				default:
 					return;
 		}
-		free(mensaje);
-		string_array_destroy(splitter);
+		//free(mensaje);
+		//string_array_destroy(splitter);
 	}
 	// envia a la interfaz correspodiente la operación que debe ejecutar
 }

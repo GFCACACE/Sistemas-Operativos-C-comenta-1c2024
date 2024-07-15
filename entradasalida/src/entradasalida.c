@@ -194,23 +194,23 @@ void recibir_io(){
 	
 	while(1){	
 		if(config->TIPO_INTERFAZ.id == GENERICA){
-			t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+			//t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
 			int cod_op_io = recibir_operacion(conexion_kernel);		
 			if(cod_op_io==-1){
 				loguear_warning("Kernel se desconectó.");
-				free(peticion_io);
+				//free(peticion_io);
 				return;
 			}
-			peticion_io->cod_op = cod_op_io;
-			char* _peticion;
-			_peticion = recibir_mensaje(conexion_kernel);
-			peticion_io->peticion = strdup(_peticion);
-			loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
+			//peticion_io->cod_op = cod_op_io;
+			char* pid_mas_unidades;
+			pid_mas_unidades = recibir_mensaje(conexion_kernel);
+			//peticion_io->peticion = strdup(_peticion);
+			loguear_warning("Aca se ve la PETICION %s", pid_mas_unidades);
 			pthread_mutex_lock(&mx_peticion);
-			queue_push(cola_peticiones_io, peticion_io);
+			queue_push(cola_peticiones_io, pid_mas_unidades);
 			pthread_mutex_unlock(&mx_peticion);
 			sem_post(&sem_bin_cola_peticiones);
-			free(_peticion);	
+			//free(_peticion);	
 		}
 
 		else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT ){
@@ -296,35 +296,44 @@ int ejecutar_op_io_stdin()
 	
 	//loguear("Ejecuta operacion de entrada salida");
 	while (1)
-	{
+	{	
+		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
+		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
-		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
+		direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 
-		t_pid_valor pid_valor = direcciones_proceso->pid_size_total;
-		t_list* direcciones_registros =  direcciones_proceso->direcciones;
-		uint32_t cantidad_elementos = list_size(direcciones_registros);
-		
-		t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
-		uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
+		//io_stdin_read(direcciones_proceso,conexion_memoria);
 
-		void _enviar_direcciones_io_stdin(void* element){
-			t_direccion_registro* dir_reg = (t_direccion_registro*) element;
-			io_stdin_read(pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
-			loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
-			pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
-		};
-		
-		
-		list_iterate(direcciones_registros, &_enviar_direcciones_io_stdin);
-		loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
-		pid_valor.PID,direccion_fisica_inicial,pid_valor.valor); //LOG MÍNIMO Y OBLIGATORIO
-		
-		enviar_texto("OK",TERMINO_IO,conexion_kernel);
-		loguear_warning("Termino el IO_STDIN_READ.");
-		}
+		enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		loguear_warning("Termino el IO_STDOUT_WRITE.");
+		free(direcciones_proceso);
+	}
 }
+		
+
+		// t_pid_valor pid_valor = direcciones_proceso->pid_size_total;
+		// t_list* direcciones_registros =  direcciones_proceso->direcciones;
+		// uint32_t cantidad_elementos = list_size(direcciones_registros);
+		
+		// t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
+		// uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
+
+		// void _enviar_direcciones_io_stdin(void* element){
+		// 	t_direccion_registro* dir_reg = (t_direccion_registro*) element;
+		// 	io_stdin_read(pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
+		// 	loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
+		// 	pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
+		// };
+		
+		
+		// list_iterate(direcciones_registros, &_enviar_direcciones_io_stdin);
+		// loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
+		// pid_valor.PID,direccion_fisica_inicial,pid_valor.valor); //LOG MÍNIMO Y OBLIGATORIO
+		
+		
+
 
 
 int ejecutar_op_io_stdout()
@@ -333,48 +342,61 @@ int ejecutar_op_io_stdout()
 	//loguear("Ejecuta operacion de entrada salida");
 	while (1)
 	{
+		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
+		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
-		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
+		direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 
-		t_pid_valor pid_valor = direcciones_proceso->pid_size_total;
-		t_list* direcciones_registros =  direcciones_proceso->direcciones;
-		uint32_t cantidad_elementos = list_size(direcciones_registros);
-		
-		t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
-		uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
+		//io_stdout_write(direcciones_proceso,conexion_memoria);
 
-		void _enviar_direcciones_io_stdin(void* element){
-			t_direccion_registro* dir_reg = (t_direccion_registro*) element;
-			io_stdout_write(pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
-			loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
-			pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
-		};
-		
-		
-		list_iterate(direcciones_registros, &_enviar_direcciones_io_stdin);
-		loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - Direccion: %d Tamanio: %d",
-		pid_valor.PID,direccion_fisica_inicial,pid_valor.valor); //LOG MÍNIMO Y OBLIGATORIO
-		
-		enviar_texto("OK",TERMINO_IO,conexion_kernel);
+		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
+		free(direcciones_proceso);
+
+		// sem_wait(&sem_bin_cola_peticiones);
+		// pthread_mutex_lock(&mx_peticion);
+		// t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
+		// pthread_mutex_unlock(&mx_peticion);
+
+		// t_pid_valor pid_valor = direcciones_proceso->pid_size_total;
+		// t_list* direcciones_registros =  direcciones_proceso->direcciones;
+		// uint32_t cantidad_elementos = list_size(direcciones_registros);
+		
+		// t_direccion_registro* direccion_registro_inicial =  list_get(direcciones_registros,0);
+		// uint32_t direccion_fisica_inicial = direccion_registro_inicial->direccion_fisica;
+
+		// void _enviar_direcciones_io_stdin(void* element){
+		// 	t_direccion_registro* dir_reg = (t_direccion_registro*) element;
+		// 	io_stdout_write(pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
+		// 	loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - Direccion: %d Tamanio: %d",
+		// 	pid_valor.PID,dir_reg->direccion_fisica,dir_reg->size_registro_pagina);
+		// };
+		
+		
+		// list_iterate(direcciones_registros, &_enviar_direcciones_io_stdin);
+		// loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - Direccion: %d Tamanio: %d",
+		// pid_valor.PID,direccion_fisica_inicial,pid_valor.valor); //LOG MÍNIMO Y OBLIGATORIO
+		
+		// enviar_texto("OK",TERMINO_IO,conexion_kernel);
+		// loguear_warning("Termino el IO_STDOUT_WRITE.");
 		}
 }
 
 int ejecutar_op_io_generica(){
 	while(1){
-		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		//t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
-		peticion_io = queue_pop(cola_peticiones_io);
+		char* pid_mas_unidades = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
-		int cod_op = peticion_io->cod_op;
-		char* _peticion;
-		_peticion = peticion_io->peticion;
+		//int cod_op = peticion_io->cod_op;
+		//char* _peticion;
+		//_peticion = peticion_io->peticion;
 		char** splitter = string_array_new();
-		splitter = string_split(_peticion," ");
-		loguear("Cod op: %d", cod_op);
+		splitter = string_split(pid_mas_unidades," ");
+		//loguear("Cod op: %d", cod_op);
 		// ESTAMOS BIEN
 		char mensaje[70];
 
@@ -383,11 +405,11 @@ int ejecutar_op_io_generica(){
 		loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]); // LOG MÍNIMO Y OBLIGATORIO
 		io_gen_sleep(atoi(splitter[1]));
 		//loguear_warning("Ya termino de dormir zzzzz");
-		enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
+		enviar_texto(splitter[0],TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_GEN_SLEEP.");
 
 		string_array_destroy(splitter);
-		free(peticion_io);
+		//free(peticion_io);
 	}
 }
 int ejecutar_op_io_dialfs(){

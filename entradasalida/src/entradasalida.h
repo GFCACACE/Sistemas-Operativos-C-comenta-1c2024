@@ -53,8 +53,8 @@ typedef struct
 
 
 typedef struct{
-    int cod_op;
-    char* peticion;
+    int pid;
+    char* unidad_tiempo_trabajo;
 }t_peticion_io;
 
 

@@ -28,7 +28,7 @@ void enviar_pid_value(t_pid_valor* pid_value,op_code operacion,int socket);
 void enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,op_code operacion,int socket);
 void _enviar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,op_code operacion,int socket);
 void enviar_direcciones_proceso(t_direcciones_proceso* direcciones_proceso,op_code operacion,int socket);
-void enviar_direccion_fs(t_direccion_fs* direccion_fs,op_code operacion,int socket);
+//void enviar_direccion_fs(t_operacion_fs* direccion_fs,op_code operacion,int socket);
 
 void enviar_stream(void*stream,int size,int socket,op_code codigo_operacion);
 void _enviar_stream_(void* texto,int size,int socket,op_code operacion);

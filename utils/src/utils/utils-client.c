@@ -328,26 +328,26 @@ void* serializar_direcciones_proceso(t_direcciones_proceso* direcciones_proceso,
 	return stream;
 }
 
-void* serializar_direccion_fs(t_direccion_fs* direccion_fs,int* size){
+// void* serializar_direccion_fs(t_operacion_fs* direccion_fs,int* size){
 	
-	uint32_t nombre_size = string_length(direccion_fs->nombre_archivo)+1;	
+// 	uint32_t nombre_size = string_length(direccion_fs->nombre_archivo)+1;	
 	
-	//	 direccion, tamanio puntero_archivo size_nombre_size nombre_size
-	*size = sizeof(uint32_t) * 4 + nombre_size;
+// 	//	 direccion, tamanio puntero_archivo size_nombre_size nombre_size
+// 	*size = sizeof(uint32_t) * 4 + nombre_size;
 
-	t_buffer* buffer = crear_buffer(*size);	
+// 	t_buffer* buffer = crear_buffer(*size);	
 
-	agregar_a_buffer(buffer, &nombre_size, sizeof(uint32_t));
-	agregar_a_buffer(buffer, direccion_fs->nombre_archivo, nombre_size);
-	agregar_a_buffer(buffer, &direccion_fs->direccion, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &direccion_fs->tamanio, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &direccion_fs->puntero_archivo, sizeof(uint32_t));
+// 	agregar_a_buffer(buffer, &nombre_size, sizeof(uint32_t));
+// 	agregar_a_buffer(buffer, direccion_fs->nombre_archivo, nombre_size);
+// 	agregar_a_buffer(buffer, &direccion_fs->direccion, sizeof(uint32_t));
+// 	agregar_a_buffer(buffer, &direccion_fs->tamanio, sizeof(uint32_t));
+// 	agregar_a_buffer(buffer, &direccion_fs->puntero_archivo, sizeof(uint32_t));
 
-	void * stream = buffer->stream;
-	free(buffer);
+// 	void * stream = buffer->stream;
+// 	free(buffer);
 	
-	return stream;
-}
+// 	return stream;
+// }
 
 
 
@@ -359,13 +359,13 @@ void enviar_direcciones_proceso(t_direcciones_proceso* direcciones_proceso,op_co
 	free(stream);
 }
 
-void enviar_direccion_fs(t_direccion_fs* direccion_fs,op_code operacion,int socket){
-	int size;
-	void* stream = serializar_direccion_fs(direccion_fs,&size);									
+// void enviar_direccion_fs(t_operacion_fs* direccion_fs,op_code operacion,int socket){
+// 	int size;
+// 	void* stream = serializar_direccion_fs(direccion_fs,&size);									
 					 
-	enviar_stream(stream,size,socket,operacion);
-	free(stream);
-}
+// 	enviar_stream(stream,size,socket,operacion);
+// 	free(stream);
+// }
 
 
 

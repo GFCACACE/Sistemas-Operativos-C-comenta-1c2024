@@ -573,7 +573,7 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 	loguear("PRIMER MENSAJE A KERNEL: %s",interfaz.string_valor);
 	sprintf(texto,"%s %s",interfaz.string_valor,unidades_de_trabajo.string_valor);
 	loguear("SEGUNDO MENSAJE A KERNEL: %s", texto);
-	enviar_texto(texto,IO_HANDLER,kernel_dispatch);
+	enviar_mensaje(texto,kernel_dispatch);
 	
 	free(texto);
 	return true;
@@ -908,10 +908,10 @@ int ejecutar_proceso_cpu()
 				paquete_destroy(paquete);
                 break;	
 			case DIRECCIONES_PROCESO:
-			  	t_direccion_fs *dir_fs = recibir_direccion_fs(paquete); 
-				loguear_direccion_fs(dir_fs);
-				direccion_fs_destroy(dir_fs);
-				paquete_destroy(paquete);
+			  	// t_operacion_fs *dir_fs = recibir_direccion_fs(paquete); 
+				// loguear_direccion_fs(dir_fs);
+				// direccion_fs_destroy(dir_fs);
+				// paquete_destroy(paquete);
                 break;
             case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");

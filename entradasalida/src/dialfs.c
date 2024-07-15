@@ -138,29 +138,36 @@ typedef struct{
 
 }t_peticion_fs;
 
-bool io_fs_read(t_peticion_fs* peticion_fs){
-    bool encontrar_archivo(void* elem){
-        t_dialfs_metadata* metadata_elem = (t_dialfs_metadata*)elem;
-        if(!strcmp(peticion_fs->nombre_archivo,metadata_elem->nombre_archivo))
-            return true;
-        return false;
-    };
-    t_dialfs_metadata* metadata_write = list_find(lista_archivos,&encontrar_archivo);
-    char* stream_memoria = malloc(sizeof(peticion_fs->direcciones_proceso.pid_size_total.valor));
-    uint32_t byte_inicial_lectura = config->BLOCK_SIZE * metadata_write->bloque_inicial + peticion_fs->registro_puntero_archivo;
-    memcpy(&stream_memoria,&data_bloques[byte_inicial_lectura],peticion_fs->direcciones_proceso->pid_size_total.valor);
-    escribir_memoria_completa_io(peticion_fs->direcciones_proceso,stream_memoria,conexion_memoria);
-    free(stream_memoria);
+// bool io_fs_read(t_operacion_fs* peticion_fs){
+//     bool encontrar_archivo(void* elem){
+//         t_dialfs_metadata* metadata_elem = (t_dialfs_metadata*)elem;
+//         if(!strcmp(peticion_fs->nombre_archivo,metadata_elem->nombre_archivo))
+//             return true;
+//         return false;
+//     };
+//     t_dialfs_metadata* metadata_write = list_find(lista_archivos,&encontrar_archivo);
+//     char* stream_memoria = malloc(sizeof(peticion_fs->direcciones_proceso->pid_size_total.valor));
+//     uint32_t byte_inicial_lectura = config->BLOCK_SIZE * metadata_write->bloque_inicial + peticion_fs->registro_puntero_archivo;
+//     memcpy(&stream_memoria,&data_bloques[byte_inicial_lectura],peticion_fs->direcciones_proceso->pid_size_total.valor);
+//     escribir_memoria_completa_io(peticion_fs->direcciones_proceso,stream_memoria,conexion_memoria);
+//     free(stream_memoria);
 
-    return true;
-}
+//     return true;
+// }
 
-bool io_fs_write(t_peticion_fs* peticion_fs){
-    t_buffer* buffer =leer_memoria_completa_io(peticion_fs->direcciones_proceso,conexion_memoria);
-    uint32_t byte_inicial_escritura = config->BLOCK_SIZE * metadata_write->bloque_inicial + peticion_fs->registro_puntero_archivo;
-    memcpy(&data_bloques[byte_inicial_escritura],buffer->stream,peticion_fs->direcciones_proceso->pid_size_total.valor);
-    return true;
-}
+// bool io_fs_write(t_operacion_fs* peticion_fs){
+//     t_buffer* buffer =leer_memoria_completa_io(peticion_fs->direcciones_proceso,conexion_memoria);
+//     bool encontrar_archivo(void* elem){
+//         t_dialfs_metadata* metadata_elem = (t_dialfs_metadata*)elem;
+//         if(!strcmp(peticion_fs->nombre_archivo,metadata_elem->nombre_archivo))
+//             return true;
+//         return false;
+//     };
+//     t_dialfs_metadata* metadata_write = list_find(lista_archivos,&encontrar_archivo);
+//     uint32_t byte_inicial_escritura = config->BLOCK_SIZE * metadata_write->bloque_inicial + peticion_fs->registro_puntero_archivo;
+//     memcpy(&data_bloques[byte_inicial_escritura],buffer->stream,peticion_fs->direcciones_proceso->pid_size_total.valor);
+//     return true;
+// }
 bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
 
     //Le resto 1 byte al archivo para que no me cree bloques demás y que no reste negativo en caso de ser 0

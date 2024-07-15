@@ -32,15 +32,15 @@ t_pid_valor* pid_value_create(uint32_t pid, uint32_t valor){
 	pid_atributo->valor = valor;
 	return pid_atributo;
 }
-t_operacion_fs* paquete_op_fs(char* _nombre_archivo, uint32_t reg_direccion, uint32_t reg_tamanio, uint32_t ptr_archivo){
-	t_operacion_fs* paquete_fs = malloc(sizeof(t_operacion_fs));
-	paquete_fs->nombre_archivo = malloc(strlen(_nombre_archivo)+1);
-	paquete_fs->registro_direccion = reg_direccion;
-	paquete_fs->registro_puntero_archivo = ptr_archivo;
-	paquete_fs->registro_tamanio = reg_tamanio;
+// t_operacion_fs* paquete_op_fs(char* _nombre_archivo, uint32_t reg_direccion, uint32_t reg_tamanio, uint32_t ptr_archivo){
+// 	t_operacion_fs* paquete_fs = malloc(sizeof(t_operacion_fs));
+// 	paquete_fs->nombre_archivo = malloc(strlen(_nombre_archivo)+1);
+// 	paquete_fs->registro_direccion = reg_direccion;
+// 	paquete_fs->registro_puntero_archivo = ptr_archivo;
+// 	paquete_fs->registro_tamanio = reg_tamanio;
 
-	return paquete_fs;
-}
+// 	return paquete_fs;
+// }
 
 t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t size_registro,void* valor){
 	t_acceso_espacio_usuario* acceso_espacio_usuario = malloc(sizeof(t_acceso_espacio_usuario));
@@ -318,19 +318,19 @@ t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio)
 	return direcciones_proceso;
 }
 
-t_direccion_fs* direccion_fs_create(char* nombre_archivo){
-	t_direccion_fs* operacion_fs = malloc(sizeof(t_direccion_fs));
-	operacion_fs->nombre_archivo = string_duplicate(nombre_archivo);
-	operacion_fs->direccion = 0;
-	operacion_fs->tamanio = 0;
-	operacion_fs->puntero_archivo = 0;
-	return operacion_fs;
-}
+// t_operacion_fs* direccion_fs_create(char* nombre_archivo){
+// 	t_operacion_fs* operacion_fs = malloc(sizeof(t_operacion_fs));
+// 	operacion_fs->nombre_archivo = string_duplicate(nombre_archivo);
+// 	operacion_fs->direccion = 0;
+// 	operacion_fs->tamanio = 0;
+// 	operacion_fs->puntero_archivo = 0;
+// 	return operacion_fs;
+// }
 
-void direccion_fs_destroy(t_direccion_fs* dir_fs){
-	free(dir_fs->nombre_archivo);
-	free(dir_fs);
-}
+// void direccion_fs_destroy(t_operacion_fs* dir_fs){
+// 	free(dir_fs->nombre_archivo);
+// 	free(dir_fs);
+// }
 
 t_id_valor* id_valor_new(uint32_t id,uint32_t valor){
 	t_id_valor* id_valor = malloc(sizeof(t_id_valor));
@@ -366,14 +366,14 @@ void loguear_direccion_proceso(t_direcciones_proceso* dir_proceso){
 
 }
 
-void loguear_direccion_fs(t_direccion_fs* dir_fs){
+// void loguear_direccion_fs(t_operacion_fs* dir_fs){
 
-	loguear("--------%s--------","dirección fs");
+// 	loguear("--------%s--------","dirección fs");
 
-	loguear("Nombre archivo:%s",dir_fs->nombre_archivo);
-	loguear("Dir:%d",dir_fs->direccion);
-	loguear("Tamanio:%d",dir_fs->tamanio);
-	loguear("Puntero archivo:%d",dir_fs->puntero_archivo);
-	loguear("--------%s--------","fin dirección fs");
+// 	loguear("Nombre archivo:%s",dir_fs->nombre_archivo);
+// 	loguear("Dir:%d",dir_fs->direccion);
+// 	loguear("Tamanio:%d",dir_fs->tamanio);
+// 	loguear("Puntero archivo:%d",dir_fs->puntero_archivo);
+// 	loguear("--------%s--------","fin dirección fs");
 
-}
+// }
