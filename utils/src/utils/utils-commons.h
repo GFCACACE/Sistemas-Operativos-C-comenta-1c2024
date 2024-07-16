@@ -151,14 +151,14 @@ typedef struct t_direccion_registro
 	uint32_t size_registro_pagina;
 }t_direccion_registro;
 
-typedef struct t_operacion_fs{
-	char* nombre_archivo;
-	t_direcciones_proceso* direcciones_proceso;
-	uint32_t registro_puntero_archivo;
-	op_code cod_op;
-	uint32_t tamanio_truncate;
-	uint32_t pid;
-}t_operacion_fs;
+// typedef struct t_operacion_fs{
+// 	char* nombre_archivo;
+// 	t_direcciones_proceso* direcciones_proceso;
+// 	uint32_t registro_puntero_archivo;
+// 	op_code cod_op;
+// 	uint32_t tamanio_truncate;
+// 	uint32_t pid;
+// }t_operacion_fs;
 
 t_direccion_registro* direccion_registro_new(uint32_t direccion,uint32_t size);
 
@@ -176,6 +176,25 @@ typedef struct
 	void* registro_dato;
 	
 }t_acceso_espacio_usuario;
+
+// NUEVA IDEA
+typedef struct t_operacion_fs{
+	op_code cod_op;
+	uint32_t pid;
+	uint32_t tamanio_registro;
+	uint32_t registro_puntero;//FSEEK
+	uint32_t tamanio_truncate;
+	char* nombre_archivo;
+	t_list* direcciones;
+}t_operacion_fs;
+
+typedef struct t_direccion_tamanio{
+	uint32_t direccion_fisica;
+	uint32_t tamanio_bytes;
+}t_direccion_tamanio
+
+// FIN NUEVA IDEA
+
 
 
 

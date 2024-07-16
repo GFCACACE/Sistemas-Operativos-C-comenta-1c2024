@@ -133,50 +133,94 @@ void enviar_operacion_fs(t_operacion_fs* operacion,op_code op,int socket){
 	free(stream);
 }
 
-/// INTENTO D SERIALIZACION
 
+/*
 typedef struct t_operacion_fs{
-	char* nombre_archivo;
-	t_direcciones_proceso* direcciones_proceso;
-	uint32_t registro_puntero_archivo;
 	op_code cod_op;
-	uint32_t tamanio_truncate;
 	uint32_t pid;
+	uint32_t tamanio_registro;
+	uint32_t registro_puntero;//FSEEK
+	uint32_t tamanio_truncate;
+	char* nombre_archivo;
+	t_list* direcciones;
 }t_operacion_fs;
 
+typedef struct t_direccion_tamanio{
+	uint32_t direccion_fisica;
+	uint32_t tamanio_bytes;
+}t_direccion_tamanio
+
+*/
 void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 	
-	t_list* lista = operacion_fs->direcciones_proceso->direcciones;
+	//t_list* lista = operacion_fs->direcciones_proceso->direcciones;
+	t_list* lista = operacion_fs->direcciones;
 	char* nombre = malloc(strlen(operacion_fs->nombre_archivo)+1);
 	uint32_t cant_direcciones = list_size(lista);
-	*size = sizeof(uint32_t) * 4 + sizeof(op_code)+ strlen(nombre) + cant_direcciones * (2*sizeof(uint32_t));
-
+	*size = sizeof(op_code) + sizeof(uint32_t) * 4 + sizeof(uint32_t) + strlen(nombre) + sizeof(uint32_t) + cant_direcciones * (2*sizeof(uint32_t));
+													// TAMAÑO char*                      TAMAÑO direcciones_proceso
 	t_buffer* buffer = crear_buffer(*size);
 	
-
-	agregar_a_buffer(buffer, &operacion_fs->direcciones_proceso->pid_size_total.PID, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &operacion_fs->direcciones_proceso->pid_size_total.valor, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &operacion_fs->cod_op, sizeof(op_code));
-	agregar_a_buffer(buffer, &operacion_fs->registro_puntero_archivo, sizeof(uint32_t));
-	agregar_A_buffer(buffer, &operacion_fs->tamanio_truncate, sizeof(uint32_t));
-	///// VER CÓMO SERIALIZAR UN CHAR*
-	agregar_a_buffer(buffer, &operacion_fs->nombre_archivo, strlen(nombre));
-	
+	agregar_a_buffer(buffer, &operacion_fs->pid, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &operacion_fs->tamanio_registro, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &operacion_fs->registro_puntero, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &operacion_fs->tamanio_truncate, sizeof(uint32_t));
+	agregar_a_buffer(buffer, strlen(nombre), sizeof(uint32_t)); // TAMAÑO CHAR*
+	agregar_a_buffer(buffer, &nombre, strlen(nombre));
+	agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t)); // TAMAÑO/CANTIDAD DIRECCIONES
 	
 	for(int i=0;i<cant_direcciones;i++)
 	{	
-		t_id_valor* id_valor = (t_id_valor*)list_get(lista,i);
-		agregar_a_buffer(buffer, &id_valor->id, sizeof(uint32_t));
-		agregar_a_buffer(buffer, &id_valor->valor, sizeof(uint32_t));
-	
+		t_direccion_tamanio* direc = (t_direccion_tamanio*)list_get(lista,i);  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		agregar_a_buffer(buffer, &direc->direccion_fisica, sizeof(uint32_t)); // REVISAR
+		agregar_a_buffer(buffer, &direc->tamanio_bytes, sizeof(uint32_t)); // 
+															// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 	void * stream = buffer->stream;
 	free(buffer);
 	free(nombre);
-	
 	return stream;
 }
+
+
+// POR HACER...
+t_operacion_fs* recibir_op_fs(t_paquete* paquete)
+{
+	int tam_nombre;
+	int cant_direcciones;
+	t_operacion_fs* op_fs = malloc(sizeof(t_operacion_fs));
+	
+	t_buffer* buffer = paquete->buffer;
+	buffer->desplazamiento = sizeof(uint32_t);
+	void _recibir(void* lugar_destino,size_t tam){
+		recibir_de_buffer(lugar_destino,buffer,tam);
+	}
+
+	agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t));
+
+	_recibir(&op_fs->cod_op,sizeof(op_code));
+	_recibir(&op_fs->pid,sizeof(uint32_t));
+	_recibir(&op_fs->tamanio_registro,sizeof(uint32_t));
+	_recibir(&op_fs->registro_puntero,sizeof(uint32_t));
+	_recibir(&op_fs->tamanio_truncate,sizeof(uint32_t));
+	_recibir(&tam_nombre,sizeof(uint32_t));
+	_recibir(&op_fs->nombre_archivo,tam_nombre);
+	_recibir(&cant_direcciones,sizeof(uint32_t));
+
+	for(int i=0;i<cant_direcciones;i++)
+	{	
+		t_direccion_tamanio* direc = malloc(sizeof(t_direccion_tamanio));
+		_recibir(&direc->direccion_fisica,sizeof(uint32_t));
+		_recibir(&direc->tamanio_bytes,sizeof(uint32_t));
+		list_add(direcciones_proceso->direcciones,direc);
+	}
+	return op_fs;
+}
+
+
+
+
 
 t_direcciones_proceso* recibir_direcciones_proceso(t_paquete* paquete)
 {
@@ -189,32 +233,6 @@ t_direcciones_proceso* recibir_direcciones_proceso(t_paquete* paquete)
 	t_direcciones_proceso* direcciones_proceso = direcciones_proceso_create(0,0);
 	
 	_recibir(&direcciones_proceso->pid_size_total.PID,sizeof(uint32_t));
-	_recibir(&direcciones_proceso->pid_size_total.valor,sizeof(uint32_t));
-	_recibir(&cant_direcciones,sizeof(uint32_t));
-	for(int i=0;i<cant_direcciones;i++)
-	{	t_id_valor* id_valor = malloc(sizeof(t_id_valor));
-		_recibir(&id_valor->id,sizeof(uint32_t));
-		_recibir(&id_valor->valor,sizeof(uint32_t));
-		list_add(direcciones_proceso->direcciones,id_valor);
-	}
-	
-
-	return direcciones_proceso;
-}
-
-// POR HACER...
-t_operacion_fs* recibir_op_fs(t_paquete* paquete)
-{
-	t_buffer* buffer = paquete->buffer;
-	buffer->desplazamiento = sizeof(uint32_t);
-	void _recibir(void* lugar_destino,size_t tam){
-		recibir_de_buffer(lugar_destino,buffer,tam);
-	}
-	int cant_direcciones;
-	t_direcciones_proceso* direcciones_proceso = direcciones_proceso_create(0,0);
-	
-	_recibir(&direcciones_proceso->pid_size_total.PID,sizeof(uint32_t));
-	_recibir(&direcciones_proceso->pid_size_total.valor,sizeof(uint32_t));
 	_recibir(&direcciones_proceso->pid_size_total.valor,sizeof(uint32_t));
 	_recibir(&cant_direcciones,sizeof(uint32_t));
 	for(int i=0;i<cant_direcciones;i++)
