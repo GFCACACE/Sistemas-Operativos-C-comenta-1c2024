@@ -802,6 +802,7 @@ void io_fs(uint32_t pid, t_paquete* paquete,char* nombre_interfaz){
 	enviar_mensaje(pid_aux, conexion_io);
 	// enviar paquete con operacion_fs
 	enviar_paquete(paquete, conexion_io);
+	paquete_destroy(paquete);
 	loguear_warning("Peticion a IO enviada");
 }
 
@@ -832,6 +833,8 @@ void limpiar_buffer(int cod_op_io){
 			paquete_destroy(paquete_iow);
 			break;
 		case FILE_SYSTEM:
+			t_paquete* paquete_fs = recibir_paquete(cpu_dispatch);
+			paquete_destroy(paquete_fs);
 			break;
 		// case IO_FS_CREATE:
 		// 	//TODO
@@ -2245,7 +2248,7 @@ void io_handler(int *ptr_conexion){
 		//loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
 		char* pid_tipo_char = recibir_mensaje(conexion);
 		//loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR
-		t_pcb* pcb;
+		
 		//char** splitter = string_array_new();
 		//splitter = string_split(mensaje," ");
 		int pid_a_manejar = atoi(pid_tipo_char);
@@ -2253,60 +2256,72 @@ void io_handler(int *ptr_conexion){
 		//loguear_warning("Antes del get del diccionario");
 		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
 		free(string_conexion);
-		switch (cod_operacion){
-			case TERMINO_IO:
-				t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
-				if(pcb_query->estado==NULL||pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)
-					break;
-					
-				pcb = pcb_query->pcb;
-				// if( encontrar_en_lista(pid_a_manejar,estado_temp, &mx_temp) ||  encontrar_en_lista(pid_a_manejar,estado_exit, &mx_exit)){
-				// 	break;
-				// }
-
-				//mensaje = recibir_mensaje(conexion);
-				
-			//	pthread_mutex_lock(interfaz -> mx_blocked);
-				bool removido = list_remove_element(interfaz -> estado_blocked->elements,pcb);
-			//	pcb = queue_pop(interfaz -> estado_blocked);
-			//	pthread_mutex_unlock(interfaz -> mx_blocked);
-				// pop_estado_get_pcb()
-				if(removido){
-					//loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
-					a_ready(pcb);
-				}
-				free(pcb_query);
-
-				break;
-			
-			// NO BORRAR POR SI ACASO; COMO ES INDIFERENTE CUAL FUE, Y LAS RESPONSABILIDADES ESTAN EN LA I/O,
-			// ACA SE LAS PUEDE TRATAR DE IGUAL FORMA
-
-			// case TERMINO_STDIN:
-			// 	pthread_mutex_lock(&interfaz -> mx_blocked);
-			// 	pcb = queue_pop(interfaz -> estado_blocked);
-			// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
-			// 	// pop_estado_get_pcb()
-			// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
-			// 	a_ready(pcb);
-				
-			// 	break;
-			
-			// case TERMINO_STDOUT:
-			// 	pthread_mutex_lock(&interfaz -> mx_blocked);
-			// 	pcb = queue_pop(interfaz -> estado_blocked);
-			// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
-			// 	// pop_estado_get_pcb()
-			// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
-			// 	a_ready(pcb);
-				
-			// 	break;
-
-				default:
-					return;
+		t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
+		if(pcb_query->estado==NULL||pcb_query->estado==estado_temp||pcb_query->estado==estado_exit){
+			free(pcb_query);
+			return;
 		}
-		//free(mensaje);
-		//string_array_destroy(splitter);
-	}
+		t_pcb* pcb; = pcb_query->pcb;
+		bool quitar_elem_de_blocked = list_remove_element(interfaz -> estado_blocked->elements,pcb);
+		if(quitar_elem_de_blocked){
+			//loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+			a_ready(pcb);
+		}
+		free(pcb_query);
+	// 	switch (cod_operacion){
+	// 		case TERMINO_IO:
+	// 			t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
+	// 			if(pcb_query->estado==NULL||pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)
+	// 				break;
+					
+	// 			pcb = pcb_query->pcb;
+	// 			// if( encontrar_en_lista(pid_a_manejar,estado_temp, &mx_temp) ||  encontrar_en_lista(pid_a_manejar,estado_exit, &mx_exit)){
+	// 			// 	break;
+	// 			// }
+
+	// 			//mensaje = recibir_mensaje(conexion);
+				
+	// 		//	pthread_mutex_lock(interfaz -> mx_blocked);
+	// 			bool removido = list_remove_element(interfaz -> estado_blocked->elements,pcb);
+	// 		//	pcb = queue_pop(interfaz -> estado_blocked);
+	// 		//	pthread_mutex_unlock(interfaz -> mx_blocked);
+	// 			// pop_estado_get_pcb()
+	// 			if(removido){
+	// 				//loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+	// 				a_ready(pcb);
+	// 			}
+	// 			free(pcb_query);
+
+	// 			break;
+			
+	// 		// NO BORRAR POR SI ACASO; COMO ES INDIFERENTE CUAL FUE, Y LAS RESPONSABILIDADES ESTAN EN LA I/O,
+	// 		// ACA SE LAS PUEDE TRATAR DE IGUAL FORMA
+
+	// 		// case TERMINO_STDIN:
+	// 		// 	pthread_mutex_lock(&interfaz -> mx_blocked);
+	// 		// 	pcb = queue_pop(interfaz -> estado_blocked);
+	// 		// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
+	// 		// 	// pop_estado_get_pcb()
+	// 		// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+	// 		// 	a_ready(pcb);
+				
+	// 		// 	break;
+			
+	// 		// case TERMINO_STDOUT:
+	// 		// 	pthread_mutex_lock(&interfaz -> mx_blocked);
+	// 		// 	pcb = queue_pop(interfaz -> estado_blocked);
+	// 		// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
+	// 		// 	// pop_estado_get_pcb()
+	// 		// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+	// 		// 	a_ready(pcb);
+				
+	// 		// 	break;
+
+	// 			default:
+	// 				return;
+	// 	}
+	// 	//free(mensaje);
+	// 	//string_array_destroy(splitter);
+	// }
 	// envia a la interfaz correspodiente la operación que debe ejecutar
 }

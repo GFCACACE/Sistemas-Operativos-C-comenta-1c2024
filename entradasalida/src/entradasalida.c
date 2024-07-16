@@ -189,6 +189,9 @@ void finalizar_io(){
 	pthread_mutex_destroy(&mx_peticion);
 }
 
+void notificar_kernel(char* texto, int socket){
+	enviar_texto(texto, TERMINO_IO, socket);
+}
 void recibir_io(){
 	loguear("IO conectada: Esperando ordenes");
 	
@@ -318,7 +321,8 @@ int ejecutar_op_io_stdin()
 
 		//io_stdin_read(direcciones_proceso,conexion_memoria);
 		loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - ", pid);
-		enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		//enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		notificar_kernel(pid, conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
 		free(direcciones_proceso);
 	}
@@ -348,6 +352,8 @@ int ejecutar_op_io_stdin()
 
 
 
+
+
 int ejecutar_op_io_stdout()
 {
 	
@@ -365,7 +371,8 @@ int ejecutar_op_io_stdout()
 
 		loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - ", pid);
 		 //LOG MÍNIMO Y OBLIGATORIO
-		enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		//enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		notificar_kernel(pid, conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
 		free(direcciones_proceso);
 
@@ -418,7 +425,8 @@ int ejecutar_op_io_generica(){
 		loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]); // LOG MÍNIMO Y OBLIGATORIO
 		io_gen_sleep(atoi(splitter[1]));
 		//loguear_warning("Ya termino de dormir zzzzz");
-		enviar_texto(splitter[0],TERMINO_IO,conexion_kernel);
+		//enviar_texto(splitter[0],TERMINO_IO,conexion_kernel);
+		notificar_kernel(splitter[0], conexion_kernel);
 		loguear_warning("Termino el IO_GEN_SLEEP.");
 
 		string_array_destroy(splitter);
@@ -434,23 +442,35 @@ int ejecutar_op_io_dialfs(){
 		//int cod_op = operacion_fs->cod_op;
 		switch(operacion_fs->cod_op){
 			case IO_FS_CREATE:
+				loguear("PID: <%d> - Crear Archivo: <%s>", operacion_fs->pid, operacion_fs->nombre_archivo); 
 				io_fs_create(operacion_fs->nombre_archivo);
 				break;
 			case IO_FS_DELETE:
+				loguear("PID: <%d> - Eliminar Archivo: <%s>", operacion_fs->pid, operacion_fs->nombre_archivo);	
 				io_fs_delete(operacion_fs->nombre_archivo);
 				break;
 			case IO_FS_TRUNCATE:
 				//aclarar
-				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->registro_puntero_archivo);
+				loguear("PID: <%d> - Truncar Archivo: <%s> - Tamanio:<%d>", operacion_fs->pid, operacion_fs->nombre_archivo, operacion_fs->direcciones_proceso->pid_size_total.valor);
+				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->tamanio_truncate);
 				break;
 			// case IO_FS_READ:
+			//	loguear("PID: <&d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
+			// operacion_fs->pid, 
+			// operacion_fs->nombre_archivo, 
+			// operacion_fs->direcciones_proceso->pid_size_total.valor, 
+			// operacion_fs->registro_puntero_archivo);
 			// 	io_fs_read(operacion_fs);
 			// 	break;
 			// case IO_FS_WRITE:
-			// 	io_fs_write(operacion_fs);
+			// loguear("PID: <&d> - Escribir Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
+			// operacion_fs->pid, 
+			// operacion_fs->nombre_archivo, 
+			// operacion_fs->direcciones_proceso->pid_size_total.valor, 
+			// operacion_fs->registro_puntero_archivo);
 			// 	break;
 		}
-
+		notificar_kernel(operacion_fs->pid, conexion_kernel);
 	}
 }
 

@@ -114,12 +114,14 @@ t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_regis
 };
 
 
-t_operacion_fs* obtener_op_fs(char* nmb_archivo,t_direcciones_proceso* direcciones, uint32_t puntero_archivo, op_code cod_op){
+t_operacion_fs* obtener_op_fs(uint32_t pid, char* nmb_archivo,t_direcciones_proceso* direcciones, uint32_t puntero_archivo, uint32_t tamanio_truncate,op_code cod_op){
 	t_operacion_fs* operacion_fs = malloc(sizeof(t_operacion_fs));
 	operacion_fs->nombre_archivo = nmb_archivo;
 	operacion_fs->cod_op = cod_op;
 	operacion_fs->registro_puntero_archivo = puntero_archivo;
 	operacion_fs->direcciones_proceso = direcciones;
+	operacion_fs->tamanio_truncate = tamanio_truncate;
+	operacion_fs->pid = pid;
 
 	return operacion_fs;
 }
@@ -132,6 +134,16 @@ void enviar_operacion_fs(t_operacion_fs* operacion,op_code op,int socket){
 }
 
 /// INTENTO D SERIALIZACION
+
+typedef struct t_operacion_fs{
+	char* nombre_archivo;
+	t_direcciones_proceso* direcciones_proceso;
+	uint32_t registro_puntero_archivo;
+	op_code cod_op;
+	uint32_t tamanio_truncate;
+	uint32_t pid;
+}t_operacion_fs;
+
 void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 	
 	t_list* lista = operacion_fs->direcciones_proceso->direcciones;
@@ -147,6 +159,7 @@ void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 	agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &operacion_fs->cod_op, sizeof(op_code));
 	agregar_a_buffer(buffer, &operacion_fs->registro_puntero_archivo, sizeof(uint32_t));
+	agregar_A_buffer(buffer, &operacion_fs->tamanio_truncate, sizeof(uint32_t));
 	///// VER CÓMO SERIALIZAR UN CHAR*
 	agregar_a_buffer(buffer, &operacion_fs->nombre_archivo, strlen(nombre));
 	
@@ -201,6 +214,7 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 	t_direcciones_proceso* direcciones_proceso = direcciones_proceso_create(0,0);
 	
 	_recibir(&direcciones_proceso->pid_size_total.PID,sizeof(uint32_t));
+	_recibir(&direcciones_proceso->pid_size_total.valor,sizeof(uint32_t));
 	_recibir(&direcciones_proceso->pid_size_total.valor,sizeof(uint32_t));
 	_recibir(&cant_direcciones,sizeof(uint32_t));
 	for(int i=0;i<cant_direcciones;i++)
