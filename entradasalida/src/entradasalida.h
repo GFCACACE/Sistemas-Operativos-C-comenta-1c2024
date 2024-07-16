@@ -8,7 +8,7 @@
 #include <commons/txt.h>
 #include <commons/bitarray.h>
 #include <commons/collections/queue.h>
-
+#include <utils/utils-interfaz.h>
 #include <utils/utils-client.h>
 #include <utils/utils-server.h>
 #include <utils/utils-serializacion.h>
