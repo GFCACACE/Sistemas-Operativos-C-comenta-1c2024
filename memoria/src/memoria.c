@@ -490,7 +490,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		free(val_parcial_lei);
 	/////BORRAR
 }		
-		loguear("Valor leido: <%d>",registro_reconstr_leer);
+	//	loguear("Valor leido: <%d>",registro_reconstr_leer);
 		/////BORRAR
 			
 			
@@ -512,11 +512,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 
 	/////BORRAR
 	//memcpy(registro_puntero_recons + size_leido, direccion_real ,acceso_espacio_usuario->size_registro);
-<<<<<<< HEAD
 	//size_leido = size_leido + acceso_espacio_usuario->size_registro;
-=======
-//	size_leido = size_leido + acceso_espacio_usuario->size_registro;
->>>>>>> dev_menosleaks
 	/////BORRAR
 
 	if(acceso_espacio_usuario->size_registro==1){
@@ -528,16 +524,14 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	}
 
 			/////BORRAR
-<<<<<<< HEAD
+
 	if(acceso_espacio_usuario->size_registro>1){
 		char* val_parcial=malloc(acceso_espacio_usuario->size_registro +1);
 		memcpy(val_parcial, direccion_real ,acceso_espacio_usuario->size_registro);
 		((char*)val_parcial)[acceso_espacio_usuario->size_registro] = '\0';
 		loguear("Valor leido: <%s>",val_parcial);
 		free(val_parcial);
-=======
-	//	loguear("Valor leido: <%d>",registro_reconstr);
->>>>>>> dev_menosleaks
+
 	/////BORRAR
 }		
 		loguear("PID: <%d> - Accion: <ESCRIBIR> - Direccion fisica: <%d> - Tamaño: <%d>",
