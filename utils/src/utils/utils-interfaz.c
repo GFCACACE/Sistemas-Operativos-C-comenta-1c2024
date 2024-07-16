@@ -114,17 +114,29 @@ t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_regis
 };
 
 
-t_operacion_fs* obtener_op_fs(uint32_t pid, char* nmb_archivo,t_direcciones_proceso* direcciones, uint32_t puntero_archivo, uint32_t tamanio_truncate,op_code cod_op){
+t_operacion_fs* obtener_op_fs(uint32_t pid, char* nmb_archivo,t_list* direcciones,uint32_t tamanio_registro, uint32_t puntero_archivo, uint32_t tamanio_truncate,op_code cod_op){
 	t_operacion_fs* operacion_fs = malloc(sizeof(t_operacion_fs));
 	operacion_fs->nombre_archivo = nmb_archivo;
 	operacion_fs->cod_op = cod_op;
-	operacion_fs->registro_puntero_archivo = puntero_archivo;
-	operacion_fs->direcciones_proceso = direcciones;
+	operacion_fs->registro_puntero = puntero_archivo;
+	if(direcciones != NULL)
+		operacion_fs->direcciones = list_create();
+	operacion_fs->direcciones = direcciones;
 	operacion_fs->tamanio_truncate = tamanio_truncate;
 	operacion_fs->pid = pid;
+	operacion_fs->tamanio_registro = tamanio_registro;
 
 	return operacion_fs;
+
 }
+
+t_direccion_tamanio* direccion_tamanio_create(){
+	t_direccion_tamanio* dir_tam = malloc(sizeof(t_direccion_tamanio));
+	
+}
+
+
+
 void enviar_operacion_fs(t_operacion_fs* operacion,op_code op,int socket){
 	int size;
 	void* stream = serializar_operacion_fs(operacion,&size);									
@@ -155,10 +167,12 @@ void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 	
 	//t_list* lista = operacion_fs->direcciones_proceso->direcciones;
 	t_list* lista = operacion_fs->direcciones;
-	char* nombre = malloc(strlen(operacion_fs->nombre_archivo)+1);
+	char* nombre = operacion_fs->nombre_archivo;
+	uint32_t long_char; 
 	uint32_t cant_direcciones = list_size(lista);
-	*size = sizeof(op_code) + sizeof(uint32_t) * 4 + sizeof(uint32_t) + strlen(nombre) + sizeof(uint32_t) + cant_direcciones * (2*sizeof(uint32_t));
+	*size = sizeof(op_code) + sizeof(uint32_t) * 4 + sizeof(uint32_t) + (strlen(nombre)+1) + sizeof(uint32_t) + cant_direcciones * (2*sizeof(uint32_t));
 													// TAMAÑO char*                      TAMAÑO direcciones_proceso
+	long_char = strlen(nombre)+1;
 	t_buffer* buffer = crear_buffer(*size);
 	
 	agregar_a_buffer(buffer, &operacion_fs->cod_op, sizeof(op_code));
@@ -166,8 +180,8 @@ void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 	agregar_a_buffer(buffer, &operacion_fs->tamanio_registro, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &operacion_fs->registro_puntero, sizeof(uint32_t));
 	agregar_a_buffer(buffer, &operacion_fs->tamanio_truncate, sizeof(uint32_t));
-	agregar_a_buffer(buffer, strlen(nombre), sizeof(uint32_t)); // TAMAÑO CHAR*
-	agregar_a_buffer(buffer, &nombre, strlen(nombre));
+	agregar_a_buffer(buffer, &long_char, sizeof(uint32_t)); // TAMAÑO CHAR*
+	agregar_a_buffer(buffer, nombre, long_char);
 	agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t)); // TAMAÑO/CANTIDAD DIRECCIONES
 	
 	for(int i=0;i<cant_direcciones;i++)
@@ -179,7 +193,7 @@ void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 	}
 	void * stream = buffer->stream;
 	free(buffer);
-	free(nombre);
+	//free(nombre);
 	return stream;
 }
 
@@ -187,9 +201,11 @@ void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 // POR HACER...
 t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 {
-	int tam_nombre;
+	uint32_t tam_nombre;
 	int cant_direcciones;
 	t_operacion_fs* op_fs = malloc(sizeof(t_operacion_fs));
+	op_fs->direcciones = list_create();
+	
 	
 	t_buffer* buffer = paquete->buffer;
 	buffer->desplazamiento = sizeof(uint32_t);
@@ -197,7 +213,7 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 		recibir_de_buffer(lugar_destino,buffer,tam);
 	}
 
-	agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t));
+	//agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t));
 
 	_recibir(&op_fs->cod_op,sizeof(op_code));
 	_recibir(&op_fs->pid,sizeof(uint32_t));
@@ -205,7 +221,8 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 	_recibir(&op_fs->registro_puntero,sizeof(uint32_t));
 	_recibir(&op_fs->tamanio_truncate,sizeof(uint32_t));
 	_recibir(&tam_nombre,sizeof(uint32_t));
-	_recibir(&op_fs->nombre_archivo,tam_nombre);
+	op_fs->nombre_archivo = malloc(tam_nombre);
+	_recibir(op_fs->nombre_archivo,tam_nombre);
 	_recibir(&cant_direcciones,sizeof(uint32_t));
 
 	for(int i=0;i<cant_direcciones;i++)
@@ -213,7 +230,7 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 		t_direccion_tamanio* direc = malloc(sizeof(t_direccion_tamanio));
 		_recibir(&direc->direccion_fisica,sizeof(uint32_t));
 		_recibir(&direc->tamanio_bytes,sizeof(uint32_t));
-		list_add(direcciones_proceso->direcciones,direc);
+		list_add(op_fs->direcciones,direc);
 	}
 	return op_fs;
 }
@@ -222,63 +239,40 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 
 
 
-t_direcciones_proceso* recibir_direcciones_proceso(t_paquete* paquete)
-{
-	t_buffer* buffer = paquete->buffer;
-	buffer->desplazamiento = sizeof(uint32_t);
-	void _recibir(void* lugar_destino,size_t tam){
-		recibir_de_buffer(lugar_destino,buffer,tam);
-	}
-	int cant_direcciones;
-	t_direcciones_proceso* direcciones_proceso = direcciones_proceso_create(0,0);
-	
-	_recibir(&direcciones_proceso->pid_size_total.PID,sizeof(uint32_t));
-	_recibir(&direcciones_proceso->pid_size_total.valor,sizeof(uint32_t));
-	_recibir(&cant_direcciones,sizeof(uint32_t));
-	for(int i=0;i<cant_direcciones;i++)
-	{	t_id_valor* id_valor = malloc(sizeof(t_id_valor));
-		_recibir(&id_valor->id,sizeof(uint32_t));
-		_recibir(&id_valor->valor,sizeof(uint32_t));
-		list_add(direcciones_proceso->direcciones,id_valor);
-	}
-	
-
-	return direcciones_proceso;
-}
 
 
-t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t size_registro,void* valor){
-	t_acceso_espacio_usuario* acceso_espacio_usuario = malloc(sizeof(t_acceso_espacio_usuario));
-	acceso_espacio_usuario->PID = PID;
-	acceso_espacio_usuario->direccion_fisica = direccion;
-	//acceso_espacio_usuario->bytes_restantes_en_frame = bytes_restantes;
-	acceso_espacio_usuario->size_registro = size_registro;
-	//acceso_espacio_usuario->size_registro = (valor!=NULL) ? (uint32_t)(strlen(valor)+1) : (uint32_t)0;
-	acceso_espacio_usuario->registro_dato = valor;
-	return acceso_espacio_usuario;
-}
+// t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t size_registro,void* valor){
+// 	t_acceso_espacio_usuario* acceso_espacio_usuario = malloc(sizeof(t_acceso_espacio_usuario));
+// 	acceso_espacio_usuario->PID = PID;
+// 	acceso_espacio_usuario->direccion_fisica = direccion;
+// 	//acceso_espacio_usuario->bytes_restantes_en_frame = bytes_restantes;
+// 	acceso_espacio_usuario->size_registro = size_registro;
+// 	//acceso_espacio_usuario->size_registro = (valor!=NULL) ? (uint32_t)(strlen(valor)+1) : (uint32_t)0;
+// 	acceso_espacio_usuario->registro_dato = valor;
+// 	return acceso_espacio_usuario;
+// }
 
 
 	
-void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,int* size){
-	// uint32_t tamanio_dato = ((uint32_t)strlen(acceso_espacio_usuario->registro_dato)+(uint32_t)1);
+// void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,int* size){
+// 	// uint32_t tamanio_dato = ((uint32_t)strlen(acceso_espacio_usuario->registro_dato)+(uint32_t)1);
 	
-	*size = sizeof(uint32_t) * 3 ;
-	if (acceso_espacio_usuario->registro_dato!=NULL){
-	*size = *size +  (acceso_espacio_usuario->size_registro); 
-	}
-	t_buffer* buffer = crear_buffer(*size);
-	agregar_a_buffer(buffer, &acceso_espacio_usuario->PID, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &acceso_espacio_usuario->direccion_fisica, sizeof(uint32_t));
-	//agregar_a_buffer(buffer, &acceso_espacio_usuario->bytes_restantes_en_frame, sizeof(uint32_t));
-	agregar_a_buffer(buffer, &acceso_espacio_usuario->size_registro, sizeof(uint32_t));
-	if( acceso_espacio_usuario->registro_dato!=NULL){
-	agregar_a_buffer(buffer, acceso_espacio_usuario->registro_dato, acceso_espacio_usuario->size_registro);
-	}
-	void * stream = buffer->stream;
-	free(buffer);
+// 	*size = sizeof(uint32_t) * 3 ;
+// 	if (acceso_espacio_usuario->registro_dato!=NULL){
+// 	*size = *size +  (acceso_espacio_usuario->size_registro); 
+// 	}
+// 	t_buffer* buffer = crear_buffer(*size);
+// 	agregar_a_buffer(buffer, &acceso_espacio_usuario->PID, sizeof(uint32_t));
+// 	agregar_a_buffer(buffer, &acceso_espacio_usuario->direccion_fisica, sizeof(uint32_t));
+// 	//agregar_a_buffer(buffer, &acceso_espacio_usuario->bytes_restantes_en_frame, sizeof(uint32_t));
+// 	agregar_a_buffer(buffer, &acceso_espacio_usuario->size_registro, sizeof(uint32_t));
+// 	if( acceso_espacio_usuario->registro_dato!=NULL){
+// 	agregar_a_buffer(buffer, acceso_espacio_usuario->registro_dato, acceso_espacio_usuario->size_registro);
+// 	}
+// 	void * stream = buffer->stream;
+// 	free(buffer);
 	
-	return stream;
+// 	return stream;
 
-}
+// }
 

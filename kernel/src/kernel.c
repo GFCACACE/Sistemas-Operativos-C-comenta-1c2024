@@ -2,6 +2,7 @@
 #include "semaphore.h"
 #include <time.h>
 
+
 sem_t sem_cont_grado_mp;
 sem_t sem_bin_new; //Sincroniza que plp (hilo new) no actúe hasta que haya un nuevo elemento en new
 sem_t sem_bin_ready; //Sincroniza que pcp no actúe hasta que haya un nuevo elemento en ready
@@ -210,14 +211,22 @@ bool iniciar_recursos(){
 }
 
 bool prueba(){
-	// t_direccion_fs* dir_fs = direccion_fs_create("hola!");
+	t_list* direcciones = list_create();
+	for(int i = 0;i<5;i++){
+		uint32_t direccion_fisica = i;
+		uint32_t registro_tamanio = 2*i;
+		t_direccion_tamanio* direccion_tamanio = direccion_tamanio_new(direccion_fisica,registro_tamanio);
+		list_add(direcciones, direccion_tamanio);
+	}
+	
+	t_operacion_fs* op_fs = obtener_op_fs(1, "nombre",direcciones, 4, 5, 6, IO_FS_CREATE);
 	// dir_fs->direccion = 56;
 	// dir_fs->tamanio = 25;
 	// dir_fs->puntero_archivo = 9;
 
-	// loguear_direccion_fs(dir_fs);
-	// enviar_direccion_fs(dir_fs,DIRECCIONES_PROCESO,cpu_dispatch);
-	// direccion_fs_destroy(dir_fs);
+	loguear_operacion_fs(op_fs);
+	enviar_operacion_fs(op_fs,DIRECCIONES_PROCESO,cpu_dispatch);
+	//direccion_fs_destroy(dir_fs);
 	return true;
 }
 
@@ -792,7 +801,7 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 
 void io_fs(uint32_t pid, t_paquete* paquete,char* nombre_interfaz){
 	loguear_warning("Entra al case");
-	loguear_warning("Uso del FS -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, operacion_fs->nombre_archivo);
+	//loguear_warning("Uso del FS -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, operacion_fs->nombre_archivo);
 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
 	int conexion_io = *(int *)ptr_conexion;
 	char* pid_aux = string_itoa(pid);
@@ -2261,13 +2270,15 @@ void io_handler(int *ptr_conexion){
 			free(pcb_query);
 			return;
 		}
-		t_pcb* pcb; = pcb_query->pcb;
+		t_pcb* pcb = pcb_query->pcb;
 		bool quitar_elem_de_blocked = list_remove_element(interfaz -> estado_blocked->elements,pcb);
 		if(quitar_elem_de_blocked){
 			//loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
 			a_ready(pcb);
 		}
 		free(pcb_query);
+	}
+}
 	// 	switch (cod_operacion){
 	// 		case TERMINO_IO:
 	// 			t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
@@ -2324,4 +2335,4 @@ void io_handler(int *ptr_conexion){
 	// 	//string_array_destroy(splitter);
 	// }
 	// envia a la interfaz correspodiente la operación que debe ejecutar
-}
+

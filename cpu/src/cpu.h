@@ -95,6 +95,7 @@ bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
 bool exe_io_fs(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_tamanio);
 bool exe_std(op_code cod_op,t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio);
 bool exe_io_fs_truncate(t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param reg_tamanio);
+t_list* obtener_lst_direccion_tamanio(t_pcb* pcb, uint32_t direccion_logica,uint32_t size_registro);
 //bool exe_io_fs_write( t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param dir_logica, t_param registro_tamanio, t_param registro_puntero_archivo);
 //bool exe_io_fs_read( t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param dir_logica, t_param registro_tamanio, t_param registro_puntero_archivo);
 /*Faltan las instrucciones de IO*/

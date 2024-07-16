@@ -507,7 +507,8 @@ bool execute(t_pcb *pcb)
 bool exe_io_fs(op_code cod_op,t_pcb* pcb,t_param interfaz,t_param _nombre_archivo){
 	
 	char* nombre_archivo = (char*)_nombre_archivo.string_valor;
-	t_operacion_fs* operacion = obtener_op_fs(pcb->pid, nombre_archivo, NULL, NULL, NULL, cod_op);  
+	t_operacion_fs* operacion = obtener_op_fs(pcb->PID, nombre_archivo, NULL, NULL, NULL, NULL, cod_op);
+	
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	
@@ -515,14 +516,33 @@ bool exe_io_fs(op_code cod_op,t_pcb* pcb,t_param interfaz,t_param _nombre_archiv
 	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
 	//la idea sería enviar un struct del tipo t_operacion_fs que contenga solamente el nombre del archivo
 	enviar_operacion_fs(operacion, FILE_SYSTEM,kernel_dispatch);
+	
 	//enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
 }
+// bool exe_io_fs_write( t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param dir_logica, t_param registro_tamanio, t_param registro_puntero_archivo)
+// {
+	
+// 	char* nombre_archivo = (char*)_nombre_archivo.string_valor;
+	
+// 	//t_direccion_tamanio* direccion_tamanio = obtener_direcciones(direccion_logica,tamanio);
+// 	t_list* direccion_tamanio_lst = obtener_lst_direccion_tamanio(pcb, (*uint32_t)dir_logica.string_valor, (*uint32_t)registro_tamanio.string_valor);
+
+// 	t_operacion_fs* operacion = obtener_op_fs(pcb->pid, nombre_archivo, direccion_tamanio_lst, NULL, NULL, NULL, IO_FS_WRITE);  
+// 	(uint32_t)registros_cpu->PC++;
+// 	actualizar_contexto(pcb);
+	
+// 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
+// 	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
+// 	//la idea sería enviar un struct del tipo t_operacion_fs que contenga solamente el nombre del archivo
+// 	enviar_operacion_fs(operacion, FILE_SYSTEM,kernel_dispatch);
+// 	//enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
+// }
 
 bool exe_io_fs_truncate(t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param reg_tamanio){
 	
 	char* nombre_archivo = _nombre_archivo.string_valor;
-	uint32_t size = (*uint32_t)reg_tamanio;
-	t_operacion_fs* operacion = obtener_op_fs(pcb->pid, nombre_archivo, NULL, NULL, size, IO_FS_TRUNCATE);  
+	uint32_t size = atoi(reg_tamanio.string_valor);
+	t_operacion_fs* operacion = obtener_op_fs(pcb->PID, nombre_archivo, NULL, NULL,NULL, size, IO_FS_TRUNCATE);  
  
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
@@ -843,6 +863,43 @@ t_direcciones_proceso* obtener_paquete_direcciones(t_pcb* pcb,uint32_t direccion
 	}
 	return direcciones_registros;
 } 
+ t_list* obtener_lst_direccion_tamanio(t_pcb* pcb, uint32_t direccion_logica,uint32_t size_registro){
+	//t_direcciones_proceso* direcciones_registros = direcciones_proceso_create(pcb->PID,size_registro);
+	t_list* direcciones_tamanio = list_create();
+	uint32_t numero_pagina = obtener_numero_pagina(direccion_logica);
+	uint32_t desplazamiento = obtener_desplazamiento(direccion_logica,numero_pagina);
+	uint32_t cantidad_paginas = obtener_cantidad_paginas(desplazamiento,size_registro);
+	
+	uint32_t direccion_fisica;
+	uint32_t size_restante_registro = size_registro;
+	uint32_t indice_pagina;
+	uint32_t size_registro_pagina_actual;
+	
+	for (indice_pagina=numero_pagina;indice_pagina < numero_pagina + cantidad_paginas;indice_pagina++){
+
+		desplazamiento = obtener_desplazamiento(direccion_logica,indice_pagina);
+		
+		direccion_fisica = mmu(pcb,direccion_logica);
+		
+		uint32_t bytes_restantes_pagina = tamanio_pagina - desplazamiento;
+	
+		if(size_restante_registro > bytes_restantes_pagina){
+			size_registro_pagina_actual = bytes_restantes_pagina;
+		}else{
+			size_registro_pagina_actual = size_restante_registro;
+		}
+		
+		t_direccion_tamanio* direccion_tamanio = direccion_tamanio_new(direccion_fisica,size_registro_pagina_actual);
+		
+		list_add(direcciones_tamanio,direccion_tamanio);
+		direccion_logica = direccion_logica + size_registro_pagina_actual;
+
+		size_restante_registro = size_restante_registro - size_registro_pagina_actual; //Cantidad de bytes que restan consumir
+		
+	}
+	return direcciones_tamanio;
+} 
+
 
 
 
@@ -942,10 +999,10 @@ int ejecutar_proceso_cpu()
 				paquete_destroy(paquete);
                 break;	
 			case DIRECCIONES_PROCESO:
-			  	// t_operacion_fs *dir_fs = recibir_direccion_fs(paquete); 
-				// loguear_direccion_fs(dir_fs);
-				// direccion_fs_destroy(dir_fs);
-				// paquete_destroy(paquete);
+			  	t_operacion_fs *dir_fs = recibir_op_fs(paquete); 
+				loguear_operacion_fs(dir_fs);
+				//direccion_fs_destroy(dir_fs);
+				paquete_destroy(paquete);
                 break;
             case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");

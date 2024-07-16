@@ -11,6 +11,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <time.h>
+#include <utils/utils-interfaz.h>
 #define MODULO "kernel"
 
 typedef enum t_alg_planificador

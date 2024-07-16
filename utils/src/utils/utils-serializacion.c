@@ -21,25 +21,26 @@ void paquete_destroy(t_paquete* paquete) {
     }
 }
 
-t_peticion_generica* recibir_peticion_generica(t_paquete* paquete){
+// t_peticion_generica* recibir_peticion_generica(t_paquete* paquete){
 
-    t_peticion_generica* peticion=malloc(sizeof(t_peticion_generica));
+//     t_peticion_generica* peticion=malloc(sizeof(t_peticion_generica));
 
-    /*Acá van todos los Recibir buffer*/
+//     /*Acá van todos los Recibir buffer*/
 
 
-    return peticion;
-}
+//     return peticion;
+// }
 
-t_peticion_generica* crear_peticion_generica(t_pcb*pcb_recibido,t_buffer* buffer_recibido){
-	t_peticion_generica* peticion = malloc(sizeof(t_peticion_generica));
+// t_peticion_generica* crear_peticion_generica(t_pcb*pcb_recibido,t_buffer* buffer_recibido){
+// 	t_peticion_generica* peticion = malloc(sizeof(t_peticion_generica));
 
-	/**/
+// 	/**/
 
-	return peticion;
-}
+// 	return peticion;
+// }
 
-void enviar_peticion(t_peticion_generica*){
+// void enviar_peticion(t_peticion_generica*){
 
-loguear_warning("Enviar petición todavía no fue implementada");
-};
+// loguear_warning("Enviar petición todavía no fue implementada");
+// };
+    

@@ -318,6 +318,7 @@ t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio)
 	return direcciones_proceso;
 }
 
+
 // t_operacion_fs* direccion_fs_create(char* nombre_archivo){
 // 	t_operacion_fs* operacion_fs = malloc(sizeof(t_operacion_fs));
 // 	operacion_fs->nombre_archivo = string_duplicate(nombre_archivo);
@@ -347,6 +348,14 @@ t_direccion_registro* direccion_registro_new(uint32_t direccion,uint32_t size){
 
 	return direccion_registro;
 }
+t_direccion_tamanio* direccion_tamanio_new(uint32_t direccion,uint32_t size){
+	t_direccion_tamanio* direccion_tamanio = malloc(sizeof(t_direccion_tamanio));
+	direccion_tamanio->direccion_fisica = direccion;
+	direccion_tamanio->tamanio_bytes =size;
+
+	return direccion_tamanio;
+}
+
 
 void direcciones_proceso_destroy(t_direcciones_proceso* direcciones_proceso){
 	list_destroy_and_destroy_elements(direcciones_proceso->direcciones,free);
@@ -364,6 +373,22 @@ void loguear_direccion_proceso(t_direcciones_proceso* dir_proceso){
 	}
 	loguear("--------%s--------","fin direcciones");
 
+}
+
+void loguear_operacion_fs(t_operacion_fs* operacion_fs){
+
+	loguear("Cod op:%d",operacion_fs->cod_op);
+	loguear("pid:%d",operacion_fs->pid);
+	loguear("tamanio reg:%d",operacion_fs->tamanio_registro);
+	loguear("registro ptr:%d",operacion_fs->registro_puntero);
+	loguear("tamanio trunc:%d",operacion_fs->tamanio_truncate);
+	loguear("nombre arc:%s",operacion_fs->nombre_archivo);
+	loguear("--------%s--------","direcciones");
+	for(int i=0;i<list_size(operacion_fs->direcciones);i++){
+		t_direccion_tamanio* dir_tamanio = (t_direccion_tamanio* )list_get(operacion_fs->direcciones,i);
+		loguear("Direcc: %d - Tam: %d", dir_tamanio->direccion_fisica,dir_tamanio->tamanio_bytes);
+	}
+	loguear("--------%s--------","fin direcciones");
 }
 
 // void loguear_direccion_fs(t_operacion_fs* dir_fs){
