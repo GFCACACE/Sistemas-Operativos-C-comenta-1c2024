@@ -461,6 +461,24 @@ bool execute(t_pcb *pcb)
 		liberar_param(PARAM3);
 		return true;
 	}
+	// if(!strcmp(INSTID,"IO_FS_READ")){
+	// 	loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor,PARAM4.string_valor);
+	// 	exe_io_fs_read(IO_FS_READ, pcb,PARAM1,PARAM2,PARAM3, PARAM4);
+	// 	liberar_param(PARAM1);
+	// 	liberar_param(PARAM2);
+	// 	liberar_param(PARAM3);
+	//  liberar_param(PARAM4)
+	// 	return true;
+	// }
+	// if(!strcmp(INSTID,"IO_FS_WRITE")){
+	// 	loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor, PARAM4.string_valor);
+	// 	exe_io_fs_write(IO_FS_WRITE, pcb,PARAM1,PARAM2,PARAM3, PARAM4);
+	// 	liberar_param(PARAM1);
+	// 	liberar_param(PARAM2);
+	// 	liberar_param(PARAM3);
+	//  liberar_param(PARAM4)
+	// 	return true;
+	// }
 	if (es_exit(INSTID))
 	{	
 
@@ -476,29 +494,32 @@ bool execute(t_pcb *pcb)
 // INSTRUCCIONES PARA IO_FS_CREATE E IO_FS_DELETE
 bool exe_io_fs(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_archivo){
 	
-	// char* nombre_archivo = _nombre_archivo.string_valor;
-	// t_operacion_fs* operacion = paquete_op_fs(nombre_archivo, NULL, NULL, NULL);  
+	char* nombre_archivo = (char*)_nombre_archivo.string_valor;
+	t_operacion_fs* operacion = obtener_op_fs(nombre_archivo, NULL, NULL, cod_op);  
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
 	//la idea sería enviar un struct del tipo t_operacion_fs que contenga solamente el nombre del archivo
+	enviar_operacion_fs(operacion, cod_op,kernel_dispatch);
 	//enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
 }
 
 bool exe_io_fs_truncate(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param reg_tamanio){
 	
-	// char* nombre_archivo = _nombre_archivo.string_valor;
-	// t_operacion_fs* operacion = paquete_op_fs(nombre_archivo, NULL, NULL, NULL);  
+	char* nombre_archivo = _nombre_archivo.string_valor;
+	uint32_t size = (*uint32_t)reg_tamanio;
+	t_operacion_fs* operacion = obtener_op_fs(nombre_archivo, NULL, size, cod_op);  
+ 
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	enviar_texto(interfaz.string_valor,cod_op,kernel_dispatch);
 	// momentáneo... la idea es que estos datos se envien en un paquete.
-	enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
-	enviar_mensaje(reg_tamanio.string_valor, kernel_dispatch);
+	enviar_operacion_fs(operacion, kernel_dispatch);
+	//enviar_mensaje(reg_tamanio.string_valor, kernel_dispatch);
 }
 
 

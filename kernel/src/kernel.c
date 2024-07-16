@@ -790,7 +790,7 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 // 	loguear_warning("Peticion a IO enviada");
 // }
 
-void io_fs(uint32_t pid, t_operacion_fs* operacion_fs,char* nombre_interfaz){
+void io_fs(uint32_t pid, t_paquete* paquete,char* nombre_interfaz){
 	loguear_warning("Entra al case");
 	loguear_warning("Uso del FS -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, operacion_fs->nombre_archivo);
 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
@@ -801,7 +801,7 @@ void io_fs(uint32_t pid, t_operacion_fs* operacion_fs,char* nombre_interfaz){
 	//enviar_texto(pid_aux,operacion_fs->cod_op,conexion_io);
 	enviar_mensaje(pid_aux, conexion_io);
 	// enviar paquete con operacion_fs
-	// enviar_paquete(operacion_fs, operacion_fs->cod_op, conexion_kernel);
+	enviar_paquete(paquete, conexion_io);
 	loguear_warning("Peticion a IO enviada");
 }
 
@@ -902,8 +902,9 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			break;
 		case FILE_SYSTEM:
 			recibir_operacion(cpu_dispatch);
+			t_paquete* paquete_fs = recibir_paquete(cpu_dispatch);
 			//t_operacion_fs* operacion_fs = recibir_op_fs(cpu_dispatch);
-			//io_fs(pcb_recibido->PID,  operacion_fs,nombre_interfaz);
+			io_fs(pcb_recibido->PID,paquete_fs,nombre_interfaz);
 			break;
 		// case IO_FS_CREATE:
 		// 	// recibir_operacion(cpu_dispatch);

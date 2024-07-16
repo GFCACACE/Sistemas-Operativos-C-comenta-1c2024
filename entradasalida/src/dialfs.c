@@ -131,12 +131,12 @@ bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final){
 
 }
 
-typedef struct{
-    char* nombre_archivo;
-    t_direcciones_proceso* direcciones_proceso;
-    uint32_t registro_puntero_archivo;
+// typedef struct{
+//     char* nombre_archivo;
+//     t_direcciones_proceso* direcciones_proceso;
+//     uint32_t registro_puntero_archivo;
 
-}t_peticion_fs;
+// }t_peticion_fs;
 
 // bool io_fs_read(t_operacion_fs* peticion_fs){
 //     bool encontrar_archivo(void* elem){

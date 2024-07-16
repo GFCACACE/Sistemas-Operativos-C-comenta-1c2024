@@ -84,15 +84,6 @@ typedef enum
 // IDEA: la CPU le envia a kernel un struct con la info que necesita 
 // para gestionar las instancias de IO generica.
 //
-typedef struct{
-	int process_id;
-	op_code operacion;
-	char* tipo_interfaz;
-	char* nombre_interfaz;
-	int unidades_de_trabajo;
-}t_peticion_generica;
-// BRAND NEW
-
 
 
 typedef struct 

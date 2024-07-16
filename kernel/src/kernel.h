@@ -205,7 +205,7 @@ bool eliminar_proceso_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pth
 t_pcb* encontrar_en_lista(uint32_t pid_buscado,t_queue* estado_buscado ,pthread_mutex_t* mutex_estado_buscado);
 
 char** recibir_io(int conexion);
-void io_fs(uint32_t pid, t_operacion_fs* operacion_fs,char* nombre_interfaz);
+void io_fs(uint32_t pid, t_paquete* paquete,char* nombre_interfaz);
 t_queue* buscar_cola_de_pcb(uint32_t pid);
 t_pcb* buscar_pcb_en_cola(t_queue* cola,uint32_t pid);
 t_pcb_query* buscar_pcb(uint32_t pid);

@@ -440,7 +440,8 @@ int ejecutar_op_io_dialfs(){
 				io_fs_delete(operacion_fs->nombre_archivo);
 				break;
 			case IO_FS_TRUNCATE:
-				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->direcciones_proceso->pid_size_total.valor);
+				//aclarar
+				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->registro_puntero_archivo);
 				break;
 			// case IO_FS_READ:
 			// 	io_fs_read(operacion_fs);
