@@ -221,6 +221,7 @@ t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio)
 void direcciones_proceso_destroy(t_direcciones_proceso* direcciones_proceso);
 void loguear_direccion_proceso(t_direcciones_proceso* direcciones_proceso);
 void loguear_operacion_fs(t_operacion_fs* operacion_fs);
+void operacion_fs_destroy(t_operacion_fs* operacion_fs);
 // t_operacion_fs* direccion_fs_create(char* nombre_archivo);
 // void loguear_direccion_fs(t_operacion_fs* dir_fs);
 // void direccion_fs_destroy(t_operacion_fs* dir_fs);

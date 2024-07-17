@@ -226,7 +226,7 @@ bool prueba(){
 
 	loguear_operacion_fs(op_fs);
 	enviar_operacion_fs(op_fs,DIRECCIONES_PROCESO,cpu_dispatch);
-	//direccion_fs_destroy(dir_fs);
+	operacion_fs_destroy(op_fs);
 	return true;
 }
 

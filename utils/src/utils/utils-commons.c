@@ -328,10 +328,11 @@ t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio)
 // 	return operacion_fs;
 // }
 
-// void direccion_fs_destroy(t_operacion_fs* dir_fs){
-// 	free(dir_fs->nombre_archivo);
-// 	free(dir_fs);
-// }
+void operacion_fs_destroy(t_operacion_fs* operacion_fs){
+	free(operacion_fs->nombre_archivo);
+	list_destroy_and_destroy_elements(operacion_fs->direcciones,free);
+	free(operacion_fs);
+}
 
 t_id_valor* id_valor_new(uint32_t id,uint32_t valor){
 	t_id_valor* id_valor = malloc(sizeof(t_id_valor));

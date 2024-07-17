@@ -6,7 +6,7 @@ bool wait_o_signal = false;
 //op_code cod_op_kernel_dispatch;
 op_code cod_op_kernel_interrupt;
 char *IR, *INSTID;
-t_param PARAM1, PARAM2, PARAM3;
+t_param PARAM1, PARAM2, PARAM3, PARAM4, PARAM5;
 pthread_mutex_t mutex_interrupt= PTHREAD_MUTEX_INITIALIZER;
 t_config_cpu *config;
 t_registros_cpu *registros_cpu;
@@ -109,7 +109,7 @@ bool iniciar_conexion_memoria()
 	int codigo_operacion = recibir_operacion(conexion_memoria);
 	if(codigo_operacion == TAMANIO_PAGINA){
 		tamanio_pagina=atoi(recibir_mensaje(conexion_memoria));
-		loguear("TAM_PAGINA: %d B");
+		loguear("TAM_PAGINA: %d B", tamanio_pagina);
 	}
 
 	return true;
@@ -438,59 +438,66 @@ bool execute(t_pcb *pcb)
 		return true;
 	}
 	if(!strcmp(INSTID,"IO_FS_CREATE")){
-		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_io_fs(IO_FS_CREATE, pcb,PARAM1,PARAM2);
 		liberar_param(PARAM1);
 		liberar_param(PARAM2);
-		//liberar_param(PARAM3);
 		return true;
 	}
 	if(!strcmp(INSTID,"IO_FS_DELETE")){
-		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> ", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_io_fs(IO_FS_DELETE, pcb,PARAM1,PARAM2);
 		liberar_param(PARAM1);
 		liberar_param(PARAM2);
-		//liberar_param(PARAM3);
 		return true;
 	}
 	if(!strcmp(INSTID,"IO_FS_TRUNCATE")){
-		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor,PARAM3.string_valor);
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s>", 
+		pcb->PID, 
+		INSTID, 
+		PARAM1.string_valor, 
+		PARAM2.string_valor,
+		PARAM3.string_valor);
 		exe_io_fs_truncate(pcb,PARAM1,PARAM2,PARAM3);
 		liberar_param(PARAM1);
 		liberar_param(PARAM2);
 		liberar_param(PARAM3);
 		return true;
 	}
-	// if(!strcmp(INSTID,"IO_FS_READ")){
-	// 	loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s> <%s> <%s>", pcb->PID, 
-	// INSTID, PARAM1.string_valor, 
-	// PARAM2.string_valor,
-	// PARAM3.string_valor,
-	// PARAM4.string_valor,
-	// PARAM5.string_valor);
-	// 	exe_io_fs_read(pcb,PARAM1,PARAM2,PARAM3, PARAM4, PARAM5);
-	// 	liberar_param(PARAM1);
-	// 	liberar_param(PARAM2);
-	// 	liberar_param(PARAM3);
-	//  liberar_param(PARAM4);
-	//  liberar_param(PARAM5);
-	// 	return true;
-	// }
-	// if(!strcmp(INSTID,"IO_FS_WRITE")){
-	// 	loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s> <%s> <%s>", pcb->PID, 
-	// INSTID, PARAM1.string_valor, 
-	// PARAM2.string_valor,
-	// PARAM3.string_valor,
-	// PARAM4.string_valor,
-	// PARAM5.string_valor);
-	// 	exe_io_fs_write( pcb,PARAM1,PARAM2,PARAM3, PARAM4, PARAM5);
-	// 	liberar_param(PARAM1);
-	// 	liberar_param(PARAM2);
-	// 	liberar_param(PARAM3);
-	//  liberar_param(PARAM4);
-	//  liberar_param(PARAM5);
-	// 	return true;
-	// }
+	if(!strcmp(INSTID,"IO_FS_READ")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s> <%s> <%s>", 
+		pcb->PID, 
+		INSTID, 
+		PARAM1.string_valor, 
+		PARAM2.string_valor,
+		PARAM3.string_valor,
+		PARAM4.string_valor,
+		PARAM5.string_valor);
+		exe_io_fs_rw(IO_FS_READ,pcb,PARAM1,PARAM2,PARAM3, PARAM4, PARAM5);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
+		liberar_param(PARAM3);
+	 	liberar_param(PARAM4);
+	 	liberar_param(PARAM5);
+		return true;
+	}
+	if(!strcmp(INSTID,"IO_FS_WRITE")){
+		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> <%s> <%s> <%s>", 
+		pcb->PID, 
+		INSTID, 
+		PARAM1.string_valor, 
+		PARAM2.string_valor,
+		PARAM3.string_valor,
+		PARAM4.string_valor,
+		PARAM5.string_valor);
+		exe_io_fs_rw(IO_FS_WRITE ,pcb,PARAM1,PARAM2,PARAM3, PARAM4, PARAM5);
+		liberar_param(PARAM1);
+		liberar_param(PARAM2);
+		liberar_param(PARAM3);
+	 	liberar_param(PARAM4);
+	 	liberar_param(PARAM5);
+		return true;
+	}
 	if (es_exit(INSTID))
 	{	
 
@@ -507,51 +514,60 @@ bool execute(t_pcb *pcb)
 bool exe_io_fs(op_code cod_op,t_pcb* pcb,t_param interfaz,t_param _nombre_archivo){
 	
 	char* nombre_archivo = (char*)_nombre_archivo.string_valor;
-	t_operacion_fs* operacion = obtener_op_fs(pcb->PID, nombre_archivo, NULL, NULL, NULL, NULL, cod_op);
+	t_list* lst_vacia = list_create();
+	t_operacion_fs* operacion = obtener_op_fs(pcb->PID, nombre_archivo, lst_vacia, 0,0, 0, cod_op);
 	
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
-	//la idea sería enviar un struct del tipo t_operacion_fs que contenga solamente el nombre del archivo
 	enviar_operacion_fs(operacion, FILE_SYSTEM,kernel_dispatch);
+	return true;
 	
-	//enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
 }
-// bool exe_io_fs_write( t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param dir_logica, t_param registro_tamanio, t_param registro_puntero_archivo)
-// {
-	
-// 	char* nombre_archivo = (char*)_nombre_archivo.string_valor;
-	
-// 	//t_direccion_tamanio* direccion_tamanio = obtener_direcciones(direccion_logica,tamanio);
-// 	t_list* direccion_tamanio_lst = obtener_lst_direccion_tamanio(pcb, (*uint32_t)dir_logica.string_valor, (*uint32_t)registro_tamanio.string_valor);
 
-// 	t_operacion_fs* operacion = obtener_op_fs(pcb->pid, nombre_archivo, direccion_tamanio_lst, NULL, NULL, NULL, IO_FS_WRITE);  
-// 	(uint32_t)registros_cpu->PC++;
-// 	actualizar_contexto(pcb);
+bool exe_io_fs_rw(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param dir_logica, t_param registro_tamanio, t_param puntero_archivo)
+{
 	
-// 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
-// 	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
-// 	//la idea sería enviar un struct del tipo t_operacion_fs que contenga solamente el nombre del archivo
-// 	enviar_operacion_fs(operacion, FILE_SYSTEM,kernel_dispatch);
-// 	//enviar_mensaje(_nombre_archivo.string_valor, kernel_dispatch);
-// }
+	char* nombre_archivo = (char*)_nombre_archivo.string_valor;
+	uint32_t direccion_logica = atoi(dir_logica.string_valor);
+	uint32_t size = atoi(registro_tamanio.string_valor);
+	uint32_t registro_puntero = atoi(puntero_archivo.string_valor);
+
+
+	t_list* direccion_tamanio_lst = obtener_lst_direccion_tamanio(pcb, direccion_logica, size);
+
+	t_operacion_fs* operacion = obtener_op_fs(pcb->PID, 
+											nombre_archivo, 
+											direccion_tamanio_lst,
+											size, 
+											registro_puntero, 
+											0, 
+											cod_op);  
+	(uint32_t)registros_cpu->PC++;
+	actualizar_contexto(pcb);
+	
+	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
+	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
+	enviar_operacion_fs(operacion, FILE_SYSTEM,kernel_dispatch);
+	return true;
+}
 
 bool exe_io_fs_truncate(t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param reg_tamanio){
 	
 	char* nombre_archivo = _nombre_archivo.string_valor;
 	uint32_t size = atoi(reg_tamanio.string_valor);
-	t_operacion_fs* operacion = obtener_op_fs(pcb->PID, nombre_archivo, NULL, NULL,NULL, size, IO_FS_TRUNCATE);  
+	t_list* lst_vacia = list_create();
+	t_operacion_fs* operacion = obtener_op_fs(pcb->PID, nombre_archivo, lst_vacia,0,0, size, IO_FS_TRUNCATE);  
  
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
 	
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
-	// momentáneo... la idea es que estos datos se envien en un paquete.
 	enviar_operacion_fs(operacion,FILE_SYSTEM, kernel_dispatch);
-	//enviar_mensaje(reg_tamanio.string_valor, kernel_dispatch);
+	return true;
 }
 
 
@@ -999,9 +1015,9 @@ int ejecutar_proceso_cpu()
 				paquete_destroy(paquete);
                 break;	
 			case DIRECCIONES_PROCESO:
-			  	t_operacion_fs *dir_fs = recibir_op_fs(paquete); 
-				loguear_operacion_fs(dir_fs);
-				//direccion_fs_destroy(dir_fs);
+			  	t_operacion_fs *op_fs = recibir_op_fs(paquete); 
+				loguear_operacion_fs(op_fs);
+				operacion_fs_destroy(op_fs);
 				paquete_destroy(paquete);
                 break;
             case -1:

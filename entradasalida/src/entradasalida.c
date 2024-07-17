@@ -451,23 +451,23 @@ int ejecutar_op_io_dialfs(){
 				break;
 			case IO_FS_TRUNCATE:
 				//aclarar
-				loguear("PID: <%d> - Truncar Archivo: <%s> - Tamanio:<%d>", operacion_fs->pid, operacion_fs->nombre_archivo, operacion_fs->direcciones_proceso->pid_size_total.valor);
+				loguear("PID: <%d> - Truncar Archivo: <%s> - Tamanio:<%d>", operacion_fs->pid, operacion_fs->nombre_archivo, operacion_fs->tamanio_truncate);
 				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->tamanio_truncate);
 				break;
 			// case IO_FS_READ:
 			//	loguear("PID: <&d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
 			// operacion_fs->pid, 
 			// operacion_fs->nombre_archivo, 
-			// operacion_fs->direcciones_proceso->pid_size_total.valor, 
-			// operacion_fs->registro_puntero_archivo);
+			// operacion_fs->tamanio_registro, 
+			// operacion_fs->puntero_archivo);
 			// 	io_fs_read(operacion_fs);
 			// 	break;
 			// case IO_FS_WRITE:
 			// loguear("PID: <&d> - Escribir Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
 			// operacion_fs->pid, 
 			// operacion_fs->nombre_archivo, 
-			// operacion_fs->direcciones_proceso->pid_size_total.valor, 
-			// operacion_fs->registro_puntero_archivo);
+			// operacion_fs->tamanio_registro, 
+			// operacion_fs->puntero_archivo);
 			// 	break;
 		}
 		notificar_kernel(operacion_fs->pid, conexion_kernel);
