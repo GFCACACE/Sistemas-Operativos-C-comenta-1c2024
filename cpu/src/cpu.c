@@ -500,10 +500,16 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 
 bool exe_std(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_param registro_tamanio)
 {
-	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
+	uint32_t direccion_logica;
+	if(registro_direccion.size==1)
+		direccion_logica =(uint32_t) *(uint8_t*)registro_direccion.puntero;
+	else
+		direccion_logica = *(uint32_t*)registro_direccion.puntero;
+	
 	uint32_t tamanio = (uint32_t)atoi(registro_tamanio.string_valor);
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb,direccion_logica,tamanio);
 	
+	loguear_direccion_proceso(direcciones_fisicas_registros);
 
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);

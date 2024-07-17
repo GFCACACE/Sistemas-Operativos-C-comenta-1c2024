@@ -364,13 +364,13 @@ void efectuar_retardo(){
 }
 
 int buscar_instrucciones(){
-	int debug=0;
+	// int debug=0;
 	 while (1) {
-		debug++;
+		// debug++;
          t_paquete *paquete = recibir_paquete(conexion_cpu);
          op_code cod_op =paquete->codigo_operacion;
 		 //int cod_op_a_devolver;
-		if(debug ==  23)
+		// if(debug ==  23)
 		loguear("Cod op: %d", cod_op);
 		efectuar_retardo();
         switch (cod_op) {
@@ -468,7 +468,7 @@ void leer_memoria(void* direccion_fisica,void* buffer,uint32_t size){
 
 
 void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario,int conexion){
-	void* direccion_real = &memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
+	void* direccion_real = memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
 	switch (tipo_acceso)
 	{
 	case PEDIDO_STDIN:
@@ -502,11 +502,12 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		/////BORRAR
 			
 			
-
+			char* dato_leido_str;
+			dato_leido_str=string_duplicate((char*)dato_leido);
 			//dato_leido[acceso_espacio_usuario->size_registro] = '\0';
 			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
-			
-			
+			loguear("valor: <%s>",dato_leido_str);
+			free(dato_leido_str);
 			_enviar_stream_(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
 			//
 		//enviar_texto(dato_leido,VALOR_LECTURA_MEMORIA,conexion);

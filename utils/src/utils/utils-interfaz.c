@@ -1,5 +1,6 @@
 #include "utils-interfaz.h"
 
+// void* memoriaPrincipal;
 
  void escribir_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion_a_memoria){
 	int operacion_ok;

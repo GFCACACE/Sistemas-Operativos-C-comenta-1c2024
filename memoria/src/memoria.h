@@ -6,8 +6,7 @@
 #include<commons/string.h>
 #include<commons/log.h>
 #include<commons/collections/queue.h>
-#include <utils/utils-client.h>
-#include <utils/utils-server.h>
+#include <utils/utils-interfaz.h>
 #include <utils/utils-commons.h>
 #include <utils/utils-config.h>
 #include <readline/readline.h>
@@ -51,6 +50,7 @@ extern t_log* logger;
 extern t_config_memoria* config_memoria;
 extern int memoria_escucha,conexion_cpu, conexion_kernel;
 extern t_dictionary* procesos;
+extern void* memoriaPrincipal;
 char* proxima_instruccion_de(t_pcb*);
 void cargar_programa_de(t_pcb*,char*);
 void enviar_proxima_instruccion (t_pcb* pcb);
