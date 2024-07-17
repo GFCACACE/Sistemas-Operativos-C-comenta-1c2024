@@ -244,20 +244,20 @@ void recibir_io(){
             free(paquete);
         }
 		else if(config->TIPO_INTERFAZ.id == DIALFS){
-            t_paquete* paquete = recibir_paquete(conexion_kernel);
-            int cod_op_io = paquete->codigo_operacion;
-            if(cod_op_io==-1){
-                loguear_warning("Kernel se desconectó.");
-                free(paquete);
-                return;
-            }
-            //t_operacion_fs* operacion_fs = recibir_op_fs(paquete);
-            pthread_mutex_lock(&mx_peticion);
-            //queue_push(cola_peticiones_io, operacion_fs);
-            pthread_mutex_unlock(&mx_peticion);
-            sem_post(&sem_bin_cola_peticiones);
-            free(paquete);
-        }
+			t_paquete* paquete = recibir_paquete(conexion_kernel);
+			int cod_op_io = paquete->codigo_operacion;
+			if(cod_op_io==-1){
+				loguear_warning("Kernel se desconectó.");
+				free(paquete);
+				return;
+			}
+			//t_operacion_fs* operacion_fs = recibir_op_fs(paquete);
+			pthread_mutex_lock(&mx_peticion);
+			//queue_push(cola_peticiones_io, operacion_fs);
+			pthread_mutex_unlock(&mx_peticion);
+			sem_post(&sem_bin_cola_peticiones);
+			free(paquete);	
+		}
 	}
 }
 
@@ -317,19 +317,9 @@ bool es_generica(){
 	return es_selector(GENERICA);
 }
 
-int ejecutar_op_io_stdin(){
+void ejecutar_op_io_stdin(){
 	while(1){
-		// t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-		// char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
-		// sem_wait(&sem_bin_cola_peticiones);
-		// pthread_mutex_lock(&mx_peticion);
-		// direcciones_proceso = queue_pop(cola_peticiones_io);
-		// pthread_mutex_unlock(&mx_peticion);
-
-		// io_stdin_read(direcciones_proceso, conexion_memoria);
-
-		// enviar_texto(pid,TERMINO_IO,conexion_kernel);
-		// loguear_warning("Termino el IO_STDIN_READ.");
+		
 		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
         char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
         sem_wait(&sem_bin_cola_peticiones);
@@ -344,7 +334,7 @@ int ejecutar_op_io_stdin(){
 
 	}
 }
-int ejecutar_op_io_stdout(){
+void ejecutar_op_io_stdout(){
 	while(1){
 		
 		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
@@ -362,11 +352,7 @@ int ejecutar_op_io_stdout(){
 	}
 }
 
-int ejecutar_op_io_dialfs(){
-
-}
-
-int ejecutar_op_io_generica(){
+void ejecutar_op_io_generica(){
 	while(1){
 		// t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
 		// sem_wait(&sem_bin_cola_peticiones);
@@ -422,64 +408,46 @@ int ejecutar_op_io_generica(){
 }
 
 
-// int ejecutar_op_io()
-// {
+void ejecutar_op_io_dialfs(){
+	while(1){
+		sem_wait(&sem_bin_cola_peticiones);
+		pthread_mutex_lock(&mx_peticion);
+		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
+		pthread_mutex_unlock(&mx_peticion);
+		int cod_op = operacion_fs->cod_op;
 
-// 	loguear("Ejecuta operacion de entrada salida");
-// 	while (1)
-// 	{
-// 		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
-// 		sem_wait(&sem_bin_cola_peticiones);
-// 		pthread_mutex_lock(&mx_peticion);
-// 		peticion_io = queue_pop(cola_peticiones_io);
-// 		pthread_mutex_unlock(&mx_peticion);
-// 		int cod_op = peticion_io->cod_op;
-// 		char* _peticion;
-// 		_peticion = peticion_io->peticion;
-// 		char** splitter = string_array_new();
-// 		splitter = string_split(_peticion," ");
-// 		loguear("Cod op: %d", cod_op);
-// 		ESTAMOS BIEN
-// 		char mensaje[70];
-
-//         switch (cod_op) {
-//             case IO_GEN_SLEEP:
-				
-// 				sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
-// 				loguear(mensaje);
-// 				loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
-// 				io_gen_sleep(atoi(splitter[1]));
-// 				loguear_warning("Ya termino de dormir zzzzz");
-// 				enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-// 				loguear_warning("Termino el IO_GEN_SLEEP.");
-//                 break;			
-// 			case IO_STDIN_READ:
-				
-// 				sprintf(mensaje,"PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
-// 				loguear(mensaje);
-// 				loguear("PID: <%s> - Operacion: <IO_STDIN_READ> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
-// 				io_stdin_read((uint32_t)atoi(splitter[0]), (uint32_t)atoi(splitter[1]), (uint32_t) atoi(splitter[2]));
-// 				enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-// 				loguear_warning("Termino el IO_STDIN_READ.");
-//                 break;
-// 			case IO_STDOUT_WRITE:
-				
-// 				sprintf(mensaje,"PID: <%s> - Operacion: <IO_STDOUT_WRITE> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
-// 				loguear(mensaje);
-// 				loguear("PID: <%s> - Operacion: <IO_STDOUT_WRITE> - Direccion: %s Tamanio: %s",splitter[0],splitter[1], splitter[2]);
-// 				io_stdout_write((uint32_t)atoi(splitter[0]),(uint32_t)atoi(splitter[1]), (uint32_t) atoi(splitter[2]));
-// 				enviar_texto(_peticion,TERMINO_IO,conexion_kernel);
-// 				loguear_warning("Termino el IO_STDOUT_WRITE.");
-//                 break;	
-//             case -1:
-// 				loguear_error("Problemas en la comunicacion con el servidor. Cerrando conexion...");
-// 				free(peticion_io);
-// 				return EXIT_FAILURE;
-// 			default:
-// 				log_warning(logger, "Operacion desconocida. No quieras meter la pata");
-// 				free(peticion_io);
-// 				return EXIT_FAILURE;
-// 		}
-// 		free(peticion_io);
-// 	}
-// }
+		switch(cod_op){
+			case IO_FS_CREATE:
+				loguear("PID: <%d> - Crear Archivo: <%s>", operacion_fs->pid, operacion_fs->nombre_archivo); 
+				io_fs_create(operacion_fs->nombre_archivo);
+				break;
+			case IO_FS_DELETE:
+				loguear("PID: <%d> - Eliminar Archivo: <%s>", operacion_fs->pid, operacion_fs->nombre_archivo);	
+				io_fs_delete(operacion_fs->nombre_archivo);
+				break;
+			case IO_FS_TRUNCATE:
+				//aclarar
+				loguear("PID: <%d> - Truncar Archivo: <%s> - Tamanio:<%d>", operacion_fs->pid, operacion_fs->nombre_archivo, operacion_fs->tamanio_truncate);
+				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->tamanio_truncate);
+				break;
+			// case IO_FS_READ:
+			//	loguear("PID: <&d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
+			// operacion_fs->pid, 
+			// operacion_fs->nombre_archivo, 
+			// operacion_fs->tamanio_registro, 
+			// operacion_fs->puntero_archivo);
+			// 	io_fs_read(operacion_fs);
+			// 	break;
+			// case IO_FS_WRITE:
+			// loguear("PID: <&d> - Escribir Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
+			// operacion_fs->pid, 
+			// operacion_fs->nombre_archivo, 
+			// operacion_fs->tamanio_registro, 
+			// operacion_fs->puntero_archivo);
+			// 	break;
+		}
+		char* pid_a_enviar = string_itoa(operacion_fs->pid);
+		notificar_kernel(pid_a_enviar, conexion_kernel);
+		//operacion_fs_destroy(operacion_fs);
+	}
+}

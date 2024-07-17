@@ -926,6 +926,12 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			t_paquete* paquete_iow = recibir_paquete(cpu_dispatch);
 			io_std(pcb_recibido->PID, paquete_iow,nombre_interfaz);
 			break;
+		case FILE_SYSTEM:
+			recibir_operacion(cpu_dispatch);
+			t_paquete* paquete_fs = recibir_paquete(cpu_dispatch);
+			//t_operacion_fs* operacion_fs = recibir_op_fs(cpu_dispatch);
+			io_fs(pcb_recibido->PID,paquete_fs,nombre_interfaz);
+			break;
 		default:
 			limpiar_buffer(cod_op_io);
 			pasar_a_exit(pcb_recibido);			
@@ -2325,72 +2331,98 @@ void a_ready_sin_mutex(t_pcb* pcb){
 }
 void io_handler(int *ptr_conexion){
 	while(1){
-		int conexion = *ptr_conexion;
-		int cod_operacion = recibir_operacion(conexion);
-		loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
-		char* pid_str = recibir_mensaje(conexion);
-		loguear_warning("Llego el mensaje %s", pid_str); //COMENTAR
-		int pid_a_manejar = atoi(pid_str);
-		t_pcb* pcb;
-		//char** splitter = string_split(mensaje," ");
-		//string_array_destroy(splitter);
-		char* string_conexion = string_itoa(conexion);
-		//loguear_warning("Antes del get del diccionario");
-		t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
-		free(string_conexion);
-		switch (cod_operacion){
-			case TERMINO_IO:
-				t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
-				if(pcb_query->estado==NULL||pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)
-					break;
+		// int conexion = *ptr_conexion;
+		// int cod_operacion = recibir_operacion(conexion);
+		// loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
+		// char* pid_str = recibir_mensaje(conexion);
+		// loguear_warning("Llego el mensaje %s", pid_str); //COMENTAR
+		// int pid_a_manejar = atoi(pid_str);
+		// t_pcb* pcb;
+		// //char** splitter = string_split(mensaje," ");
+		// //string_array_destroy(splitter);
+		// char* string_conexion = string_itoa(conexion);
+		// //loguear_warning("Antes del get del diccionario");
+		// t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
+		// free(string_conexion);
+		// switch (cod_operacion){
+		// 	case TERMINO_IO:
+		// 		t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
+		// 		if(pcb_query->estado==NULL||pcb_query->estado==estado_temp||pcb_query->estado==estado_exit)
+		// 			break;
 					
-				pcb = pcb_query->pcb;
-				// if( encontrar_en_lista(pid_a_manejar,estado_temp, &mx_temp) ||  encontrar_en_lista(pid_a_manejar,estado_exit, &mx_exit)){
-				// 	break;
-				// }
+		// 		pcb = pcb_query->pcb;
+		// 		// if( encontrar_en_lista(pid_a_manejar,estado_temp, &mx_temp) ||  encontrar_en_lista(pid_a_manejar,estado_exit, &mx_exit)){
+		// 		// 	break;
+		// 		// }
 
-				//mensaje = recibir_mensaje(conexion);
+		// 		//mensaje = recibir_mensaje(conexion);
 				
-			//	pthread_mutex_lock(interfaz -> mx_blocked);
-				bool proceso_sale_de_blocked = list_remove_element(interfaz -> estado_blocked->elements,pcb);
-			//	pcb = queue_pop(interfaz -> estado_blocked);
-			//	pthread_mutex_unlock(interfaz -> mx_blocked);
-				// pop_estado_get_pcb()
-				if(proceso_sale_de_blocked){
-					//loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
-					a_ready(pcb);
-				}
-				free(pcb_query);
+		// 	//	pthread_mutex_lock(interfaz -> mx_blocked);
+		// 		bool proceso_sale_de_blocked = list_remove_element(interfaz -> estado_blocked->elements,pcb);
+		// 	//	pcb = queue_pop(interfaz -> estado_blocked);
+		// 	//	pthread_mutex_unlock(interfaz -> mx_blocked);
+		// 		// pop_estado_get_pcb()
+		// 		if(proceso_sale_de_blocked){
+		// 			//loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+		// 			a_ready(pcb);
+		// 		}
+		// 		free(pcb_query);
 
-				break;
+		// 		break;
 			
-			// NO BORRAR POR SI ACASO, COMO ES INDIFERENTE CUAL FUE, Y LAS RESPONSABILIDADES ESTAN EN LA I/O,
-			// ACA SE LAS PUEDE TRATAR DE IGUAL FORMA
+		// 	// NO BORRAR POR SI ACASO, COMO ES INDIFERENTE CUAL FUE, Y LAS RESPONSABILIDADES ESTAN EN LA I/O,
+		// 	// ACA SE LAS PUEDE TRATAR DE IGUAL FORMA
 
-			// case TERMINO_STDIN:
-			// 	pthread_mutex_lock(&interfaz -> mx_blocked);
-			// 	pcb = queue_pop(interfaz -> estado_blocked);
-			// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
-			// 	// pop_estado_get_pcb()
-			// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
-			// 	a_ready(pcb);
+		// 	// case TERMINO_STDIN:
+		// 	// 	pthread_mutex_lock(&interfaz -> mx_blocked);
+		// 	// 	pcb = queue_pop(interfaz -> estado_blocked);
+		// 	// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
+		// 	// 	// pop_estado_get_pcb()
+		// 	// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+		// 	// 	a_ready(pcb);
 				
-			// 	break;
+		// 	// 	break;
 			
-			// case TERMINO_STDOUT:
-			// 	pthread_mutex_lock(&interfaz -> mx_blocked);
-			// 	pcb = queue_pop(interfaz -> estado_blocked);
-			// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
-			// 	// pop_estado_get_pcb()
-			// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
-			// 	a_ready(pcb);
+		// 	// case TERMINO_STDOUT:
+		// 	// 	pthread_mutex_lock(&interfaz -> mx_blocked);
+		// 	// 	pcb = queue_pop(interfaz -> estado_blocked);
+		// 	// 	pthread_mutex_unlock(&interfaz -> mx_blocked);
+		// 	// 	// pop_estado_get_pcb()
+		// 	// 	loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+		// 	// 	a_ready(pcb);
 				
-			// 	break;
+		// 	// 	break;
 
-				default:
-					return;
-		}
-		free(pid_str);
+		// 		default:
+		// 			return;
+		// }
+		// free(pid_str);
+
+		int conexion = *ptr_conexion;
+                recibir_operacion(conexion);
+                //loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
+                char* pid_tipo_char = recibir_mensaje(conexion);
+                //loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR
+
+                //char** splitter = string_array_new();
+                //splitter = string_split(mensaje," ");
+                int pid_a_manejar = atoi(pid_tipo_char);
+                char* string_conexion = string_itoa(conexion);
+                //loguear_warning("Antes del get del diccionario");
+                t_blocked_interfaz* interfaz = dictionary_get(diccionario_conexion_qblocked,string_conexion);
+                free(string_conexion);
+                t_pcb_query* pcb_query = buscar_pcb(pid_a_manejar);
+                if(pcb_query->estado==NULL||pcb_query->estado==estado_temp||pcb_query->estado==estado_exit){
+                        free(pcb_query);
+                        return;
+                }
+                t_pcb* pcb = pcb_query->pcb;
+                bool quitar_elem_de_blocked = list_remove_element(interfaz -> estado_blocked->elements,pcb);
+                if(quitar_elem_de_blocked){
+                        //loguear_warning("Ya se popeo el PCB con PID: %d", pcb->PID);
+                        a_ready(pcb);
+                }
+                free(pcb_query);
 	}
 }
 
@@ -2407,4 +2439,21 @@ t_list* get_nombres_recursos(){
 		lista=	list_map(lista_recursos,&_get_nombre);
 
 	 return lista;
+}
+
+
+void io_fs(uint32_t pid, t_paquete* paquete,char* nombre_interfaz){
+	loguear_warning("Entra al case");
+	//loguear_warning("Uso del FS -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, operacion_fs->nombre_archivo);
+	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
+	int conexion_io = *(int *)ptr_conexion;
+	char* pid_aux = string_itoa(pid);
+
+	//enviar pid con cod op del tipo de operacion
+	//enviar_texto(pid_aux,operacion_fs->cod_op,conexion_io);
+	enviar_mensaje(pid_aux, conexion_io);
+	// enviar paquete con operacion_fs
+	enviar_paquete(paquete, conexion_io);
+	paquete_destroy(paquete);
+	loguear_warning("Peticion a IO enviada");
 }
