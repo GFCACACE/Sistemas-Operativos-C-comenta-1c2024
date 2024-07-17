@@ -908,9 +908,6 @@ void io_handler_exec(t_pcb* pcb_recibido){
 		free(nombre_interfaz);
 		return; 
 	}
-		//proceso_estado();
-
-	loguear_warning("COD OP ES 31? %d",cod_op_io);
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
 			recibir_operacion(cpu_dispatch);

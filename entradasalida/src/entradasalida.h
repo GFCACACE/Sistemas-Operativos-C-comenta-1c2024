@@ -88,4 +88,7 @@ int ejecutar_op_io_dialfs();
 
 void finalizar_io();
 
+void notificar_kernel(char* texto, int socket);
+
+
 #endif

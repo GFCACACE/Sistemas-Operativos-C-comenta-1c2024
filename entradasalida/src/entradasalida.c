@@ -1,7 +1,6 @@
 #include "entradasalida.h"
 
 
-
 int conexion_memoria, conexion_kernel;
 int cod_op_kernel,cod_op_memoria;
 t_config_io* config;
@@ -68,6 +67,8 @@ char* devuelve_tipo_en_char(t_interfaz tipo_interfaz){
 		return "STDOUT";
 	else if(tipo_interfaz == DIALFS)
 		return "DIALFS";
+	else
+		return "";
 }
 
 
@@ -130,10 +131,12 @@ bool iniciar_conexion_kernel(){
 	if(conexion_kernel ==-1){
 		
 		loguear_error("No se pudo conectar kernel");
+		free(texto);
 		return false;
 	}
 	sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
 	enviar_texto(texto,NUEVA_IO,conexion_kernel);
+	free(texto);
     return true;
 }
 
@@ -145,10 +148,12 @@ bool iniciar_conexion_memoria(){
 		
 		if(conexion_memoria ==-1){
 			loguear_error("No se pudo conectar memoria");
+			free(texto);
 			return false;
 		} 
 		sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
 		enviar_texto(texto,NUEVA_IO,conexion_memoria);
+		free(texto);
 		return true;
 	}
 	return true;
@@ -195,56 +200,54 @@ void finalizar_io(){
 	pthread_mutex_destroy(&mx_peticion);
 }
 
-// void recibir_io(){
-// 	loguear("IO conectada: Esperando ordenes");
-	
-// 	while(1){
-// 		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
-// 		int cod_op_io = recibir_operacion(conexion_kernel);		
-// 		if(cod_op_io==-1){
-// 			loguear_warning("Kernel se desconectó.");
-// 			free(peticion_io);
-// 			return;
-// 		}
-// 		peticion_io->cod_op = cod_op_io;
-// 		char* _peticion;
-// 		_peticion = recibir_mensaje(conexion_kernel);
-// 		peticion_io->peticion = strdup(_peticion);
-// 		loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
-// 		pthread_mutex_lock(&mx_peticion);
-// 		queue_push(cola_peticiones_io, peticion_io);
-// 		pthread_mutex_unlock(&mx_peticion);
-// 		sem_post(&sem_bin_cola_peticiones);
-// 		free(_peticion);	
-// 	}
-
-// }
+void notificar_kernel(char* texto, int socket){
+    enviar_texto(texto, TERMINO_IO, socket);
+}
 
 void recibir_io(){
 	loguear("IO conectada: Esperando ordenes");
 	
 	while(1){	
+		// if(config->TIPO_INTERFAZ.id == GENERICA){
+		// 	t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		// 	int cod_op_io = recibir_operacion(conexion_kernel);		
+		// 	if(cod_op_io==-1){
+		// 		loguear_warning("Kernel se desconectó.");
+		// 		free(peticion_io);
+		// 		return;
+		// 	}
+		// 	peticion_io->cod_op = cod_op_io;
+		// 	char* _peticion;
+		// 	_peticion = recibir_mensaje(conexion_kernel);
+		// 	peticion_io->peticion = strdup(_peticion);
+		// 	loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
+		// 	pthread_mutex_lock(&mx_peticion);
+		// 	queue_push(cola_peticiones_io, peticion_io);
+		// 	pthread_mutex_unlock(&mx_peticion);
+		// 	sem_post(&sem_bin_cola_peticiones);
+		// 	free(_peticion);
+		// }
 		if(config->TIPO_INTERFAZ.id == GENERICA){
-			t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
-			int cod_op_io = recibir_operacion(conexion_kernel);		
-			if(cod_op_io==-1){
-				loguear_warning("Kernel se desconectó.");
-				free(peticion_io);
-				return;
-			}
-			peticion_io->cod_op = cod_op_io;
-			char* _peticion;
-			_peticion = recibir_mensaje(conexion_kernel);
-			peticion_io->peticion = strdup(_peticion);
-			loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
-			pthread_mutex_lock(&mx_peticion);
-			queue_push(cola_peticiones_io, peticion_io);
-			pthread_mutex_unlock(&mx_peticion);
-			sem_post(&sem_bin_cola_peticiones);
-			free(_peticion);	
+            //t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+            int cod_op_io = recibir_operacion(conexion_kernel);
+            if(cod_op_io==-1){
+                loguear_warning("Kernel se desconectó.");
+                //free(peticion_io);
+                return;
+            }
+            //peticion_io->cod_op = cod_op_io;
+            char* pid_mas_unidades;
+            pid_mas_unidades = recibir_mensaje(conexion_kernel);
+            //peticion_io->peticion = strdup(_peticion);
+            loguear_warning("Aca se ve la PETICION %s", pid_mas_unidades);
+            pthread_mutex_lock(&mx_peticion);
+            queue_push(cola_peticiones_io, pid_mas_unidades);
+            pthread_mutex_unlock(&mx_peticion);
+            sem_post(&sem_bin_cola_peticiones);
+            //free(pid_mas_unidades);
 		}
 
-		else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT ){
+		else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT){
 			t_paquete* paquete = recibir_paquete(conexion_kernel);
 			int cod_op_io = paquete->codigo_operacion;
 			if(cod_op_io==-1){
@@ -356,30 +359,55 @@ int ejecutar_op_io_dialfs(){
 
 int ejecutar_op_io_generica(){
 	while(1){
-		t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		// t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
+		// sem_wait(&sem_bin_cola_peticiones);
+		// pthread_mutex_lock(&mx_peticion);
+		// peticion_io = queue_pop(cola_peticiones_io);
+		// pthread_mutex_unlock(&mx_peticion);
+		// int cod_op = peticion_io->cod_op;
+		// char* _peticion;
+		// _peticion = peticion_io->peticion;
+		// char** splitter = string_array_new();
+		// splitter = string_split(_peticion," ");
+		// loguear("Cod op: %d", cod_op);
+		// // ESTAMOS BIEN
+		// char mensaje[70];
+
+		// sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
+		// //loguear(mensaje);
+		// loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]); // LOG MÍNIMO Y OBLIGATORIO
+		// io_gen_sleep(atoi(splitter[1]));
+		// //loguear_warning("Ya termino de dormir zzzzz");
+		// enviar_texto(splitter[0],TERMINO_IO,conexion_kernel);
+		// loguear_warning("Termino el IO_GEN_SLEEP.");
+
+		// string_array_destroy(splitter);
+		// free(peticion_io);
+
+
 		sem_wait(&sem_bin_cola_peticiones);
-		pthread_mutex_lock(&mx_peticion);
-		peticion_io = queue_pop(cola_peticiones_io);
-		pthread_mutex_unlock(&mx_peticion);
-		int cod_op = peticion_io->cod_op;
-		char* _peticion;
-		_peticion = peticion_io->peticion;
-		char** splitter = string_array_new();
-		splitter = string_split(_peticion," ");
-		loguear("Cod op: %d", cod_op);
-		// ESTAMOS BIEN
-		char mensaje[70];
+        pthread_mutex_lock(&mx_peticion);
+        char* pid_mas_unidades = queue_pop(cola_peticiones_io);
+        pthread_mutex_unlock(&mx_peticion);
+        //int cod_op = peticion_io->cod_op;
+        //char* _peticion;
+        //_peticion = peticion_io->peticion;
+        char** splitter = string_array_new();
+        splitter = string_split(pid_mas_unidades," ");
+        //loguear("Cod op: %d", cod_op);
+        // ESTAMOS BIEN
+        char mensaje[70];
 
-		sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
-		//loguear(mensaje);
-		loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]); // LOG MÍNIMO Y OBLIGATORIO
-		io_gen_sleep(atoi(splitter[1]));
-		//loguear_warning("Ya termino de dormir zzzzz");
-		enviar_texto(splitter[0],TERMINO_IO,conexion_kernel);
-		loguear_warning("Termino el IO_GEN_SLEEP.");
+        sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
+        //loguear(mensaje);
+        loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]); // LOG MÍNIMO Y OBLIGATORIO
+        io_gen_sleep(atoi(splitter[1]));
+        //loguear_warning("Ya termino de dormir zzzzz");
+        //enviar_texto(splitter[0],TERMINO_IO,conexion_kernel);
+        notificar_kernel(splitter[0], conexion_kernel);
+        loguear_warning("Termino el IO_GEN_SLEEP.");
 
-		string_array_destroy(splitter);
-		free(peticion_io);
+        string_array_destroy(splitter);
 	}
 
 }
