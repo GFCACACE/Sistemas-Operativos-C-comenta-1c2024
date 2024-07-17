@@ -471,23 +471,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	void* direccion_real = memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
 	switch (tipo_acceso)
 	{
-	case PEDIDO_STDIN:
-	
-		 escribir_memoria(direccion_real,acceso_espacio_usuario->registro_dato ,acceso_espacio_usuario->size_registro);
-		 loguear("PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d",
-		 acceso_espacio_usuario->PID,
-		 acceso_espacio_usuario->direccion_fisica,
-		 acceso_espacio_usuario->size_registro);
 
-		enviar_texto("OK",RESPUESTA_STDIN,conexion);
-		break;
-
-	case PEDIDO_STDOUT:
-	
-			leer_memoria(direccion_real,acceso_espacio_usuario->registro_dato ,acceso_espacio_usuario->size_registro);
-			enviar_texto(acceso_espacio_usuario->registro_dato,RESPUESTA_STDOUT,conexion);
-			//loguear("Se leyó: <%s>. Tamaño: <%d>",acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
-		break;
 	case LECTURA_MEMORIA:
 			void* dato_leido = malloc(acceso_espacio_usuario->size_registro);
 			leer_memoria(direccion_real,dato_leido,acceso_espacio_usuario->size_registro);
@@ -501,12 +485,12 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	//	loguear("Valor leido: <%d>",registro_reconstr_leer);
 		/////BORRAR
 			
-			
-			char* dato_leido_str;
+			char* dato_leido_str = malloc(acceso_espacio_usuario->size_registro+1);
+			memcpy(dato_leido_str,dato_leido,acceso_espacio_usuario->size_registro);
 			dato_leido_str=string_duplicate((char*)dato_leido);
-			//dato_leido[acceso_espacio_usuario->size_registro] = '\0';
+			dato_leido_str[acceso_espacio_usuario->size_registro] = '\0';
 			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
-			loguear("valor: <%s>",dato_leido_str);
+			loguear("VALOR LEIDO: <%s>",dato_leido_str);
 			free(dato_leido_str);
 			_enviar_stream_(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
 			//
