@@ -197,8 +197,6 @@ void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 	return stream;
 }
 
-
-// POR HACER...
 t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 {
 	uint32_t tam_nombre;
@@ -208,12 +206,10 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 	
 	
 	t_buffer* buffer = paquete->buffer;
-	buffer->desplazamiento = sizeof(uint32_t);
+	buffer->desplazamiento = sizeof(uint32_t); // PORQUE YA HICIMOS recibir_operacion(cod_op)
 	void _recibir(void* lugar_destino,size_t tam){
 		recibir_de_buffer(lugar_destino,buffer,tam);
 	}
-
-	//agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t));
 
 	_recibir(&op_fs->cod_op,sizeof(op_code));
 	_recibir(&op_fs->pid,sizeof(uint32_t));
@@ -221,7 +217,7 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 	_recibir(&op_fs->registro_puntero,sizeof(uint32_t));
 	_recibir(&op_fs->tamanio_truncate,sizeof(uint32_t));
 	_recibir(&tam_nombre,sizeof(uint32_t));
-	op_fs->nombre_archivo = malloc(tam_nombre);
+	op_fs->nombre_archivo = malloc(tam_nombre);  // ES UN CHAR*, DEBEMOS RESERVAR EL ESPACIO
 	_recibir(op_fs->nombre_archivo,tam_nombre);
 	_recibir(&cant_direcciones,sizeof(uint32_t));
 
@@ -232,14 +228,9 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 		_recibir(&direc->tamanio_bytes,sizeof(uint32_t));
 		list_add(op_fs->direcciones,direc);
 	}
+	paquete_destroy(paquete);
 	return op_fs;
 }
-
-
-
-
-
-
 
 // t_acceso_espacio_usuario* acceso_espacio_usuario_create(uint32_t PID, uint32_t direccion, uint32_t size_registro,void* valor){
 // 	t_acceso_espacio_usuario* acceso_espacio_usuario = malloc(sizeof(t_acceso_espacio_usuario));
@@ -252,8 +243,6 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 // 	return acceso_espacio_usuario;
 // }
 
-
-	
 // void* serializar_acceso_espacio_usuario(t_acceso_espacio_usuario* acceso_espacio_usuario,int* size){
 // 	// uint32_t tamanio_dato = ((uint32_t)strlen(acceso_espacio_usuario->registro_dato)+(uint32_t)1);
 	
