@@ -226,7 +226,7 @@ bool prueba(){
 
 	loguear_operacion_fs(op_fs);
 	enviar_operacion_fs(op_fs,DIRECCIONES_PROCESO,cpu_dispatch);
-	operacion_fs_destroy(op_fs);
+	//operacion_fs_destroy(op_fs);
 	return true;
 }
 
@@ -245,7 +245,7 @@ bool iniciar_kernel(char* path_config){
 	iniciar_semaforos()&&
 	inicializar_dictionario_mutex_colas()&&
 	iniciar_recursos() &&
-	iniciar_threads_io()&& prueba();
+	iniciar_threads_io(); /*&& prueba();*/
 }
 bool iniciar_semaforos(){
 	sem_init(&sem_cont_grado_mp,0,config->GRADO_MULTIPROGRAMACION);
@@ -765,13 +765,9 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 		pthread_mutex_t* mutex_cola = dictionary_get(estados_mutexes_dictionary,recurso->recurso);
 		pthread_mutex_lock(mutex_cola);
 		if(!queue_is_empty(recurso->cola_procesos_esperando)){
-			
-			
 			t_pcb* pcb_liberado=queue_pop(recurso->cola_procesos_esperando);
 			asignar_recurso(pcb_liberado,recurso);
 			a_ready_sin_mutex(pcb_liberado);
-			
-			
 		}
 		pthread_mutex_unlock(mutex_cola);
 		loguear("SIGNAL DE PID:<%d> - RECURSO: <%s> - INSTANCIAS_DISPONIBLES: <%d>",pcb_recibido->PID,
@@ -831,7 +827,7 @@ void limpiar_buffer(int cod_op_io){
 	switch(cod_op_io){
 		case IO_GEN_SLEEP:
 			recibir_operacion(cpu_dispatch); 
-			char* peticion = recibir_mensaje(cpu_dispatch);
+			recibir_mensaje(cpu_dispatch);
 			break;
 		case IO_STDIN_READ:
 			t_paquete* paquete_ior = recibir_paquete(cpu_dispatch);
@@ -2253,7 +2249,7 @@ void a_ready(t_pcb* pcb){
 void io_handler(int *ptr_conexion){
 	while(1){
 		int conexion = *ptr_conexion;
-		int cod_operacion = recibir_operacion(conexion);
+		recibir_operacion(conexion);
 		//loguear_warning("LLego el cod op %d", cod_operacion); // COMENTAR 
 		char* pid_tipo_char = recibir_mensaje(conexion);
 		//loguear_warning("Llego el mensaje %s", mensaje); //COMENTAR

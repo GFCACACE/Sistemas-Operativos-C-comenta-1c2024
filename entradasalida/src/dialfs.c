@@ -63,6 +63,7 @@ bool cargar_directorio_metadata(){
       }
     }
     closedir(dir);
+    return true;
 }
 
 t_dialfs_metadata* obtener_metadata_txt(char* nombre_archivo){
@@ -98,6 +99,7 @@ bool io_fs_delete(char* nombre_archivo){
         t_dialfs_metadata* metadata = (t_dialfs_metadata*) elem;
         if(!strcmp(nombre_archivo, metadata->nombre_archivo))
             return true;
+        return false;
     };
 
     char* path_metadata =string_new();

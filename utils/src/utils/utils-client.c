@@ -208,7 +208,7 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente)
         return;
     }
 
-    ssize_t bytes_enviados = send(socket_cliente, a_enviar, bytes, 0);
+    size_t bytes_enviados = send(socket_cliente, a_enviar, bytes, 0);
     if (bytes_enviados == -1) {
         perror("Error al enviar el paquete");
     } else if (bytes_enviados != bytes) {

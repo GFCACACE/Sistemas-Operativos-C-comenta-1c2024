@@ -10,7 +10,7 @@
 #define PATH_BITMAP "bitmap.dat"
 #define PATH_BLOQUES "bloques.dat"
 #define DIR_METADATA "metadata/"
-
+#include <math.h>
 
 typedef struct 
 {   

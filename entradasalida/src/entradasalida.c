@@ -89,6 +89,8 @@ char* devuelve_tipo_en_char(t_interfaz tipo_interfaz){
         return "STDOUT";
     else if(tipo_interfaz == DIALFS)
         return "DIALFS";
+	else
+		return "";
 }
 void loguear_config_stdout(){
 	loguear("TIEMPO_UNIDAD_TRABAJO: %d",config->TIEMPO_UNIDAD_TRABAJO);
@@ -306,7 +308,7 @@ bool es_generica(){
 
 
 
-int ejecutar_op_io_stdin()
+void ejecutar_op_io_stdin()
 {
 	
 	//loguear("Ejecuta operacion de entrada salida");
@@ -320,7 +322,7 @@ int ejecutar_op_io_stdin()
 		pthread_mutex_unlock(&mx_peticion);
 
 		//io_stdin_read(direcciones_proceso,conexion_memoria);
-		loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - ", pid);
+		loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - ", atoi(pid));
 		//enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		notificar_kernel(pid, conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
@@ -354,7 +356,7 @@ int ejecutar_op_io_stdin()
 
 
 
-int ejecutar_op_io_stdout()
+void ejecutar_op_io_stdout()
 {
 	
 	//loguear("Ejecuta operacion de entrada salida");
@@ -369,7 +371,7 @@ int ejecutar_op_io_stdout()
 
 		//io_stdout_write(direcciones_proceso,conexion_memoria);
 
-		loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - ", pid);
+		loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - ", atoi(pid));
 		 //LOG MÍNIMO Y OBLIGATORIO
 		//enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		notificar_kernel(pid, conexion_kernel);
@@ -404,7 +406,7 @@ int ejecutar_op_io_stdout()
 		}
 }
 
-int ejecutar_op_io_generica(){
+void ejecutar_op_io_generica(){
 	while(1){
 		//t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
 		sem_wait(&sem_bin_cola_peticiones);
@@ -433,14 +435,15 @@ int ejecutar_op_io_generica(){
 		//free(peticion_io);
 	}
 }
-int ejecutar_op_io_dialfs(){
+void ejecutar_op_io_dialfs(){
 	while(1){
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
 		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
-		//int cod_op = operacion_fs->cod_op;
-		switch(operacion_fs->cod_op){
+		int cod_op = operacion_fs->cod_op;
+
+		switch(cod_op){
 			case IO_FS_CREATE:
 				loguear("PID: <%d> - Crear Archivo: <%s>", operacion_fs->pid, operacion_fs->nombre_archivo); 
 				io_fs_create(operacion_fs->nombre_archivo);
@@ -470,7 +473,9 @@ int ejecutar_op_io_dialfs(){
 			// operacion_fs->puntero_archivo);
 			// 	break;
 		}
-		notificar_kernel(operacion_fs->pid, conexion_kernel);
+		char* pid_a_enviar = string_itoa(operacion_fs->pid);
+		notificar_kernel(pid_a_enviar, conexion_kernel);
+		//operacion_fs_destroy(operacion_fs);
 	}
 }
 

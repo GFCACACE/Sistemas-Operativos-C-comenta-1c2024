@@ -1017,7 +1017,7 @@ int ejecutar_proceso_cpu()
 			case DIRECCIONES_PROCESO:
 			  	t_operacion_fs *op_fs = recibir_op_fs(paquete); 
 				loguear_operacion_fs(op_fs);
-				operacion_fs_destroy(op_fs);
+				//operacion_fs_destroy(op_fs);
 				paquete_destroy(paquete);
                 break;
             case -1:
