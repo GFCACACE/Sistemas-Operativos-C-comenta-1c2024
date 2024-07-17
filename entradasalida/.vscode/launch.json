@@ -8,7 +8,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/bin/${workspaceFolderBasename}",
-      "args": ["${workspaceFolder}/${workspaceFolderBasename}.config", "SLP1"],
+      "args": ["${workspaceFolder}/TECLADO.config", "TECLADO"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

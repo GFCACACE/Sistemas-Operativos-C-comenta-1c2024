@@ -501,7 +501,7 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 bool exe_std(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_param registro_tamanio)
 {
 	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
-	uint32_t tamanio = *(uint32_t*)registro_tamanio.string_valor;
+	uint32_t tamanio = (uint32_t)atoi(registro_tamanio.string_valor);
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb,direccion_logica,tamanio);
 	
 
@@ -570,9 +570,13 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 
 
 bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registro_datos){
+	uint32_t direccion_logica;
 	uint32_t size_registro = (uint32_t)registro_datos.size; 
 	char* registro_dato = (char*)registro_datos.string_valor; 
-	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
+	if(size_registro==1)
+		direccion_logica =(uint32_t) *(uint8_t*)registro_direccion.puntero;
+	else
+		direccion_logica = *(uint32_t*)registro_direccion.puntero;
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb_recibido,direccion_logica,size_registro);
 	loguear_direccion_proceso(direcciones_fisicas_registros);	
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
@@ -779,7 +783,8 @@ uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
 	);
 	
 	direccion_fisica = tamanio_pagina * (uint32_t)atoi(nro_frame) + desplazamiento;
-	actualizar_tlb(pcb->PID,numero_pagina,(uint32_t)atoi(nro_frame));
+	if(config->CANTIDAD_ENTRADAS_TLB > 0)	
+		actualizar_tlb(pcb->PID,numero_pagina,(uint32_t)atoi(nro_frame));
 
 	free(nro_frame);
 	return direccion_fisica;

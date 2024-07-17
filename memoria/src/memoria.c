@@ -221,7 +221,7 @@ void io_handler(int *ptr_conexion){
 			break;	
 		
 		default:
-			log_warning(logger,"Operación desconocida. No quieras meter la pata");
+			loguear_warning("Operación desconocida. No quieras meter la pata");
 			
 			
 			break;
@@ -364,10 +364,13 @@ void efectuar_retardo(){
 }
 
 int buscar_instrucciones(){
+	int debug=0;
 	 while (1) {
+		debug++;
          t_paquete *paquete = recibir_paquete(conexion_cpu);
-         int cod_op =paquete->codigo_operacion;
+         op_code cod_op =paquete->codigo_operacion;
 		 //int cod_op_a_devolver;
+		if(debug ==  23)
 		loguear("Cod op: %d", cod_op);
 		efectuar_retardo();
         switch (cod_op) {
