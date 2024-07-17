@@ -248,3 +248,122 @@ t_buffer* leer_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_re
 		/////BORRAR
 	return dato_final_puntero;
 }
+
+
+t_operacion_fs* obtener_op_fs(uint32_t pid, char* nmb_archivo,t_list* direcciones,uint32_t tamanio_registro, uint32_t puntero_archivo, uint32_t tamanio_truncate,op_code cod_op){
+	t_operacion_fs* operacion_fs = malloc(sizeof(t_operacion_fs));
+	operacion_fs->nombre_archivo = nmb_archivo;
+	operacion_fs->cod_op = cod_op;
+	operacion_fs->registro_puntero = puntero_archivo;
+	if(direcciones != NULL)
+		operacion_fs->direcciones = list_create();
+	operacion_fs->direcciones = direcciones;
+	operacion_fs->tamanio_truncate = tamanio_truncate;
+	operacion_fs->pid = pid;
+	operacion_fs->tamanio_registro = tamanio_registro;
+
+	return operacion_fs;
+
+}
+
+t_direccion_tamanio* direccion_tamanio_create(){
+	t_direccion_tamanio* dir_tam = malloc(sizeof(t_direccion_tamanio));
+	
+}
+
+
+
+void enviar_operacion_fs(t_operacion_fs* operacion,op_code op,int socket){
+	int size;
+	void* stream = serializar_operacion_fs(operacion,&size);									
+					 
+	enviar_stream(stream,size,socket,op);
+	free(stream);
+}
+
+
+/*
+typedef struct t_operacion_fs{
+	op_code cod_op;
+	uint32_t pid;
+	uint32_t tamanio_registro;
+	uint32_t registro_puntero;//FSEEK
+	uint32_t tamanio_truncate;
+	char* nombre_archivo;
+	t_list* direcciones;
+}t_operacion_fs;
+
+typedef struct t_direccion_tamanio{
+	uint32_t direccion_fisica;
+	uint32_t tamanio_bytes;
+}t_direccion_tamanio
+
+*/
+void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
+	
+	//t_list* lista = operacion_fs->direcciones_proceso->direcciones;
+	t_list* lista = operacion_fs->direcciones;
+	char* nombre = operacion_fs->nombre_archivo;
+	uint32_t long_char; 
+	uint32_t cant_direcciones = list_size(lista);
+	*size = sizeof(op_code) + sizeof(uint32_t) * 4 + sizeof(uint32_t) + (strlen(nombre)+1) + sizeof(uint32_t) + cant_direcciones * (2*sizeof(uint32_t));
+													// TAMAÑO char*                      TAMAÑO direcciones_proceso
+	long_char = strlen(nombre)+1;
+	t_buffer* buffer = crear_buffer(*size);
+	
+	agregar_a_buffer(buffer, &operacion_fs->cod_op, sizeof(op_code));
+	agregar_a_buffer(buffer, &operacion_fs->pid, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &operacion_fs->tamanio_registro, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &operacion_fs->registro_puntero, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &operacion_fs->tamanio_truncate, sizeof(uint32_t));
+	agregar_a_buffer(buffer, &long_char, sizeof(uint32_t)); // TAMAÑO CHAR*
+	agregar_a_buffer(buffer, nombre, long_char);
+	agregar_a_buffer(buffer, &cant_direcciones, sizeof(uint32_t)); // TAMAÑO/CANTIDAD DIRECCIONES
+	
+	for(int i=0;i<cant_direcciones;i++)
+	{	
+		t_direccion_tamanio* direc = (t_direccion_tamanio*)list_get(lista,i);  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		agregar_a_buffer(buffer, &direc->direccion_fisica, sizeof(uint32_t)); // REVISAR
+		agregar_a_buffer(buffer, &direc->tamanio_bytes, sizeof(uint32_t)); // 
+															// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	}
+	void * stream = buffer->stream;
+	free(buffer);
+	//free(nombre);
+	return stream;
+}
+
+t_operacion_fs* recibir_op_fs(t_paquete* paquete)
+{
+	uint32_t tam_nombre;
+	int cant_direcciones;
+	t_operacion_fs* op_fs = malloc(sizeof(t_operacion_fs));
+	op_fs->direcciones = list_create();
+	
+	
+	t_buffer* buffer = paquete->buffer;
+	buffer->desplazamiento = sizeof(uint32_t); // PORQUE YA HICIMOS recibir_operacion(cod_op)
+	void _recibir(void* lugar_destino,size_t tam){
+		recibir_de_buffer(lugar_destino,buffer,tam);
+	}
+
+	_recibir(&op_fs->cod_op,sizeof(op_code));
+	_recibir(&op_fs->pid,sizeof(uint32_t));
+	_recibir(&op_fs->tamanio_registro,sizeof(uint32_t));
+	_recibir(&op_fs->registro_puntero,sizeof(uint32_t));
+	_recibir(&op_fs->tamanio_truncate,sizeof(uint32_t));
+	_recibir(&tam_nombre,sizeof(uint32_t));
+	op_fs->nombre_archivo = malloc(tam_nombre);  // ES UN CHAR*, DEBEMOS RESERVAR EL ESPACIO
+	_recibir(op_fs->nombre_archivo,tam_nombre);
+	_recibir(&cant_direcciones,sizeof(uint32_t));
+
+	for(int i=0;i<cant_direcciones;i++)
+	{	
+		t_direccion_tamanio* direc = malloc(sizeof(t_direccion_tamanio));
+		_recibir(&direc->direccion_fisica,sizeof(uint32_t));
+		_recibir(&direc->tamanio_bytes,sizeof(uint32_t));
+		list_add(op_fs->direcciones,direc);
+	}
+	paquete_destroy(paquete);
+	return op_fs;
+}
