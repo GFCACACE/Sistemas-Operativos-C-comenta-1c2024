@@ -662,6 +662,7 @@ void io_std(int pid,t_paquete* paquete_IO, char* nombre_interfaz){
 	int conexion_io = *(int *)ptr_conexion;
 	enviar_paquete(paquete_IO,conexion_io);
 	loguear_warning("Peticion a IO enviada");
+	paquete_destroy(paquete_IO);
 }
 
 

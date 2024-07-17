@@ -208,25 +208,7 @@ void recibir_io(){
 	loguear("IO conectada: Esperando ordenes");
 	
 	while(1){	
-		// if(config->TIPO_INTERFAZ.id == GENERICA){
-		// 	t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
-		// 	int cod_op_io = recibir_operacion(conexion_kernel);		
-		// 	if(cod_op_io==-1){
-		// 		loguear_warning("Kernel se desconectó.");
-		// 		free(peticion_io);
-		// 		return;
-		// 	}
-		// 	peticion_io->cod_op = cod_op_io;
-		// 	char* _peticion;
-		// 	_peticion = recibir_mensaje(conexion_kernel);
-		// 	peticion_io->peticion = strdup(_peticion);
-		// 	loguear_warning("Aca se ve la PETICION %s", peticion_io->peticion);
-		// 	pthread_mutex_lock(&mx_peticion);
-		// 	queue_push(cola_peticiones_io, peticion_io);
-		// 	pthread_mutex_unlock(&mx_peticion);
-		// 	sem_post(&sem_bin_cola_peticiones);
-		// 	free(_peticion);
-		// }
+		
 		if(config->TIPO_INTERFAZ.id == GENERICA){
             //t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
             int cod_op_io = recibir_operacion(conexion_kernel);
@@ -246,22 +228,36 @@ void recibir_io(){
             sem_post(&sem_bin_cola_peticiones);
             //free(pid_mas_unidades);
 		}
-
-		else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT){
-			t_paquete* paquete = recibir_paquete(conexion_kernel);
-			int cod_op_io = paquete->codigo_operacion;
-			if(cod_op_io==-1){
-				loguear_warning("Kernel se desconectó.");
-				free(paquete);
-				return;
-			}
-			t_direcciones_proceso* direcciones_proceso = recibir_direcciones_proceso(paquete);
-			pthread_mutex_lock(&mx_peticion);
-			queue_push(cola_peticiones_io, direcciones_proceso);
-			pthread_mutex_unlock(&mx_peticion);
-			sem_post(&sem_bin_cola_peticiones);
-			free(paquete);	
-		}
+		else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT ){
+            t_paquete* paquete = recibir_paquete(conexion_kernel);
+            int cod_op_io = paquete->codigo_operacion;
+            if(cod_op_io==-1){
+                loguear_warning("Kernel se desconectó.");
+                free(paquete);
+                return;
+            }
+            t_direcciones_proceso* direcciones_proceso = recibir_direcciones_proceso(paquete);
+            pthread_mutex_lock(&mx_peticion);
+            queue_push(cola_peticiones_io, direcciones_proceso);
+            pthread_mutex_unlock(&mx_peticion);
+            sem_post(&sem_bin_cola_peticiones);
+            free(paquete);
+        }
+		else if(config->TIPO_INTERFAZ.id == DIALFS){
+            t_paquete* paquete = recibir_paquete(conexion_kernel);
+            int cod_op_io = paquete->codigo_operacion;
+            if(cod_op_io==-1){
+                loguear_warning("Kernel se desconectó.");
+                free(paquete);
+                return;
+            }
+            //t_operacion_fs* operacion_fs = recibir_op_fs(paquete);
+            pthread_mutex_lock(&mx_peticion);
+            //queue_push(cola_peticiones_io, operacion_fs);
+            pthread_mutex_unlock(&mx_peticion);
+            sem_post(&sem_bin_cola_peticiones);
+            free(paquete);
+        }
 	}
 }
 
@@ -323,33 +319,46 @@ bool es_generica(){
 
 int ejecutar_op_io_stdin(){
 	while(1){
+		// t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
+		// char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
+		// sem_wait(&sem_bin_cola_peticiones);
+		// pthread_mutex_lock(&mx_peticion);
+		// direcciones_proceso = queue_pop(cola_peticiones_io);
+		// pthread_mutex_unlock(&mx_peticion);
+
+		// io_stdin_read(direcciones_proceso, conexion_memoria);
+
+		// enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		// loguear_warning("Termino el IO_STDIN_READ.");
 		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
-		sem_wait(&sem_bin_cola_peticiones);
-		pthread_mutex_lock(&mx_peticion);
-		direcciones_proceso = queue_pop(cola_peticiones_io);
-		pthread_mutex_unlock(&mx_peticion);
+        char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
+        sem_wait(&sem_bin_cola_peticiones);
+        pthread_mutex_lock(&mx_peticion);
+        direcciones_proceso = queue_pop(cola_peticiones_io);
+        pthread_mutex_unlock(&mx_peticion);
+		loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - ", atoi(pid));
+        io_stdin_read(direcciones_proceso,conexion_memoria);
+        notificar_kernel(pid, conexion_kernel);
+        loguear_warning("Termino el IO_STDIN_READ.");
+        free(direcciones_proceso);
 
-		io_stdin_read(direcciones_proceso, conexion_memoria);
-
-		enviar_texto(pid,TERMINO_IO,conexion_kernel);
-		loguear_warning("Termino el IO_STDIN_READ.");
 	}
 }
 int ejecutar_op_io_stdout(){
 	while(1){
+		
 		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
-		sem_wait(&sem_bin_cola_peticiones);
-		pthread_mutex_lock(&mx_peticion);
-		direcciones_proceso = queue_pop(cola_peticiones_io);
-		pthread_mutex_unlock(&mx_peticion);
+        char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
+        sem_wait(&sem_bin_cola_peticiones);
+        pthread_mutex_lock(&mx_peticion);
+        direcciones_proceso = queue_pop(cola_peticiones_io);
+        pthread_mutex_unlock(&mx_peticion);
+		loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - ", atoi(pid)); //LOG MÍNIMO Y OBLIGATORIO
+        io_stdout_write(direcciones_proceso,conexion_memoria);
 
-		io_stdout_write(direcciones_proceso,conexion_memoria);
-
-		enviar_texto(pid,TERMINO_IO,conexion_kernel);
-		loguear_warning("Termino el IO_STDOUT_WRITE.");
-		free(direcciones_proceso);
+        notificar_kernel(pid, conexion_kernel);
+        loguear_warning("Termino el IO_STDOUT_WRITE.");
+        free(direcciones_proceso);
 	}
 }
 
