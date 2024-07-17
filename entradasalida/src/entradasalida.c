@@ -1,13 +1,6 @@
 #include "entradasalida.h"
 
-/////BORRAR
-int registro_reconstr;
-int registro_reconstr_leer;
-void* registro_puntero_recons = &registro_reconstr;
-void* registro_puntero_recons_leer = &registro_reconstr_leer;
-uint32_t  size_leido=0;
-uint32_t size_leido_leer=0;
-/////BORRAR
+
 
 int conexion_memoria, conexion_kernel;
 int cod_op_kernel,cod_op_memoria;
