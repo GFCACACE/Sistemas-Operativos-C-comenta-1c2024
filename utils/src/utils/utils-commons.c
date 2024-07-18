@@ -282,6 +282,14 @@ void reemplazar_pcb_con(t_pcb* destino,t_pcb* origen) {
     }
 }
 
+t_direccion_tamanio* direccion_tamanio_new(uint32_t direccion,uint32_t size){
+	t_direccion_tamanio* direccion_tamanio = malloc(sizeof(t_direccion_tamanio));
+	direccion_tamanio->direccion_fisica = direccion;
+	direccion_tamanio->tamanio_bytes =size;
+
+	return direccion_tamanio;
+}
+
 
 int list_find_index(t_list* self, bool(*condition)(void*)) {
     if (self == NULL || condition == NULL) {

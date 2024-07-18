@@ -64,7 +64,7 @@ void* gestionar_interrupcion();
 int ejecutar_proceso_cpu();
 int intentar_conexion(char*,int,char*);
 char* pedir_proxima_instruccion(t_pcb* pcb);
-
+t_list* obtener_lst_direccion_tamanio(t_pcb* pcb, uint32_t direccion_logica,uint32_t size_registro);
 //Ciclo de Instrucción//////////////////////
 void ciclo_de_instruccion(t_pcb* pcb);
 t_param interpretar_valor_instruccion(char*);
@@ -84,14 +84,15 @@ bool exe_sub(t_param,t_param);
 bool exe_jnz(t_param,t_param);
 bool exe_resize(t_pcb*,t_param);
 bool exe_copy_string(t_pcb*,t_param);
-//bool exe_stdin_read(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio);
-//bool exe_stdout_write(t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio);
 bool exe_std(op_code cod_op, t_pcb* pcb, t_param interfaz, t_param registro_direccion,t_param registro_tamanio);
-
 bool exe_wait(t_pcb* pcb,t_param);
 bool exe_signal(t_pcb* pcb,t_param);
 bool exe_exit(t_pcb*);
 bool exe_io_gen_sleep(t_pcb*,t_param,t_param);
+bool exe_io_fs(op_code cod_op,t_pcb* pcb,t_param interfaz,t_param _nombre_archivo);
+bool exe_io_fs_rw(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param dir_logica, t_param registro_tamanio, t_param puntero_archivo);
+bool exe_io_fs_truncate(t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_param reg_tamanio);
+
 /*Faltan las instrucciones de IO*/
 ///////////////////////////////////
 /*MMU*/

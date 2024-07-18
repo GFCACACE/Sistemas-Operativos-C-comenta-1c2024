@@ -80,7 +80,6 @@ void loguear_config_stdout();
 void loguear_config_dialfs();
 void ejecutar_selector_io();
 void recibir_io();
-//int ejecutar_op_io();
 void ejecutar_op_io_stdin();
 void ejecutar_op_io_stdout();
 void ejecutar_op_io_generica();
