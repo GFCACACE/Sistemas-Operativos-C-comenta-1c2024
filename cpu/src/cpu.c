@@ -626,9 +626,38 @@ bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 	actualizar_contexto(pcb);
 	return true;
 }
-bool exe_copy_string(t_pcb* pcb,t_param tamanio){
-	/*Escribir en memoria en la dirección Lógica del registro de CPU "DI"
-	la cantidad "tamanio" de la dirección Lógica del registro de CPU "SI"*/
+bool exe_copy_string(t_pcb* pcb_recibido,t_param tamanio){
+
+	t_buffer* buffer_a_leer;
+
+	uint32_t direccion_logica_origen = registros_cpu->SI;
+	uint32_t direccion_logica_destino =registros_cpu->DI;
+
+	uint32_t size_registro = atoi(tamanio.string_valor);
+
+	t_direcciones_proceso* direcciones_fisicas_origen = obtener_paquete_direcciones(pcb_recibido,direccion_logica_origen,size_registro);
+	t_direcciones_proceso* direcciones_fisicas_destino = obtener_paquete_direcciones(pcb_recibido,direccion_logica_destino,size_registro);
+	
+
+	loguear("Direcciones a leer:");
+	loguear_direccion_proceso(direcciones_fisicas_origen);
+	
+	char* cadena = malloc(sizeof(size_registro)+1);
+	
+	
+	buffer_a_leer = leer_memoria_completa_io(direcciones_fisicas_origen,conexion_memoria,LECTURA_MEMORIA);
+	cadena = (char*)buffer_a_leer->stream;
+	loguear("Resultado de la lectura : %s", cadena);
+    
+	
+	loguear("Direcciones a escribir:\n");
+	loguear_direccion_proceso(direcciones_fisicas_destino);
+
+	escribir_memoria_completa_io(direcciones_fisicas_destino,cadena,conexion_memoria,ESCRITURA_MEMORIA);
+	free(cadena);
+
+	registros_cpu->PC++;
+	actualizar_contexto(pcb_recibido);
 	return true;
 }
 
@@ -760,13 +789,14 @@ uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
 	uint32_t desplazamiento = obtener_desplazamiento(direccion_logica,numero_pagina);
 	int registro_tlb = tlb_hit(pcb->PID,numero_pagina);
 	
-
+	if(config->CANTIDAD_ENTRADAS_TLB > 0)	{
 	if(registro_tlb != -1){
 		loguear("PID: <%d> - TLB HIT - Pagina: <%d>",pcb->PID,numero_pagina);
 		direccion_fisica = tamanio_pagina * (uint32_t)registro_tlb + desplazamiento;
 		return direccion_fisica;
 	}
 	loguear("PID: <%d> - TLB MISS - Pagina: <%d>",pcb->PID,numero_pagina);
+	}
 	char* nro_frame = string_new();
 	
 	t_pid_valor* pid_nro_pagina= pid_value_create(pcb->PID,numero_pagina); //Vamos con esta conversion?
