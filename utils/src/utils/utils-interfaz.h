@@ -7,12 +7,13 @@
 #include "utils/utils-logger.h"
 #include <math.h>
 #include <commons/collections/dictionary.h>
-#include "utils/utils-server.h"
-#include "utils/utils-client.h"
-#include "utils/utils-config.h"
-#include "utils/utils-commons.h"
+#include <utils/utils-server.h>
+#include <utils/utils-client.h>
+#include <utils/utils-config.h>
+#include <utils/utils-commons.h>
 #include <stdint.h>
 #include "utils/utils-serializacion.h"
+
 
 
 void escribir_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion);

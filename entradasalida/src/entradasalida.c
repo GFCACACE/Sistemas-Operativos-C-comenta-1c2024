@@ -142,7 +142,7 @@ bool iniciar_conexion_kernel(){
 
 
 bool iniciar_conexion_memoria(){
-	if(devuelve_tipo_en_char(config->TIPO_INTERFAZ.id) != "GENERICA"){
+	if(strcmp(devuelve_tipo_en_char(config->TIPO_INTERFAZ.id), "GENERICA")){
 		conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
 		char* texto = string_new();
 		
