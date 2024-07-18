@@ -331,7 +331,8 @@ void ejecutar_op_io_stdin(){
         notificar_kernel(pid, conexion_kernel);
         loguear_warning("Termino el IO_STDIN_READ.");
         free(direcciones_proceso);
-		// free(pid) ???????????????????????????????? SI O NO
+		free(pid);
+		// ???????????????????????????????? SI O NO
 
 	}
 }
@@ -340,17 +341,17 @@ void ejecutar_op_io_stdout(){
 	while(1){
 		
 		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-        char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
         sem_wait(&sem_bin_cola_peticiones);
         pthread_mutex_lock(&mx_peticion);
         direcciones_proceso = queue_pop(cola_peticiones_io);
         pthread_mutex_unlock(&mx_peticion);
+		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
 		loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - ", atoi(pid)); //LOG MÍNIMO Y OBLIGATORIO
         io_stdout_write(direcciones_proceso,conexion_memoria);
-
         notificar_kernel(pid, conexion_kernel);
         loguear_warning("Termino el IO_STDOUT_WRITE.");
         free(direcciones_proceso);
+		free(pid);
 	}
 }
 

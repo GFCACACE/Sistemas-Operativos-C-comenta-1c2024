@@ -633,9 +633,10 @@ void notificar_proceso_eliminado(t_validacion* validacion,t_paquete* paquete){
 }
 
 void recibir_pcb_y_aplicar(t_paquete *paquete,t_validacion* (*accion)(t_pcb*),void (*notificador)(t_validacion*,t_paquete*) ){
-	 t_pcb *pcb = recibir_pcb(paquete); 
+	t_pcb *pcb = recibir_pcb(paquete); 
 	t_validacion* validacion = accion(pcb);
 	notificador(validacion,paquete);	
+	//paquete_destroy(paquete);
 }
 
 
@@ -655,13 +656,15 @@ int recibir_procesos(){
 			case -1:
 				loguear_error("el cliente se desconectó. Terminando servidor");		
 				exit_failure = true;
+				paquete_destroy(paquete);
 				break;
 		    default:
 				log_warning(logger,"Operación desconocida. No quieras meter la pata");		
 				exit_failure = true;
+				paquete_destroy(paquete);
 				break;
 		}
-		paquete_destroy(paquete);
+		//paquete_destroy(paquete); ADENTRO DE recibir_pcb_y_aplicar
 		if(exit_failure)
 			return EXIT_FAILURE;
 	 }
