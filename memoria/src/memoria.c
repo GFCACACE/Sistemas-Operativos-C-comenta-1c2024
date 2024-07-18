@@ -190,7 +190,7 @@ void io_handler(int *ptr_conexion){
 		int conexion_io = *ptr_conexion;
 
 		t_paquete *paquete = recibir_paquete(conexion_io);
-		int cod_op = paquete->codigo_operacion;
+		op_code cod_op = paquete->codigo_operacion;
 		loguear_warning("Llego el cod op %d", cod_op);
 		// DES_SERIALIZAR EL PEDIDO
 		
@@ -461,6 +461,7 @@ uint32_t ejecutar_resize(t_pid_valor* tamanio_proceso){
 
 void escribir_memoria(void* direccion_fisica,void* dato,uint32_t size){
 	memcpy(direccion_fisica,dato,size);
+	
 }
 void leer_memoria(void* direccion_fisica,void* buffer,uint32_t size){
 	memcpy(buffer,direccion_fisica,size);
@@ -489,7 +490,10 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 			memcpy(dato_leido_str,dato_leido,acceso_espacio_usuario->size_registro);
 			dato_leido_str=string_duplicate((char*)dato_leido);
 			dato_leido_str[acceso_espacio_usuario->size_registro] = '\0';
-			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
+			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>",
+			 acceso_espacio_usuario->PID,
+			 acceso_espacio_usuario->direccion_fisica,
+			 acceso_espacio_usuario->size_registro);
 			loguear("VALOR LEIDO: <%s>",dato_leido_str);
 			free(dato_leido_str);
 			_enviar_stream_(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
@@ -516,7 +520,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 		 acceso_espacio_usuario->PID,
 		 acceso_espacio_usuario->direccion_fisica,
 		 acceso_espacio_usuario->size_registro);
-		enviar_texto("OK",MOV_OUT_OK,conexion_cpu);
+		enviar_texto("OK",MOV_OUT_OK,conexion);
 		break;
 	default:
 		break;

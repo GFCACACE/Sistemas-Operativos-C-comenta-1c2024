@@ -627,13 +627,8 @@ bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 	return true;
 }
 bool exe_copy_string(t_pcb* pcb,t_param tamanio){
-	uint32_t direccion_fisica_origen = mmu(pcb,registros_cpu->SI);
-	uint32_t direccion_fisica_destino = mmu(pcb,registros_cpu->DI);
-	//Falta Loop
-	//t_acceso_espacio_usuario* acceso_espacio_usuario = 
-	 acceso_espacio_usuario_create(pcb->PID, direccion_fisica_destino,atoi(tamanio.string_valor),&direccion_fisica_origen);
-	registros_cpu->PC++;
-	actualizar_contexto(pcb);
+	/*Escribir en memoria en la dirección Lógica del registro de CPU "DI"
+	la cantidad "tamanio" de la dirección Lógica del registro de CPU "SI"*/
 	return true;
 }
 
