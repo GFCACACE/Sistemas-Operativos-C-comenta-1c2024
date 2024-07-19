@@ -251,9 +251,9 @@ void recibir_io(){
 				free(paquete);
 				return;
 			}
-			//t_operacion_fs* operacion_fs = recibir_op_fs(paquete);
+			t_operacion_fs* operacion_fs = recibir_op_fs(paquete);
 			pthread_mutex_lock(&mx_peticion);
-			//queue_push(cola_peticiones_io, operacion_fs);
+			queue_push(cola_peticiones_io, operacion_fs);
 			pthread_mutex_unlock(&mx_peticion);
 			sem_post(&sem_bin_cola_peticiones);
 			free(paquete);	
