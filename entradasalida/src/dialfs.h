@@ -27,8 +27,8 @@ t_dialfs_metadata* obtener_metadata_txt(char* nombre_archivo);
 bool iniciar_archivos_dialfs();//Control de bloques de datos
 // bool compactacion();
 bool io_fs_create(char* nombre_archivo);
-bool io_fs_delete(char* nombre_archivo);
-bool io_fs_truncate(char* nombre_archivo, uint32_t tamanio_final);
+bool io_fs_delete(char* nombre_archivo, uint32_t pid);
+bool io_fs_truncate(char* nombre_archivo, uint32_t tamanio_final, uint32_t pid);
 bool io_fs_write(t_operacion_fs* operacion_fs);
 bool io_fs_read(t_operacion_fs* operacion_fs);
 
@@ -41,7 +41,7 @@ t_dialfs_metadata* compactacion(t_dialfs_metadata* metadata);
 bool cargar_directorio_metadata();
 // t_bitarray* obtener_bitmap();
 int asignar_bloque_inicial();
-bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final);
+bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final, uint32_t pid);
 void loguear_bitmap(t_bitarray* bitmap);
 extern FILE *archivo_bitmap,*archivo_metadata,*archivo_bloques;
 extern int tamanio_filesystem, tamanio_bitmap;

@@ -386,7 +386,7 @@ int ejecutar_op_io_dialfs(){
 		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 		int cod_op = operacion_fs->cod_op;
-		usleep((config->TIEMPO_UNIDAD_TRABAJO));// cualquier operación del fs SIEMPRE consume una unidad de tiempo trabajo
+		usleep(config->TIEMPO_UNIDAD_TRABAJO);// cualquier operación del fs SIEMPRE consume una unidad de tiempo trabajo
 		switch(cod_op){
 			case IO_FS_CREATE:
 				loguear("PID: <%d> - Crear Archivo: <%s>", operacion_fs->pid, operacion_fs->nombre_archivo); 
@@ -394,15 +394,15 @@ int ejecutar_op_io_dialfs(){
 				break;
 			case IO_FS_DELETE:
 				loguear("PID: <%d> - Eliminar Archivo: <%s>", operacion_fs->pid, operacion_fs->nombre_archivo);	
-				io_fs_delete(operacion_fs->nombre_archivo);
+				io_fs_delete(operacion_fs->nombre_archivo, operacion_fs->pid);
 				break;
 			case IO_FS_TRUNCATE:
 				//aclarar
 				loguear("PID: <%d> - Truncar Archivo: <%s> - Tamanio:<%d>", operacion_fs->pid, operacion_fs->nombre_archivo, operacion_fs->tamanio_truncate);
-				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->tamanio_truncate);
+				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->tamanio_truncate, operacion_fs->pid);
 				break;
 			case IO_FS_READ:
-				loguear("PID: <&d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
+				loguear("PID: <%d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
 			operacion_fs->pid, 
 			operacion_fs->nombre_archivo, 
 			operacion_fs->tamanio_registro, 
@@ -410,7 +410,7 @@ int ejecutar_op_io_dialfs(){
 				io_fs_read(operacion_fs);
 				break;
 			case IO_FS_WRITE:
-				loguear("PID: <&d> - Escribir Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
+				loguear("PID: <%d> - Escribir Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
 			operacion_fs->pid, 
 			operacion_fs->nombre_archivo, 
 			operacion_fs->tamanio_registro, 

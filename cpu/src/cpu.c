@@ -442,14 +442,14 @@ bool execute(t_pcb *pcb)
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s>", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_io_fs(IO_FS_CREATE, pcb,PARAM1,PARAM2);
 		liberar_param(PARAM1);
-		liberar_param(PARAM2);
+		//liberar_param(PARAM2);
 		return true;
 	}
 	if(!strcmp(INSTID,"IO_FS_DELETE")){
 		loguear("PID: <%d> - Ejecutando: <%s> - <%s> <%s> ", pcb->PID, INSTID, PARAM1.string_valor, PARAM2.string_valor);
 		exe_io_fs(IO_FS_DELETE, pcb,PARAM1,PARAM2);
 		liberar_param(PARAM1);
-		liberar_param(PARAM2);
+		//liberar_param(PARAM2);
 		return true;
 	}
 	if(!strcmp(INSTID,"IO_FS_TRUNCATE")){
@@ -461,7 +461,7 @@ bool execute(t_pcb *pcb)
 		PARAM3.string_valor);
 		exe_io_fs_truncate(pcb,PARAM1,PARAM2,PARAM3);
 		liberar_param(PARAM1);
-		liberar_param(PARAM2);
+		//liberar_param(PARAM2);
 		liberar_param(PARAM3);
 		return true;
 	}
@@ -476,7 +476,7 @@ bool execute(t_pcb *pcb)
 		PARAM5.string_valor);
 		exe_io_fs_rw(IO_FS_READ,pcb,PARAM1,PARAM2,PARAM3, PARAM4, PARAM5);
 		liberar_param(PARAM1);
-		liberar_param(PARAM2);
+		//liberar_param(PARAM2);
 		liberar_param(PARAM3);
 	 	liberar_param(PARAM4);
 	 	liberar_param(PARAM5);
@@ -493,7 +493,7 @@ bool execute(t_pcb *pcb)
 		PARAM5.string_valor);
 		exe_io_fs_rw(IO_FS_WRITE ,pcb,PARAM1,PARAM2,PARAM3, PARAM4, PARAM5);
 		liberar_param(PARAM1);
-		liberar_param(PARAM2);
+		//liberar_param(PARAM2);
 		liberar_param(PARAM3);
 	 	liberar_param(PARAM4);
 	 	liberar_param(PARAM5);

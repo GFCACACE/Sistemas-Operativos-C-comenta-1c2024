@@ -93,7 +93,7 @@ bool io_fs_create(char* nombre_archivo){
 
 }
 
-bool io_fs_delete(char* nombre_archivo){
+bool io_fs_delete(char* nombre_archivo, uint32_t pid){
     
     bool buscar_archivo(void* elem){
         t_dialfs_metadata* metadata = (t_dialfs_metadata*) elem;
@@ -106,7 +106,7 @@ bool io_fs_delete(char* nombre_archivo){
     path_metadata = path_resolve(config->PATH_BASE_DIALFS,DIR_METADATA);
     path_metadata = path_resolve(path_metadata,nombre_archivo);
     t_dialfs_metadata* metadata_delete = (t_dialfs_metadata*)list_find(lista_archivos,&buscar_archivo);
-    truncar_bitmap(metadata_delete,0);
+    truncar_bitmap(metadata_delete,0, pid);
     list_remove_element(lista_archivos,metadata_delete);
     remove(path_metadata);
     // free(metadata_delete->nombre_archivo);
@@ -114,7 +114,7 @@ bool io_fs_delete(char* nombre_archivo){
     return true;
 }
 
-bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final){
+bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final, uint32_t pid){
 
     bool buscar_archivo(void* elem){
         t_dialfs_metadata* metadata = (t_dialfs_metadata*) elem;
@@ -125,7 +125,7 @@ bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final){
     char* path_metadata =string_new();
     path_metadata = path_resolve(dir_metadata,nombre_archivo);
     t_dialfs_metadata* metadata = (t_dialfs_metadata*)list_find(lista_archivos,&buscar_archivo);
-    truncar_bitmap(metadata,tamanio_final);
+    truncar_bitmap(metadata,tamanio_final, pid);
     metadata->tamanio_archivo = tamanio_final;
     editar_archivo_metadata(path_metadata,metadata);
 
@@ -168,7 +168,7 @@ bool io_fs_write(t_operacion_fs* peticion_fs){
     return true;
 }
 
-bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
+bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final, uint32_t pid){
 
     //Le resto 1 byte al archivo para que no me cree bloques demás y que no reste negativo en caso de ser 0
     uint32_t tam_archivo = (metadata->tamanio_archivo == 0)? 0 : metadata->tamanio_archivo - 1;
@@ -198,7 +198,9 @@ bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
             //Si no se puede...
             if(bitarray_test_bit(bitarray_bitmap,i)){
                 //Compactamos
+                loguear("PID: <%d> - Inicio Compactacion.", pid);
                 metadata = compactacion(metadata);
+                loguear("PID: <%d> - Fin Compactacion.", pid);
                 //Recalculamos las posiciones de los bloques
                 posicion_inicial=metadata->bloque_inicial + cantidad_bloques_inicial;
                 posicion_final= metadata->bloque_inicial + cantidad_bloques_final;
@@ -216,7 +218,7 @@ bool truncar_bitmap(t_dialfs_metadata* metadata, uint32_t tamanio_final){
 }
 
 t_dialfs_metadata* compactacion(t_dialfs_metadata* metadata){
-
+    usleep((config->RETRASO_COMPACTACION)*1000);
 
     bool ordenar_por_bloque_inicial(void* elem1,void* elem2){
         t_dialfs_metadata* metadata_sort_1 = (t_dialfs_metadata*) elem1;
