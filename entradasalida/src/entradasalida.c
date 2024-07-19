@@ -256,7 +256,7 @@ void recibir_io(){
 			int cod_op_io = paquete->codigo_operacion;
 			if(cod_op_io==-1){
 				loguear_warning("Kernel se desconectó.");
-				free(paquete);
+				paquete_destroy(paquete);
 				return;
 			}
 			t_direcciones_proceso* direcciones_proceso = recibir_direcciones_proceso(paquete);
@@ -264,7 +264,7 @@ void recibir_io(){
 			queue_push(cola_peticiones_io, direcciones_proceso);
 			pthread_mutex_unlock(&mx_peticion);
 			sem_post(&sem_bin_cola_peticiones);
-			free(paquete);	
+			paquete_destroy(paquete);	
 		}
 	}
 }
@@ -327,33 +327,33 @@ bool es_generica(){
 
 int ejecutar_op_io_stdin(){
 	while(1){
-		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
+		
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
-		direcciones_proceso = queue_pop(cola_peticiones_io);
+		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
-
+		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
 		io_stdin_read(direcciones_proceso, conexion_memoria);
 
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDIN_READ.");
+		free(pid);
+		direcciones_proceso_destroy(direcciones_proceso);
 	}
 }
 int ejecutar_op_io_stdout(){
 	while(1){
-		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
+		
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);
-		direcciones_proceso = queue_pop(cola_peticiones_io);
+		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
-
+		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
 		io_stdout_write(direcciones_proceso,conexion_memoria);
-
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
-		free(direcciones_proceso);
+		free(pid);
+		direcciones_proceso_destroy(direcciones_proceso);
 	}
 }
 
