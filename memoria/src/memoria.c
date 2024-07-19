@@ -194,38 +194,50 @@ void io_handler(int *ptr_conexion){
 		loguear_warning("Llego el cod op %d", cod_op);
 		// DES_SERIALIZAR EL PEDIDO
 		
-		//loguear_warning("Llego el pedido %s", pedido);
+		t_acceso_espacio_usuario* acceso_espacio_usuario = recibir_acceso_espacio_usuario(paquete);					
+		acceder_a_espacio_usuario(cod_op,acceso_espacio_usuario,conexion_io);
+		paquete_destroy(paquete);
 
-		switch (cod_op)
-		{
-		case PEDIDO_STDIN:
-			
-			loguear("Nro_conexion <%d>",PEDIDO_STDIN);
-			/*EFECTUAR PEDIDO*/
-			t_acceso_espacio_usuario* acceso_espacio_usuario_stdin = recibir_acceso_espacio_usuario(paquete);					
-			acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_stdin,conexion_io);
-			/*ENVIAR RESPUESTA DE OK A I/O*/
-			break;
-		case PEDIDO_STDOUT:
-			
-			/*EFECTUAR PEDIDO*/
-			t_acceso_espacio_usuario* acceso_espacio_usuario_stdout = recibir_acceso_espacio_usuario(paquete);		
 
-			//FUNCION QUE RESUELVA ACCESO ESPACIO USUARIO
+		// switch (cod_op)
+		// {
 			
-			acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_stdout,conexion_io);
+		// case PEDIDO_STDIN:
+			
+		// 	loguear("Nro_conexion <%d>",PEDIDO_STDIN);
+		// 	/*EFECTUAR PEDIDO*/
+		// 	t_acceso_espacio_usuario* acceso_espacio_usuario_stdin = recibir_acceso_espacio_usuario(paquete);					
+		// 	acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_stdin,conexion_io);
+		// 	/*ENVIAR RESPUESTA DE OK A I/O*/
+		// 	break;
+		// case PEDIDO_STDOUT:
+			
+		// 	/*EFECTUAR PEDIDO*/
+		// 	t_acceso_espacio_usuario* acceso_espacio_usuario_stdout = recibir_acceso_espacio_usuario(paquete);		
+
+		// 	FUNCION QUE RESUELVA ACCESO ESPACIO USUARIO
+			
+		// 	acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_stdout,conexion_io);
 			
 			
 			
-			/*ENVIAR RESPUESTA DE LO LEIDO A I/O*/
-			break;	
+		// 	/*ENVIAR RESPUESTA DE LO LEIDO A I/O*/
+		// 	break;
+		// case FS_READ:
+		// 	loguear("Nro_conexion <%d>",FS_READ);
+		// 	t_acceso_espacio_usuario* acceso_espacio_usuario_fsr = recibir_acceso_espacio_usuario(paquete);					
+		// 	acceder_a_espacio_usuario(ESCRITURA_MEMORIA,acceso_espacio_usuario_stdin,conexion_io);
+
+		// case FS_WRITE:
+		// 	t_acceso_espacio_usuario* acceso_espacio_usuario_fsw = recibir_acceso_espacio_usuario(paquete);	
+		// 	acceder_a_espacio_usuario(LECTURA_MEMORIA,acceso_espacio_usuario_stdout,conexion_io);
 		
-		default:
-			log_warning(logger,"Operación desconocida. No quieras meter la pata");
+		// default:
+		// 	log_warning(logger,"Operación desconocida. No quieras meter la pata");
 			
 			
-			break;
-		}
+		// 	break;
+		// }
 		// paquete_destroy(paquete);
 	}
 }

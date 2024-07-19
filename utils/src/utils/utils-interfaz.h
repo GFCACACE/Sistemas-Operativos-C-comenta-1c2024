@@ -6,6 +6,7 @@
 #include<commons/string.h>
 #include "utils/utils-logger.h"
 #include<math.h>
+#include <stdio.h>
 #include<commons/collections/dictionary.h>
 #include "utils/utils-server.h"
 #include "utils/utils-client.h"
@@ -22,5 +23,6 @@ t_operacion_fs* obtener_op_fs(uint32_t pid,char* nombre,t_list* lst,uint32_t tam
 void enviar_operacion_fs(t_operacion_fs*,op_code ,int);
 void* serializar_operacion_fs(t_operacion_fs*, int*);
 t_operacion_fs* recibir_op_fs(t_paquete* paquete);
+void operacion_fs_destroy(t_operacion_fs* operacion_fs);
 
 #endif /* utils_interfaz_h */

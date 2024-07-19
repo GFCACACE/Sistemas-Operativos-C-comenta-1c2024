@@ -523,6 +523,7 @@ bool exe_io_fs(op_code cod_op,t_pcb* pcb,t_param interfaz,t_param _nombre_archiv
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
 	enviar_operacion_fs(operacion, FILE_SYSTEM,kernel_dispatch);
+	operacion_fs_destroy(operacion);
 	return true;
 	
 }
@@ -550,6 +551,7 @@ bool exe_io_fs_rw(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param _nombre_ar
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
 	enviar_operacion_fs(operacion, FILE_SYSTEM,kernel_dispatch);
+	operacion_fs_destroy(operacion);
 	return true;
 }
 
@@ -566,6 +568,7 @@ bool exe_io_fs_truncate(t_pcb* pcb,t_param interfaz,t_param _nombre_archivo, t_p
 	enviar_pcb(pcb,IO_HANDLER,kernel_dispatch);
 	enviar_texto(interfaz.string_valor,FILE_SYSTEM,kernel_dispatch);
 	enviar_operacion_fs(operacion,FILE_SYSTEM, kernel_dispatch);
+	operacion_fs_destroy(operacion);
 	return true;
 }
 

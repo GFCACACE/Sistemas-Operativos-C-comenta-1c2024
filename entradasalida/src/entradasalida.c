@@ -326,7 +326,6 @@ int ejecutar_op_io_stdin(){
 		pthread_mutex_unlock(&mx_peticion);
 		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
 		io_stdin_read(direcciones_proceso, conexion_memoria);
-
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDIN_READ.");
 		free(pid);
@@ -387,7 +386,7 @@ int ejecutar_op_io_dialfs(){
 		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 		int cod_op = operacion_fs->cod_op;
-
+		usleep((config->TIEMPO_UNIDAD_TRABAJO));// cualquier operación del fs SIEMPRE consume una unidad de tiempo trabajo
 		switch(cod_op){
 			case IO_FS_CREATE:
 				loguear("PID: <%d> - Crear Archivo: <%s>", operacion_fs->pid, operacion_fs->nombre_archivo); 
@@ -402,24 +401,26 @@ int ejecutar_op_io_dialfs(){
 				loguear("PID: <%d> - Truncar Archivo: <%s> - Tamanio:<%d>", operacion_fs->pid, operacion_fs->nombre_archivo, operacion_fs->tamanio_truncate);
 				io_fs_truncate(operacion_fs->nombre_archivo,operacion_fs->tamanio_truncate);
 				break;
-			// case IO_FS_READ:
-			//	loguear("PID: <&d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
-			// operacion_fs->pid, 
-			// operacion_fs->nombre_archivo, 
-			// operacion_fs->tamanio_registro, 
-			// operacion_fs->puntero_archivo);
-			// 	io_fs_read(operacion_fs);
-			// 	break;
-			// case IO_FS_WRITE:
-			// loguear("PID: <&d> - Escribir Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
-			// operacion_fs->pid, 
-			// operacion_fs->nombre_archivo, 
-			// operacion_fs->tamanio_registro, 
-			// operacion_fs->puntero_archivo);
-			// 	break;
+			case IO_FS_READ:
+				loguear("PID: <&d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
+			operacion_fs->pid, 
+			operacion_fs->nombre_archivo, 
+			operacion_fs->tamanio_registro, 
+			operacion_fs->registro_puntero);
+				io_fs_read(operacion_fs);
+				break;
+			case IO_FS_WRITE:
+				loguear("PID: <&d> - Escribir Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
+			operacion_fs->pid, 
+			operacion_fs->nombre_archivo, 
+			operacion_fs->tamanio_registro, 
+			operacion_fs->registro_puntero);
+				io_fs_write(operacion_fs);
+				break;
 		}
 		char* pid_a_enviar = string_itoa(operacion_fs->pid);
 		notificar_kernel(pid_a_enviar, conexion_kernel);
-		//operacion_fs_destroy(operacion_fs);
+		free(pid_a_enviar);
+		operacion_fs_destroy(operacion_fs);
 	}
 }

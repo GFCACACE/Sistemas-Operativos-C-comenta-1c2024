@@ -23,7 +23,7 @@ void io_stdin_read(t_direcciones_proceso* direcciones_proceso, int conexion){
     loguear("TEXTO INGRESADO: %s",texto);
     memcpy(texto_a_enviar,texto,pid_valor.valor);
     loguear("TEXTO A ENVIAR: %s",texto_a_enviar);
-    escribir_memoria_completa_io(direcciones_proceso, texto_a_enviar, conexion,PEDIDO_STDIN);
+    escribir_memoria_completa_io(direcciones_proceso, texto_a_enviar, conexion,ESCRITURA_MEMORIA);
     free(texto);
     free(texto_a_enviar);
 }

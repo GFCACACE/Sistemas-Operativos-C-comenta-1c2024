@@ -270,7 +270,11 @@ t_operacion_fs* obtener_op_fs(uint32_t pid, char* nmb_archivo,t_list* direccione
 }
 
 
-
+void operacion_fs_destroy(t_operacion_fs* operacion_fs){
+	list_destroy_and_destroy_elements(operacion_fs->direcciones,free);
+	free(operacion_fs->nombre_archivo);
+	free(operacion_fs);
+}
 
 void enviar_operacion_fs(t_operacion_fs* operacion,op_code op,int socket){
 	int size;

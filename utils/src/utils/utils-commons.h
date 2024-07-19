@@ -66,6 +66,8 @@ typedef enum
 	IO_FS_READ,
 	IO_FS_WRITE,
 	FILE_SYSTEM,
+	FS_WRITE,
+	FS_READ,
 	//IO - Kernel
 	NUEVA_IO,
 	TERMINO_IO_GEN_SLEEP,
