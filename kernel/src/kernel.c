@@ -301,11 +301,11 @@ bool inicializar_dictionario_mutex_colas(){
 	_agregar_interfaz(IO_STDIN_READ,"STDIN",tipos_de_interfaces);
 	_agregar_interfaz(IO_STDOUT_WRITE,"STDOUT",tipos_de_interfaces);
 	_agregar_interfaz(IO_GEN_SLEEP,"GENERICA",tipos_de_interfaces);
-	_agregar_interfaz(IO_FS_CREATE,"DIALFS",tipos_de_interfaces);
-	_agregar_interfaz(IO_FS_DELETE,"DIALFS",tipos_de_interfaces);
-	_agregar_interfaz(IO_FS_TRUNCATE,"DIALFS",tipos_de_interfaces);
-	_agregar_interfaz(IO_FS_WRITE,"DIALFS",tipos_de_interfaces);
-	_agregar_interfaz(IO_FS_READ,"DIALFS",tipos_de_interfaces);
+	_agregar_interfaz(FILE_SYSTEM,"DIALFS",tipos_de_interfaces);
+	// _agregar_interfaz(IO_FS_DELETE,"DIALFS",tipos_de_interfaces);
+	// _agregar_interfaz(IO_FS_TRUNCATE,"DIALFS",tipos_de_interfaces);
+	// _agregar_interfaz(IO_FS_WRITE,"DIALFS",tipos_de_interfaces);
+	// _agregar_interfaz(IO_FS_READ,"DIALFS",tipos_de_interfaces);
 
 	
 
