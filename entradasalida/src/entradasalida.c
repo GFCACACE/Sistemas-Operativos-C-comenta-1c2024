@@ -317,45 +317,39 @@ bool es_generica(){
 	return es_selector(GENERICA);
 }
 
-void ejecutar_op_io_stdin(){
+int ejecutar_op_io_stdin(){
 	while(1){
 		
-		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-        sem_wait(&sem_bin_cola_peticiones);
-        pthread_mutex_lock(&mx_peticion);
-        direcciones_proceso = queue_pop(cola_peticiones_io);
-        pthread_mutex_unlock(&mx_peticion);
+		sem_wait(&sem_bin_cola_peticiones);
+		pthread_mutex_lock(&mx_peticion);
+		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
+		pthread_mutex_unlock(&mx_peticion);
 		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
-		loguear("PID: <%d> - Operacion: <IO_STDIN_READ> - ", atoi(pid));
-        io_stdin_read(direcciones_proceso,conexion_memoria);
-        notificar_kernel(pid, conexion_kernel);
-        loguear_warning("Termino el IO_STDIN_READ.");
-        free(direcciones_proceso);
-		free(pid);
-		// ???????????????????????????????? SI O NO
+		io_stdin_read(direcciones_proceso, conexion_memoria);
 
+		enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		loguear_warning("Termino el IO_STDIN_READ.");
+		free(pid);
+		direcciones_proceso_destroy(direcciones_proceso);
+	}
+}
+int ejecutar_op_io_stdout(){
+	while(1){
+		
+		sem_wait(&sem_bin_cola_peticiones);
+		pthread_mutex_lock(&mx_peticion);
+		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
+		pthread_mutex_unlock(&mx_peticion);
+		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
+		io_stdout_write(direcciones_proceso,conexion_memoria);
+		enviar_texto(pid,TERMINO_IO,conexion_kernel);
+		loguear_warning("Termino el IO_STDOUT_WRITE.");
+		free(pid);
+		direcciones_proceso_destroy(direcciones_proceso);
 	}
 }
 
-void ejecutar_op_io_stdout(){
-	while(1){
-		
-		t_direcciones_proceso* direcciones_proceso = malloc(sizeof(t_direcciones_proceso));
-        sem_wait(&sem_bin_cola_peticiones);
-        pthread_mutex_lock(&mx_peticion);
-        direcciones_proceso = queue_pop(cola_peticiones_io);
-        pthread_mutex_unlock(&mx_peticion);
-		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
-		loguear("PID: <%d> - Operacion: <IO_STDOUT_WRITE> - ", atoi(pid)); //LOG MÍNIMO Y OBLIGATORIO
-        io_stdout_write(direcciones_proceso,conexion_memoria);
-        notificar_kernel(pid, conexion_kernel);
-        loguear_warning("Termino el IO_STDOUT_WRITE.");
-        free(direcciones_proceso);
-		free(pid);
-	}
-}
-
-void ejecutar_op_io_generica(){
+int ejecutar_op_io_generica(){
 	while(1){
 	
 		sem_wait(&sem_bin_cola_peticiones);
@@ -386,7 +380,7 @@ void ejecutar_op_io_generica(){
 }
 
 
-void ejecutar_op_io_dialfs(){
+int ejecutar_op_io_dialfs(){
 	while(1){
 		sem_wait(&sem_bin_cola_peticiones);
 		pthread_mutex_lock(&mx_peticion);

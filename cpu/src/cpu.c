@@ -618,10 +618,16 @@ bool exe_jnz(t_param registro_destino, t_param nro_instruccion)
 
 bool exe_std(op_code cod_op, t_pcb* pcb,t_param interfaz,t_param registro_direccion, t_param registro_tamanio)
 {
-	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
-	uint32_t tamanio = atoi(registro_tamanio.string_valor);
+	uint32_t direccion_logica;
+	if(registro_direccion.size==1)
+		direccion_logica =(uint32_t) *(uint8_t*)registro_direccion.puntero;
+	else
+		direccion_logica = *(uint32_t*)registro_direccion.puntero;
+	
+	uint32_t tamanio = (uint32_t)atoi(registro_tamanio.string_valor);
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb,direccion_logica,tamanio);
 	
+	loguear_direccion_proceso(direcciones_fisicas_registros);
 
 	(uint32_t)registros_cpu->PC++;
 	actualizar_contexto(pcb);
@@ -649,6 +655,7 @@ bool exe_io_gen_sleep(t_pcb* pcb,t_param interfaz, t_param unidades_de_trabajo)
 	return true;
 }
 
+
 bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_direccion){
 	
 	uint32_t size_registro = (uint32_t)registro_datos.size;
@@ -662,7 +669,7 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	
 
 	t_buffer* buffer_lectura = leer_memoria_completa(direcciones_fisicas_registros,conexion_memoria);
-	
+
 	int registro_reconstruido;
 	void* registro_reconstruido_puntero =  &registro_reconstruido;
 	
@@ -675,22 +682,9 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 	loguear("Valor post a reconstruir <%d>",registro_reconstruido);
 
 	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
-		pcb_recibido->PID,
+	pcb_recibido->PID,
 	direccion_fisica_inicial,
 	registro_reconstruido);
-/*
-
-	void* valor_reconstr = malloc(buffer_lectura->size+1);
-
-	memcpy(valor_reconstr,buffer_lectura->stream,buffer_lectura->size);
-	((char*)valor_reconstr)[buffer_lectura->size] = '\0';
-
-	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>",
-		pcb_recibido->PID,
-	direccion_fisica_inicial,
-	valor_reconstr);
-
-*/
 	buffer_destroy(buffer_lectura);
 	
 	registros_cpu->PC++;
@@ -701,9 +695,13 @@ bool exe_mov_in(t_pcb* pcb_recibido,t_param registro_datos,t_param registro_dire
 
 
 bool exe_mov_out(t_pcb* pcb_recibido,t_param registro_direccion ,t_param registro_datos){
+	uint32_t direccion_logica;
 	uint32_t size_registro = (uint32_t)registro_datos.size; 
 	char* registro_dato = (char*)registro_datos.string_valor; 
-	uint32_t direccion_logica = *(uint32_t*)registro_direccion.puntero;
+	if(size_registro==1)
+		direccion_logica =(uint32_t) *(uint8_t*)registro_direccion.puntero;
+	else
+		direccion_logica = *(uint32_t*)registro_direccion.puntero;
 	t_direcciones_proceso* direcciones_fisicas_registros = obtener_paquete_direcciones(pcb_recibido,direccion_logica,size_registro);
 	loguear_direccion_proceso(direcciones_fisicas_registros);	
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
@@ -747,14 +745,38 @@ bool exe_resize(t_pcb* pcb,t_param p_tamanio){
 	actualizar_contexto(pcb);
 	return true;
 }
-bool exe_copy_string(t_pcb* pcb,t_param tamanio){
-	uint32_t direccion_fisica_origen = mmu(pcb,registros_cpu->SI);
-	uint32_t direccion_fisica_destino = mmu(pcb,registros_cpu->DI);
-	//Falta Loop
-	//t_acceso_espacio_usuario* acceso_espacio_usuario = 
-	 acceso_espacio_usuario_create(pcb->PID, direccion_fisica_destino,atoi(tamanio.string_valor),&direccion_fisica_origen);
+bool exe_copy_string(t_pcb* pcb_recibido,t_param tamanio){
+
+	t_buffer* buffer_a_leer;
+
+	uint32_t direccion_logica_origen = registros_cpu->SI;
+	uint32_t direccion_logica_destino =registros_cpu->DI;
+
+	uint32_t size_registro = atoi(tamanio.string_valor);
+
+	t_direcciones_proceso* direcciones_fisicas_origen = obtener_paquete_direcciones(pcb_recibido,direccion_logica_origen,size_registro);
+	t_direcciones_proceso* direcciones_fisicas_destino = obtener_paquete_direcciones(pcb_recibido,direccion_logica_destino,size_registro);
+	
+
+	loguear("Direcciones a leer:");
+	loguear_direccion_proceso(direcciones_fisicas_origen);
+	
+	char* cadena = malloc(sizeof(size_registro)+1);
+	
+	
+	buffer_a_leer = leer_memoria_completa_io(direcciones_fisicas_origen,conexion_memoria,LECTURA_MEMORIA);
+	cadena = (char*)buffer_a_leer->stream;
+	loguear("Resultado de la lectura : %s", cadena);
+    
+	
+	loguear("Direcciones a escribir:\n");
+	loguear_direccion_proceso(direcciones_fisicas_destino);
+
+	escribir_memoria_completa_io(direcciones_fisicas_destino,cadena,conexion_memoria,ESCRITURA_MEMORIA);
+	free(cadena);
+
 	registros_cpu->PC++;
-	actualizar_contexto(pcb);
+	actualizar_contexto(pcb_recibido);
 	return true;
 }
 
@@ -884,16 +906,14 @@ uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
 	uint32_t direccion_fisica;
 	uint32_t numero_pagina = obtener_numero_pagina(direccion_logica);
 	uint32_t desplazamiento = obtener_desplazamiento(direccion_logica,numero_pagina);
+	int registro_tlb = tlb_hit(pcb->PID,numero_pagina);
 	
-	
-	if(config->CANTIDAD_ENTRADAS_TLB!=0){
-		int registro_tlb = tlb_hit(pcb->PID,numero_pagina);
+	if(config->CANTIDAD_ENTRADAS_TLB > 0)	{
 	if(registro_tlb != -1){
 		loguear("PID: <%d> - TLB HIT - Pagina: <%d>",pcb->PID,numero_pagina);
 		direccion_fisica = tamanio_pagina * (uint32_t)registro_tlb + desplazamiento;
 		return direccion_fisica;
 	}
-	
 	loguear("PID: <%d> - TLB MISS - Pagina: <%d>",pcb->PID,numero_pagina);
 	}
 	char* nro_frame = string_new();
@@ -913,14 +933,13 @@ uint32_t mmu (t_pcb* pcb, uint32_t direccion_logica){
 	);
 	
 	direccion_fisica = tamanio_pagina * (uint32_t)atoi(nro_frame) + desplazamiento;
-	if(config->CANTIDAD_ENTRADAS_TLB!=0){
-
-	actualizar_tlb(pcb->PID,numero_pagina,(uint32_t)atoi(nro_frame));
-	}
+	if(config->CANTIDAD_ENTRADAS_TLB > 0)	
+		actualizar_tlb(pcb->PID,numero_pagina,(uint32_t)atoi(nro_frame));
 
 	free(nro_frame);
 	return direccion_fisica;
 }
+
 
 
 uint32_t calcular_bytes_restantes(uint32_t direcc_fisica){

@@ -1,7 +1,7 @@
 #include "utils-interfaz.h"
 
 
- void escribir_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion_a_memoria){
+void escribir_memoria_completa(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion_a_memoria){
 	int operacion_ok;
 	t_acceso_espacio_usuario* acceso_espacio_usuario;
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
@@ -120,7 +120,7 @@ t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_regis
 }
 
 
- void escribir_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion_a_memoria){
+void escribir_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion_a_memoria, op_code op_code){
 	int operacion_ok;
 	t_acceso_espacio_usuario* acceso_espacio_usuario;
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
@@ -159,7 +159,7 @@ t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_regis
 			dato_parcial);
 			
 			
-			enviar_acceso_espacio_usuario(acceso_espacio_usuario,PEDIDO_STDIN,conexion_a_memoria);
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,op_code,conexion_a_memoria);
 			size_leido += size_registro_pagina_actual;	
 
 			operacion_ok = recibir_operacion(conexion_a_memoria);
@@ -187,61 +187,64 @@ t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_regis
 //free(registro_dato);		
 }
 
-
-t_buffer* leer_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_registros,int conexion){
-
-	// 
-	//int response;
-	//t_acceso_espacio_usuario* acceso_espacio_usuario;
+t_buffer* leer_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_registros,int conexion,op_code op_code){
+	
 	t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
 	t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
 	uint32_t size_leido=0;
-	//uint32_t size_registro_pagina_actual;
-    t_buffer* dato_final_puntero = crear_buffer(pid_size_total.valor);
 
+    t_buffer* dato_final_puntero = crear_buffer(pid_size_total.valor);
+	
+	/////BORRAR
+//	int registro_reconstr;
+   
+	/////BORRAR
 
 
 	void _enviar_direcciones_memoria(void* element){	
 			t_direccion_registro* direccion_registro = (t_direccion_registro*) element;
-			uint16_t size_registro_pagina_actual = direccion_registro->size_registro_pagina;
-
-			loguear("direccion_registro:<%d>",  direccion_registro->size_registro_pagina);
-			loguear("direccion_registro->direccion_fisica:<%d>", direccion_registro->direccion_fisica);
+			int size_registro_pagina_actual = direccion_registro->size_registro_pagina;
+			
+			
 			t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(
 			pid_size_total.PID,
 			direccion_registro->direccion_fisica,
 			direccion_registro->size_registro_pagina,
 			NULL);		
-			enviar_acceso_espacio_usuario(acceso_espacio_usuario,PEDIDO_STDOUT,conexion);
-
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,op_code,conexion);
+			
 			free(acceso_espacio_usuario);
-			
-			 recibir_operacion(conexion);
-
+		//	int response = 
+			recibir_operacion(conexion);
+				
 		//	if(response == VALOR_LECTURA_MEMORIA){
-			
+				
 				void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion);		
-			//|WAR, |WAR NEVER CHANGES|S...   
+				
+				
+				
 				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
-				// char* val_parcial= malloc(size_registro_pagina_actual+1);
-				// memcpy(val_parcial  [size_leido],dato_final_puntero->stream ,size_registro_pagina_actual);
-				// ((char*)val_parcial)[size_registro_pagina_actual] = '\0';
-				// loguear("size_registro_pagina_actual <%d>",size_registro_pagina_actual);
-				// loguear("Valor parcial: <%s>",val_parcial);
-				// free(val_parcial);
-				/////BORRAR
-				//memcpy(registro_puntero_recons + size_leido, dato_recibido ,size_registro_pagina_actual);
-				/////BORRAR
+				
 
+
+				//BORRAR
+				
+				char* dato_recibido_prueba = malloc(size_registro_pagina_actual +1 );
+				memcpy(dato_recibido_prueba, dato_recibido ,size_registro_pagina_actual);
+				dato_recibido_prueba[size_registro_pagina_actual] = '\0';
+				
+				/////BORRAR
+				loguear("DATO RECIBIDO PRUEBA: <%s>",dato_recibido_prueba);
 				size_leido += size_registro_pagina_actual;
-
-
+	
+				
 			//	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
 		   // pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
 				free(dato_recibido);
+				free(dato_recibido_prueba);
 			//}
-
-
+			
+			
 		}
 		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
 		/////BORRAR
@@ -249,7 +252,6 @@ t_buffer* leer_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_re
 		/////BORRAR
 	return dato_final_puntero;
 }
-
 
 t_operacion_fs* obtener_op_fs(uint32_t pid, char* nmb_archivo,t_list* direcciones,uint32_t tamanio_registro, uint32_t puntero_archivo, uint32_t tamanio_truncate,op_code cod_op){
 	t_operacion_fs* operacion_fs = malloc(sizeof(t_operacion_fs));
@@ -279,23 +281,6 @@ void enviar_operacion_fs(t_operacion_fs* operacion,op_code op,int socket){
 }
 
 
-/*
-typedef struct t_operacion_fs{
-	op_code cod_op;
-	uint32_t pid;
-	uint32_t tamanio_registro;
-	uint32_t registro_puntero;//FSEEK
-	uint32_t tamanio_truncate;
-	char* nombre_archivo;
-	t_list* direcciones;
-}t_operacion_fs;
-
-typedef struct t_direccion_tamanio{
-	uint32_t direccion_fisica;
-	uint32_t tamanio_bytes;
-}t_direccion_tamanio
-
-*/
 void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 	
 	//t_list* lista = operacion_fs->direcciones_proceso->direcciones;

@@ -463,9 +463,8 @@ void leer_memoria(void* direccion_fisica,void* buffer,uint32_t size){
 	memcpy(buffer,direccion_fisica,size);
 }
 
-
 void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acceso_espacio_usuario,int conexion){
-	void* direccion_real = &memoriaPrincipal[acceso_espacio_usuario->direccion_fisica];
+	void* direccion_real = memoriaPrincipal + acceso_espacio_usuario->direccion_fisica;
 	switch (tipo_acceso)
 	{
 
@@ -474,31 +473,24 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 			leer_memoria(direccion_real,dato_leido,acceso_espacio_usuario->size_registro);
 			
 		/////BORRAR
-		//memcpy(registro_puntero_recons_leer + size_leido_leer, dato_leido ,acceso_espacio_usuario->size_registro);
-		//size_leido_leer = size_leido_leer + acceso_espacio_usuario->size_registro;
+	//	memcpy(registro_puntero_recons_leer + size_leido_leer, dato_leido ,acceso_espacio_usuario->size_registro);
+	//	size_leido_leer = size_leido_leer + acceso_espacio_usuario->size_registro;
 		/////BORRAR
 
-	
-
-	/////BORRAR
-
-	if(acceso_espacio_usuario->size_registro>1){
-		char* val_parcial_lei=malloc(acceso_espacio_usuario->size_registro +1);
-		memcpy(val_parcial_lei, direccion_real ,acceso_espacio_usuario->size_registro);
-		val_parcial_lei[acceso_espacio_usuario->size_registro] = '\0';
-		loguear("Valor leido: <%s>",val_parcial_lei);
-		free(val_parcial_lei);
-	/////BORRAR
-}		
+		/////BORRAR
 	//	loguear("Valor leido: <%d>",registro_reconstr_leer);
 		/////BORRAR
 			
-			
-
-			//dato_leido[acceso_espacio_usuario->size_registro] = '\0';
-			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>", acceso_espacio_usuario->PID,acceso_espacio_usuario->direccion_fisica,acceso_espacio_usuario->size_registro);
-			
-			
+			char* dato_leido_str = malloc(acceso_espacio_usuario->size_registro+1);
+			memcpy(dato_leido_str,dato_leido,acceso_espacio_usuario->size_registro);
+			dato_leido_str=string_duplicate((char*)dato_leido);
+			dato_leido_str[acceso_espacio_usuario->size_registro] = '\0';
+			loguear("PID: <%d> - Accion: LEER - Direccion fisica: <%d> - Tamaño: <%d>",
+			 acceso_espacio_usuario->PID,
+			 acceso_espacio_usuario->direccion_fisica,
+			 acceso_espacio_usuario->size_registro);
+			loguear("VALOR LEIDO: <%s>",dato_leido_str);
+			free(dato_leido_str);
 			_enviar_stream_(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
 			//
 		//enviar_texto(dato_leido,VALOR_LECTURA_MEMORIA,conexion);
@@ -512,28 +504,13 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 
 	/////BORRAR
 	//memcpy(registro_puntero_recons + size_leido, direccion_real ,acceso_espacio_usuario->size_registro);
-	//size_leido = size_leido + acceso_espacio_usuario->size_registro;
+//	size_leido = size_leido + acceso_espacio_usuario->size_registro;
 	/////BORRAR
-
-	if(acceso_espacio_usuario->size_registro==1){
-		char* val_parcial_unbyte=malloc(acceso_espacio_usuario->size_registro +1);
-		memcpy(val_parcial_unbyte, direccion_real ,acceso_espacio_usuario->size_registro);
-			val_parcial_unbyte[acceso_espacio_usuario->size_registro] = '\0';
-			loguear("Valor leido: <%s>",val_parcial_unbyte);
-			free(val_parcial_unbyte);
-	}
 
 			/////BORRAR
-
-	if(acceso_espacio_usuario->size_registro>1){
-		char* val_parcial=malloc(acceso_espacio_usuario->size_registro +1);
-		memcpy(val_parcial, direccion_real ,acceso_espacio_usuario->size_registro);
-		val_parcial[acceso_espacio_usuario->size_registro] = '\0';
-		loguear("Valor leido: <%s>",val_parcial);
-		free(val_parcial);
-
+	//	loguear("Valor leido: <%d>",registro_reconstr);
 	/////BORRAR
-}		
+
 		loguear("PID: <%d> - Accion: <ESCRIBIR> - Direccion fisica: <%d> - Tamaño: <%d>",
 		 acceso_espacio_usuario->PID,
 		 acceso_espacio_usuario->direccion_fisica,
