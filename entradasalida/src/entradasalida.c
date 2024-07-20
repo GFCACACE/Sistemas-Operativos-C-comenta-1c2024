@@ -8,6 +8,13 @@ t_queue* cola_peticiones_io;
 pthread_mutex_t mx_peticion = PTHREAD_MUTEX_INITIALIZER; 
 sem_t sem_bin_cola_peticiones; 
 
+int get_sem_cola_peticiones_value(){
+	int sval;
+	sem_getvalue(&sem_bin_cola_peticiones,&sval);
+	return sval;
+}
+
+
 t_config_io* iniciar_config_io(char* path_config,char* nombre){
 	t_config* _config = config_create(path_config);
 	if(_config ==NULL)
@@ -204,6 +211,10 @@ void notificar_kernel(char* texto, int socket){
     enviar_texto(texto, TERMINO_IO, socket);
 }
 
+bool es_codigo_valido(int code){
+	return code>=MENSAJE&&code<NO_CODE;
+}
+
 void recibir_io(){
 	loguear("IO conectada: Esperando ordenes");
 	
@@ -212,7 +223,8 @@ void recibir_io(){
 		if(config->TIPO_INTERFAZ.id == GENERICA){
             //t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
             int cod_op_io = recibir_operacion(conexion_kernel);
-            if(cod_op_io==-1){
+			loguear_warning("cod op: %d",cod_op_io);
+            if(!es_codigo_valido(cod_op_io)){
                 loguear_warning("Kernel se desconectó.");
                 //free(peticion_io);
                 return;
@@ -231,7 +243,8 @@ void recibir_io(){
 		else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT ){
             t_paquete* paquete = recibir_paquete(conexion_kernel);
             int cod_op_io = paquete->codigo_operacion;
-            if(cod_op_io==-1){
+			loguear_warning("cod op: %d",cod_op_io);
+            if(!es_codigo_valido(cod_op_io)){
                 loguear_warning("Kernel se desconectó.");
                 free(paquete);
                 return;
@@ -246,7 +259,8 @@ void recibir_io(){
 		else if(config->TIPO_INTERFAZ.id == DIALFS){
 			t_paquete* paquete = recibir_paquete(conexion_kernel);
 			int cod_op_io = paquete->codigo_operacion;
-			if(cod_op_io==-1){
+			loguear_warning("cod op: %d",cod_op_io);
+			if(!es_codigo_valido(cod_op_io)){
 				loguear_warning("Kernel se desconectó.");
 				free(paquete);
 				return;
@@ -258,6 +272,8 @@ void recibir_io(){
 			sem_post(&sem_bin_cola_peticiones);
 			free(paquete);	
 		}
+
+		loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 	}
 }
 
@@ -320,7 +336,9 @@ bool es_generica(){
 int ejecutar_op_io_stdin(){
 	while(1){
 		
+		loguear_warning("ejecutar_op_io_stdin sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
+		loguear_warning("ejecutar_op_io_stdin sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		pthread_mutex_lock(&mx_peticion);
 		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
@@ -335,7 +353,10 @@ int ejecutar_op_io_stdin(){
 int ejecutar_op_io_stdout(){
 	while(1){
 		
+
+		loguear_warning("ejecutar_op_io_stdout sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
+		loguear_warning("ejecutar_op_io_stdout sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		pthread_mutex_lock(&mx_peticion);
 		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
@@ -351,7 +372,9 @@ int ejecutar_op_io_stdout(){
 int ejecutar_op_io_generica(){
 	while(1){
 	
+		loguear_warning("ejecutar_op_io_generica sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
+		loguear_warning("ejecutar_op_io_generica sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
         pthread_mutex_lock(&mx_peticion);
         char* pid_mas_unidades = queue_pop(cola_peticiones_io);
         pthread_mutex_unlock(&mx_peticion);
@@ -381,7 +404,9 @@ int ejecutar_op_io_generica(){
 
 int ejecutar_op_io_dialfs(){
 	while(1){
+		loguear_warning("ejecutar_op_io_dialfs sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
+		loguear_warning("ejecutar_op_io_dialfs sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		pthread_mutex_lock(&mx_peticion);
 		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);

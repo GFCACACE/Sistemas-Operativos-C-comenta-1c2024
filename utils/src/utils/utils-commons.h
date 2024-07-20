@@ -84,6 +84,7 @@ typedef enum
 	// STDIN,
 	// STDOUT,
 	// DIALFS
+	NO_CODE
 }op_code;
 
 // BRAND NEW

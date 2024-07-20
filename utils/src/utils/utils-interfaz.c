@@ -258,8 +258,6 @@ t_operacion_fs* obtener_op_fs(uint32_t pid, char* nmb_archivo,t_list* direccione
 	operacion_fs->nombre_archivo = nmb_archivo;
 	operacion_fs->cod_op = cod_op;
 	operacion_fs->registro_puntero = puntero_archivo;
-	if(direcciones != NULL)
-		operacion_fs->direcciones = list_create();
 	operacion_fs->direcciones = direcciones;
 	operacion_fs->tamanio_truncate = tamanio_truncate;
 	operacion_fs->pid = pid;
