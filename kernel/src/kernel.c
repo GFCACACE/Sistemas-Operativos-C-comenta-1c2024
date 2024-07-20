@@ -2275,11 +2275,11 @@ void io_fs(uint32_t pid, t_paquete* paquete,char* nombre_interfaz){
 	//loguear_warning("Uso del FS -> Interfaz:%s Nombre archivo:%s", nombre_interfaz, operacion_fs->nombre_archivo);
 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
 	int conexion_io = *(int *)ptr_conexion;
-	char* pid_aux = string_itoa(pid);
+	// char* pid_aux = string_itoa(pid);
 
 	//enviar pid con cod op del tipo de operacion
 	//enviar_texto(pid_aux,operacion_fs->cod_op,conexion_io);
-	enviar_mensaje(pid_aux, conexion_io);
+	// enviar_mensaje(pid_aux, conexion_io);
 	// enviar paquete con operacion_fs
 	enviar_paquete(paquete, conexion_io);
 	paquete_destroy(paquete);

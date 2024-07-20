@@ -192,7 +192,6 @@ typedef struct t_direccion_registro
 
 t_direccion_registro* direccion_registro_new(uint32_t direccion,uint32_t size);
 
-// NUEVA IDEA
 typedef struct t_operacion_fs{
 	op_code cod_op;
 	uint32_t pid;
@@ -207,10 +206,6 @@ typedef struct t_direccion_tamanio{
 	uint32_t direccion_fisica;
 	uint32_t tamanio_bytes;
 }t_direccion_tamanio;
-
-// FIN NUEVA IDEA
-
-
 
 
 t_validacion* validacion_new();
