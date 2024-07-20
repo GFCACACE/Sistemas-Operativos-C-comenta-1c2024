@@ -133,7 +133,11 @@ bool iniciar_log_config(char* path_config, char* nombre){
 
 bool iniciar_conexion_kernel(){
     conexion_kernel = crear_conexion(config->IP_KERNEL, config->PUERTO_KERNEL);
+	char* tipo = devuelve_tipo_en_char(config->TIPO_INTERFAZ.id);
 	char* texto = string_new();
+	string_append(&texto, config->NOMBRE);
+	string_append(&texto, " ");
+	string_append(&texto, tipo);
 
 	if(conexion_kernel ==-1){
 		
@@ -141,8 +145,8 @@ bool iniciar_conexion_kernel(){
 		free(texto);
 		return false;
 	}
-	sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
-	enviar_texto(texto,NUEVA_IO,conexion_kernel);
+//	sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
+	enviar_texto(texto,NUEVA_IO,conexion_kernel);	
 	free(texto);
     return true;
 }
@@ -151,16 +155,16 @@ bool iniciar_conexion_kernel(){
 bool iniciar_conexion_memoria(){
 	if(strcmp(devuelve_tipo_en_char(config->TIPO_INTERFAZ.id), "GENERICA")){
 		conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
-		char* texto = string_new();
+	//	char* texto = string_new();
 		
 		if(conexion_memoria ==-1){
 			loguear_error("No se pudo conectar memoria");
-			free(texto);
+		//	free(texto);
 			return false;
 		} 
-		sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
-		enviar_texto(texto,NUEVA_IO,conexion_memoria);
-		free(texto);
+	//	sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
+		//enviar_texto(texto,NUEVA_IO,conexion_memoria);
+		//free(texto);
 		return true;
 	}
 	return true;

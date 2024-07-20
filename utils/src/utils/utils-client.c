@@ -170,6 +170,8 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente)
 
     int bytes = paquete->buffer->size + 2*sizeof(int);
     void* a_enviar = serializar_paquete(paquete, bytes);
+	loguear_warning(" mem_hexdump enviar_paquete");
+	mem_hexdump(a_enviar,bytes);
 
     if (a_enviar == NULL) {
         perror("Error al serializar el paquete");

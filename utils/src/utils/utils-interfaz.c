@@ -276,7 +276,11 @@ void operacion_fs_destroy(t_operacion_fs* operacion_fs){
 
 void enviar_operacion_fs(t_operacion_fs* operacion,op_code op,int socket){
 	int size;
-	void* stream = serializar_operacion_fs(operacion,&size);									
+	void* stream = serializar_operacion_fs(operacion,&size);	
+
+	t_paquete* paquete = crear_paquete(op);
+	agregar_a_paquete(paquete,stream,size);	
+	t_operacion_fs* op_fs = recibir_op_fs(paquete);
 					 
 	enviar_stream(stream,size,socket,op);
 	free(stream);
@@ -314,6 +318,7 @@ void* serializar_operacion_fs(t_operacion_fs* operacion_fs,int* size){
 	void * stream = buffer->stream;
 	free(buffer);
 	//free(nombre);
+	
 	return stream;
 }
 
@@ -325,6 +330,8 @@ t_operacion_fs* recibir_op_fs(t_paquete* paquete)
 	op_fs->direcciones = list_create();
 	
 	t_buffer* buffer = paquete->buffer;
+	loguear_warning(" mem_hexdump recibir_op_fs");
+	mem_hexdump(buffer->stream,buffer->size);
 	buffer->desplazamiento = sizeof(op_code); // PORQUE YA HICIMOS recibir_operacion(cod_op)
 	void _recibir(void* lugar_destino,size_t tam){
 		recibir_de_buffer(lugar_destino,buffer,tam);
