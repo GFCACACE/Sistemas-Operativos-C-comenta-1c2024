@@ -150,6 +150,42 @@ char **recibir_io(int conexion){
 }
 
 
+// void iniciar_conexion_io(){
+// 	while (1){
+// 		bool aceptar_interfaz = true;
+// 		pthread_t thread;
+//     	int *fd_conexion_ptr = malloc(sizeof(int));
+//     	*fd_conexion_ptr = esperar_cliente(memoria_escucha);
+// 		if(*fd_conexion_ptr == -1){ 
+// 			loguear_warning("No se puso establecer la conexion con el cliente (I/O).");
+// 			free(fd_conexion_ptr);
+// 			aceptar_interfaz=false;
+// 			// return false;
+// 		}
+// 		//char* nombre_interfaz = malloc(16);
+// 		char** splitter_io = recibir_io(*fd_conexion_ptr);
+// 		loguear_warning("NOMBRE DE LA IO: %s", splitter_io[0]);
+// 		loguear_warning("TIPO DE INTERFAZ: %s", splitter_io[1]);
+// 		char* nombre_interfaz = splitter_io[0];
+// 		//char* tipo_interfaz = splitter_io[1]; 
+// 		if(aceptar_interfaz && !existe_interfaz(nombre_interfaz)){
+// 		//char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
+					
+// 			char* string_conexion = string_itoa(*fd_conexion_ptr);
+
+// 			//loguear("bienvenido %s",nombre_interfaz);
+// 			dictionary_put(diccionario_interfaz_conexion,nombre_interfaz,fd_conexion_ptr);
+// 			//
+// 			pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
+// 			//							
+// 			pthread_detach(thread);
+// 			free(string_conexion);
+// 	}
+// 	// return true;
+// }
+// }
+
+
 
 void iniciar_conexion_io(){
 	while (1){
@@ -168,19 +204,21 @@ void iniciar_conexion_io(){
 		loguear_warning("NOMBRE DE LA IO: %s", splitter_io[0]);
 		loguear_warning("TIPO DE INTERFAZ: %s", splitter_io[1]);
 		char* nombre_interfaz = splitter_io[0];
+		
 		//char* tipo_interfaz = splitter_io[1]; 
 		if(aceptar_interfaz && !existe_interfaz(nombre_interfaz)){
-		//char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
+			//char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
 					
 			char* string_conexion = string_itoa(*fd_conexion_ptr);
 
-			//loguear("bienvenido %s",nombre_interfaz);
+			loguear("bienvenido %s",nombre_interfaz);
 			dictionary_put(diccionario_interfaz_conexion,nombre_interfaz,fd_conexion_ptr);
 			//
 			pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
 			//							
 			pthread_detach(thread);
 			free(string_conexion);
+			free(splitter_io);
 	}
 	// return true;
 }
@@ -243,20 +281,20 @@ void io_handler(int *ptr_conexion){
 }
 
 bool iniciar_memoria_instrucciones(){
-	pthread_t thread_memoria_procesos;
+		pthread_t thread_memoria_procesos;
 	pthread_t thread_memoria_instrucciones;//Inicializo el thread
 	pthread_t thread_controlador_io;//Inicializo el thread
 
 	pthread_create(&thread_memoria_procesos,NULL, (void*)recibir_procesos,NULL); //KERNEL
-	pthread_create(&thread_controlador_io,NULL,(void*)iniciar_conexion_io,NULL); //CONTROLAR IO
 	pthread_create(&thread_memoria_instrucciones,NULL,(void*)buscar_instrucciones,NULL); //CPU
+	pthread_create(&thread_controlador_io,NULL,(void*)iniciar_conexion_io,NULL); //CONTROLAR IO
 	
 	pthread_detach(thread_memoria_procesos);
 	if (thread_memoria_procesos == -1){
 		loguear_error("No se pudo iniciar la memoria de procesos.");
 		return false;
 	}
-	pthread_detach(thread_controlador_io);
+	pthread_join(thread_controlador_io,NULL);
 	if (thread_controlador_io == -1){
 		loguear_error("No se pudo iniciar el controlador de ios.");
 		return false;
@@ -503,6 +541,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 			 acceso_espacio_usuario->size_registro);
 			loguear("VALOR LEIDO: <%s>",dato_leido_str);
 			free(dato_leido_str);
+			mem_hexdump(dato_leido,acceso_espacio_usuario->size_registro);
 			_enviar_stream_(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
 			//
 		//enviar_texto(dato_leido,VALOR_LECTURA_MEMORIA,conexion);
@@ -512,7 +551,12 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 	case ESCRITURA_MEMORIA:
 		escribir_memoria(direccion_real,acceso_espacio_usuario->registro_dato,acceso_espacio_usuario->size_registro);
 
-
+			char* dato_leido_escritura = malloc(acceso_espacio_usuario->size_registro+1);
+			memcpy(dato_leido_escritura,direccion_real,acceso_espacio_usuario->size_registro);
+			dato_leido_escritura[acceso_espacio_usuario->size_registro] = '\0';
+			loguear("VALOR LEIDO: <%s>",dato_leido_escritura);
+			free(dato_leido_escritura);
+			mem_hexdump(direccion_real,acceso_espacio_usuario->size_registro);
 
 	/////BORRAR
 	//memcpy(registro_puntero_recons + size_leido, direccion_real ,acceso_espacio_usuario->size_registro);

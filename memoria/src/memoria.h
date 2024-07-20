@@ -4,6 +4,7 @@
 #include <utils/hello.h>
 #include<commons/config.h>
 #include<commons/string.h>
+#include<commons/memory.h>
 #include<commons/log.h>
 #include<commons/collections/queue.h>
 #include <utils/utils-client.h>
