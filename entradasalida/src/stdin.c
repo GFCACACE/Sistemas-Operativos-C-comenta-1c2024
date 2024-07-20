@@ -13,7 +13,7 @@ void io_stdin_read(t_direcciones_proceso* direcciones_proceso, int conexion){
     if(list_size(direcciones_proceso->direcciones) <= 0)
         return;
         
-    char* texto = malloc(50);
+    char* texto = malloc(100);
     char* texto_a_enviar = malloc(pid_valor.valor);
     texto = leer_texto_consola();
     while(strlen(texto)  < pid_valor.valor){

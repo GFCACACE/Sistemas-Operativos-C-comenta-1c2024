@@ -250,7 +250,7 @@ void recibir_io(){
 			loguear_warning("cod op: %d",cod_op_io);
             if(!es_codigo_valido(cod_op_io)){
                 loguear_warning("Kernel se desconectó.");
-                free(paquete);
+               // free(paquete);
                 return;
             }
             t_direcciones_proceso* direcciones_proceso = recibir_direcciones_proceso(paquete);
@@ -258,7 +258,7 @@ void recibir_io(){
             queue_push(cola_peticiones_io, direcciones_proceso);
             pthread_mutex_unlock(&mx_peticion);
             sem_post(&sem_bin_cola_peticiones);
-            free(paquete);
+            //free(paquete);
         }
 		else if(config->TIPO_INTERFAZ.id == DIALFS){
 			t_paquete* paquete = recibir_paquete(conexion_kernel);
@@ -266,15 +266,17 @@ void recibir_io(){
 			loguear_warning("cod op: %d",cod_op_io);
 			if(!es_codigo_valido(cod_op_io)){
 				loguear_warning("Kernel se desconectó.");
-				free(paquete);
+				//free(paquete);
 				return;
 			}
 			t_operacion_fs* operacion_fs = recibir_op_fs(paquete);
 			pthread_mutex_lock(&mx_peticion);
 			queue_push(cola_peticiones_io, operacion_fs);
 			pthread_mutex_unlock(&mx_peticion);
+			loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 			sem_post(&sem_bin_cola_peticiones);
-			free(paquete);	
+			loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+			//free(paquete);	
 		}
 
 		loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());

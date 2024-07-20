@@ -871,7 +871,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			io_std(pcb_recibido->PID, paquete_iow,nombre_interfaz);
 			break;
 		case FILE_SYSTEM:
-			recibir_operacion(cpu_dispatch);
+			//recibir_operacion(cpu_dispatch);
 			t_paquete* paquete_fs = recibir_paquete(cpu_dispatch);
 			//t_operacion_fs* operacion_fs = recibir_op_fs(cpu_dispatch);
 			io_fs(pcb_recibido->PID,paquete_fs,nombre_interfaz);

@@ -85,6 +85,8 @@ bool io_fs_create(char* nombre_archivo){
     
     t_dialfs_metadata* metadata = create_metadata(nombre_archivo);
     list_add(lista_archivos, metadata);
+    loguear("Se agrega el archivo %s",nombre_archivo);
+    
     // fwrite(&metadata,sizeof(t_dialfs_metadata),1,archivo_metadata);
     editar_archivo_metadata(path_metadata,metadata);
 
@@ -117,10 +119,8 @@ bool io_fs_delete(char* nombre_archivo, uint32_t pid){
 bool io_fs_truncate(char* nombre_archivo,uint32_t tamanio_final, uint32_t pid){
 
     bool buscar_archivo(void* elem){
-        t_dialfs_metadata* metadata = (t_dialfs_metadata*) elem;
-        if(!strcmp(nombre_archivo, metadata->nombre_archivo))
-            return true;
-        return false;
+        t_dialfs_metadata* metadata = (t_dialfs_metadata*) elem;     
+        return !strcmp(nombre_archivo, metadata->nombre_archivo);
     };
     char* path_metadata =string_new();
     path_metadata = path_resolve(dir_metadata,nombre_archivo);
@@ -289,7 +289,7 @@ t_dialfs_metadata* create_metadata(char* nombre_archivo){
     t_dialfs_metadata* metadata = malloc(sizeof(t_dialfs_metadata));
     metadata->bloque_inicial= (uint32_t)asignar_bloque_inicial();
     metadata->tamanio_archivo = 0;
-    metadata->nombre_archivo=nombre_archivo;
+    metadata->nombre_archivo= string_duplicate(nombre_archivo);
     return metadata;
 
 }
