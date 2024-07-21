@@ -539,7 +539,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 			 acceso_espacio_usuario->PID,
 			 acceso_espacio_usuario->direccion_fisica,
 			 acceso_espacio_usuario->size_registro);
-			loguear("VALOR LEIDO: <%s>",dato_leido_str);
+			//loguear("VALOR LEIDO: <%s>",dato_leido_str);
 			free(dato_leido_str);
 			mem_hexdump(dato_leido,acceso_espacio_usuario->size_registro);
 			_enviar_stream_(dato_leido,acceso_espacio_usuario->size_registro,conexion,VALOR_LECTURA_MEMORIA);
@@ -554,7 +554,7 @@ void acceder_a_espacio_usuario(op_code tipo_acceso,t_acceso_espacio_usuario* acc
 			char* dato_leido_escritura = malloc(acceso_espacio_usuario->size_registro+1);
 			memcpy(dato_leido_escritura,direccion_real,acceso_espacio_usuario->size_registro);
 			dato_leido_escritura[acceso_espacio_usuario->size_registro] = '\0';
-			loguear("VALOR LEIDO: <%s>",dato_leido_escritura);
+			//loguear("VALOR LEIDO: <%s>",dato_leido_escritura);
 			free(dato_leido_escritura);
 			mem_hexdump(direccion_real,acceso_espacio_usuario->size_registro);
 
