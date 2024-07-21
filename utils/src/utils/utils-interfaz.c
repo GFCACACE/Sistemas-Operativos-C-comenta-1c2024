@@ -118,6 +118,72 @@ t_buffer* leer_memoria_completa(t_direcciones_proceso* direcciones_fisicas_regis
 		/////BORRAR
 	return dato_final_puntero;
 }
+void escribir_memoria_completa_FS(uint32_t tamanio_registro,t_list* direcciones_registros, uint32_t pid, char* registro_dato,int conexion_a_memoria, op_code op_code){
+	int operacion_ok;
+	t_acceso_espacio_usuario* acceso_espacio_usuario;
+	//t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
+	//t_pid_valor pid_size_total = tamanio_registro;
+	uint32_t size_leido=0;
+	uint32_t size_registro_pagina_actual;
+    
+	//BORRAR
+	//char* registro_dato = malloc(5);
+	//registro_dato = "hola";
+	//BORRAR
+    void* registro_puntero =(void*) registro_dato; 
+	void* dato_parcial_prueba = malloc(tamanio_registro);
+		void _enviar_direcciones_memoria(void* element){
+		
+			t_direccion_tamanio* direccion_registro = (t_direccion_tamanio*) element;
+			size_registro_pagina_actual = direccion_registro->tamanio_bytes;
+			
+			
+			void* dato_parcial = malloc(size_registro_pagina_actual);
+
+			//BORRAR
+			//void* dato_parcial_prueba = malloc(size_registro_pagina_actual+1);
+			//BORRAR
+			memcpy(dato_parcial, registro_puntero + size_leido,size_registro_pagina_actual);
+			
+			//BORRAR
+			memcpy(dato_parcial_prueba + size_leido,dato_parcial,size_registro_pagina_actual);
+			//BORRAR
+			
+			
+			acceso_espacio_usuario =  acceso_espacio_usuario_create(
+			pid,
+			direccion_registro->direccion_fisica,
+			direccion_registro-> tamanio_bytes,
+			dato_parcial);
+			
+			
+			enviar_acceso_espacio_usuario(acceso_espacio_usuario,op_code,conexion_a_memoria);
+			size_leido += size_registro_pagina_actual;	
+
+			operacion_ok = recibir_operacion(conexion_a_memoria);
+			
+			if(operacion_ok==MOV_OUT_OK){
+				char* valor_memoria =recibir_mensaje(conexion_a_memoria);
+				free(valor_memoria);
+			};
+			
+			//loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>",
+			//pid_size_total.PID,direccion_registro->direccion_fisica,registro_dato + size_leido);
+			free(acceso_espacio_usuario);
+			free(dato_parcial);
+			
+			
+			
+		};
+		
+	list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
+	((char*)dato_parcial_prueba)[tamanio_registro] = '\0';
+	loguear("Dato prueba <%s>",dato_parcial_prueba);
+//	loguear("Valor escrito: <%d>",registro_reconstr);
+	free(dato_parcial_prueba);
+
+//free(registro_dato);		
+}
 
 
 void escribir_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_registros, char* registro_dato,int conexion_a_memoria, op_code op_code){
@@ -167,7 +233,7 @@ void escribir_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_reg
 			if(operacion_ok==MOV_OUT_OK){
 				char* valor_memoria =recibir_mensaje(conexion_a_memoria);
 				free(valor_memoria);
-			}
+			};
 			
 			//loguear("PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>",
 			//pid_size_total.PID,direccion_registro->direccion_fisica,registro_dato + size_leido);
@@ -185,6 +251,72 @@ void escribir_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_reg
 	free(dato_parcial_prueba);
 
 //free(registro_dato);		
+};
+
+t_buffer* leer_memoria_completa_FS(uint32_t tamanio_registro,t_list* direcciones_registros, uint32_t pid,int conexion,op_code op_code){
+	
+	//t_list* direcciones_registros =  direcciones_fisicas_registros->direcciones;
+	//t_pid_valor pid_size_total = direcciones_fisicas_registros->pid_size_total;
+	uint32_t size_leido=0;
+
+    t_buffer* dato_final_puntero = crear_buffer(tamanio_registro);
+	
+	/////BORRAR
+//	int registro_reconstr;
+   
+	/////BORRAR
+
+
+	void _enviar_direcciones_memoria(void* element){	
+					t_direccion_tamanio* direccion_registro = (t_direccion_tamanio*) element;
+					int size_registro_pagina_actual = direccion_registro->tamanio_bytes;
+					
+					
+					t_acceso_espacio_usuario* acceso_espacio_usuario =  acceso_espacio_usuario_create(
+					pid,
+					direccion_registro->direccion_fisica,
+					direccion_registro->tamanio_bytes,
+					NULL);		
+					enviar_acceso_espacio_usuario(acceso_espacio_usuario,op_code,conexion);
+					
+					free(acceso_espacio_usuario);
+				//	int response = 
+					recibir_operacion(conexion);
+						
+				//	if(response == VALOR_LECTURA_MEMORIA){
+						
+						void* dato_recibido = recibir_buffer(&size_registro_pagina_actual,conexion);		
+						
+						
+						
+						memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
+						
+
+
+						//BORRAR
+						
+						char* dato_recibido_prueba = malloc(size_registro_pagina_actual +1 );
+						memcpy(dato_recibido_prueba, dato_recibido ,size_registro_pagina_actual);
+						dato_recibido_prueba[size_registro_pagina_actual] = '\0';
+						
+						/////BORRAR
+						loguear("DATO RECIBIDO PRUEBA: <%s>",dato_recibido_prueba);
+						size_leido += size_registro_pagina_actual;
+			
+						
+					//	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
+				// pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
+						free(dato_recibido);
+						free(dato_recibido_prueba);
+					//}
+					
+					
+				};
+		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
+		/////BORRAR
+		//loguear("Valor leido: <%d>",registro_reconstr);
+		/////BORRAR
+	return dato_final_puntero;
 }
 
 t_buffer* leer_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_registros,int conexion,op_code op_code){

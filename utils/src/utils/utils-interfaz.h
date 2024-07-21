@@ -25,5 +25,7 @@ void enviar_operacion_fs(t_operacion_fs*,op_code ,int);
 void* serializar_operacion_fs(t_operacion_fs*, int*);
 t_operacion_fs* recibir_op_fs(t_paquete* paquete);
 void operacion_fs_destroy(t_operacion_fs* operacion_fs);
+void escribir_memoria_completa_FS(uint32_t tamanio_registro,t_list* direcciones_registros, uint32_t pid, char* registro_dato,int conexion_a_memoria, op_code op_code);
+t_buffer* leer_memoria_completa_FS(uint32_t tamanio_registro,t_list* direcciones_registros, uint32_t pid,int conexion,op_code op_code);
 
 #endif /* utils_interfaz_h */

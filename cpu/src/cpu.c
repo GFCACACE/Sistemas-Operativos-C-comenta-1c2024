@@ -323,8 +323,14 @@ bool decode()
 		PARAM1 = interpretar_valor_instruccion(sep_instruction[1]);
 	if (sep_instruction[2]){
 		PARAM2 = interpretar_valor_instruccion(sep_instruction[2]); // esta de acá
-		if (sep_instruction[3])
+		if (sep_instruction[3]){
 			PARAM3 = interpretar_valor_instruccion(sep_instruction[3]);
+			if(sep_instruction[4]){
+				PARAM4 = interpretar_valor_instruccion(sep_instruction[4]);
+				if(sep_instruction[5])
+					PARAM5 = interpretar_valor_instruccion(sep_instruction[5]);
+			}
+		}
 	}
 	string_array_destroy(sep_instruction);
 	free(registros);

@@ -82,7 +82,15 @@ bool io_fs_create(char* nombre_archivo){
 
     char* path_metadata =string_new();
     path_metadata = path_resolve(dir_metadata,nombre_archivo);
-    
+
+    bool buscar_archivo(void* elem){
+        t_dialfs_metadata* metadata = (t_dialfs_metadata*) elem;
+        return !strcmp(nombre_archivo, metadata->nombre_archivo);
+    };
+    if(list_any_satisfy(lista_archivos, &buscar_archivo)){
+        loguear_warning("Ya existe un archivo creado con ese nombre.");
+        return true;
+    };
     t_dialfs_metadata* metadata = create_metadata(nombre_archivo);
     list_add(lista_archivos, metadata);
     loguear("Se agrega el archivo %s",nombre_archivo);
@@ -95,13 +103,13 @@ bool io_fs_create(char* nombre_archivo){
 
 }
 
+
+
 bool io_fs_delete(char* nombre_archivo, uint32_t pid){
     
     bool buscar_archivo(void* elem){
         t_dialfs_metadata* metadata = (t_dialfs_metadata*) elem;
-        if(!strcmp(nombre_archivo, metadata->nombre_archivo))
-            return true;
-        return false;
+        return !strcmp(nombre_archivo, metadata->nombre_archivo);
     };
 
     char* path_metadata =string_new();
@@ -149,14 +157,14 @@ bool io_fs_read(t_operacion_fs* peticion_fs){
     char* stream_memoria = malloc(sizeof(peticion_fs->tamanio_registro));
     uint32_t byte_inicial_lectura = config->BLOCK_SIZE * metadata_write->bloque_inicial + peticion_fs->registro_puntero;
     memcpy(&stream_memoria,&data_bloques[byte_inicial_lectura],peticion_fs->tamanio_registro);
-    escribir_memoria_completa_io(peticion_fs->direcciones,stream_memoria,conexion_memoria, ESCRITURA_MEMORIA);
+    escribir_memoria_completa_FS(peticion_fs->tamanio_registro, peticion_fs->direcciones, peticion_fs->pid,stream_memoria,conexion_memoria, ESCRITURA_MEMORIA);
     free(stream_memoria);
 
     return true;
 } 
 
 bool io_fs_write(t_operacion_fs* peticion_fs){
-    t_buffer* buffer =leer_memoria_completa_io(peticion_fs->direcciones,conexion_memoria, LECTURA_MEMORIA);
+    t_buffer* buffer =leer_memoria_completa_FS(peticion_fs->tamanio_registro, peticion_fs->direcciones, peticion_fs->pid,conexion_memoria, LECTURA_MEMORIA);
     bool encontrar_archivo(void* elem){
         t_dialfs_metadata* metadata_elem = (t_dialfs_metadata*)elem;
         return (!strcmp(peticion_fs->nombre_archivo,metadata_elem->nombre_archivo));

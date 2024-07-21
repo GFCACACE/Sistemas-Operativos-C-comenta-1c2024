@@ -9,7 +9,7 @@
       "request": "launch",
       
       "program": "${workspaceFolder}/bin/${workspaceFolderBasename}",
-      "args": ["${workspaceFolder}/TECLADO.config", "TECLADO"],
+      "args": ["${workspaceFolder}/FS.config", "FS"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],
