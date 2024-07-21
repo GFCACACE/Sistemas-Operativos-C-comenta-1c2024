@@ -419,7 +419,7 @@ int ejecutar_op_io_dialfs(){
 		pthread_mutex_lock(&mx_peticion);
 		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
-		int cod_op = operacion_fs->cod_op;
+		op_code cod_op = operacion_fs->cod_op;
 		usleep(config->TIEMPO_UNIDAD_TRABAJO);// cualquier operación del fs SIEMPRE consume una unidad de tiempo trabajo
 		switch(cod_op){
 			case IO_FS_CREATE:
@@ -441,7 +441,9 @@ int ejecutar_op_io_dialfs(){
 			operacion_fs->nombre_archivo, 
 			operacion_fs->tamanio_registro, 
 			operacion_fs->registro_puntero);
+
 				io_fs_read(operacion_fs);
+
 				break;
 			case IO_FS_WRITE:
 				loguear("PID: <%d> - Escribir Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", 
@@ -452,7 +454,8 @@ int ejecutar_op_io_dialfs(){
 				io_fs_write(operacion_fs);
 				break;
 		}
-		char* pid_a_enviar = string_itoa(operacion_fs->pid);
+		char* pid_a_enviar = malloc(3);
+		pid_a_enviar = string_itoa(operacion_fs->pid);
 		notificar_kernel(pid_a_enviar, conexion_kernel);
 		free(pid_a_enviar);
 		operacion_fs_destroy(operacion_fs);

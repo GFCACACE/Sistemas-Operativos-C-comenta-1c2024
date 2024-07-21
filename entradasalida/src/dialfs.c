@@ -58,7 +58,7 @@ bool cargar_directorio_metadata(){
     
     while ((entry = readdir(dir)) != NULL) {
       if(string_contains(entry->d_name,".txt")){
-        t_dialfs_metadata* metadata=obtener_metadata_txt(entry->d_name);
+          t_dialfs_metadata* metadata=obtener_metadata_txt(entry->d_name);
         list_add(lista_archivos,metadata);
       }
     }
@@ -72,7 +72,7 @@ t_dialfs_metadata* obtener_metadata_txt(char* nombre_archivo){
 
     metadata->bloque_inicial=(uint32_t)config_get_int_value(config_meta,"BLOQUE_INICIAL");
     metadata->tamanio_archivo=(uint32_t)config_get_int_value(config_meta,"TAMANIO_ARCHIVO");
-    metadata->nombre_archivo=nombre_archivo;
+    metadata->nombre_archivo=string_duplicate(nombre_archivo);
 
     config_destroy(config_meta);
     return metadata;
@@ -154,9 +154,9 @@ bool io_fs_read(t_operacion_fs* peticion_fs){
         return (!strcmp(peticion_fs->nombre_archivo,metadata_elem->nombre_archivo));
     };
     t_dialfs_metadata* metadata_write = list_find(lista_archivos,&encontrar_archivo);
-    char* stream_memoria = malloc(sizeof(peticion_fs->tamanio_registro));
+    void* stream_memoria = malloc(peticion_fs->tamanio_registro);
     uint32_t byte_inicial_lectura = config->BLOCK_SIZE * metadata_write->bloque_inicial + peticion_fs->registro_puntero;
-    memcpy(&stream_memoria,&data_bloques[byte_inicial_lectura],peticion_fs->tamanio_registro);
+    memcpy(stream_memoria,data_bloques+ byte_inicial_lectura,peticion_fs->tamanio_registro);
     escribir_memoria_completa_FS(peticion_fs->tamanio_registro, peticion_fs->direcciones, peticion_fs->pid,stream_memoria,conexion_memoria, ESCRITURA_MEMORIA);
     free(stream_memoria);
 
@@ -171,8 +171,8 @@ bool io_fs_write(t_operacion_fs* peticion_fs){
     };
     t_dialfs_metadata* metadata_write = list_find(lista_archivos,&encontrar_archivo);
     uint32_t byte_inicial_escritura = config->BLOCK_SIZE * metadata_write->bloque_inicial + peticion_fs->registro_puntero;
-    memcpy(&data_bloques[byte_inicial_escritura],buffer->stream,peticion_fs->tamanio_registro);
-
+    // memcpy(&data_bloques[byte_inicial_escritura],buffer->stream,peticion_fs->tamanio_registro);
+    memcpy(data_bloques + byte_inicial_escritura,buffer->stream,peticion_fs->tamanio_registro);
     return true;
 }
 
