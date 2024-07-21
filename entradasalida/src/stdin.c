@@ -15,6 +15,7 @@ void io_stdin_read(t_direcciones_proceso* direcciones_proceso, int conexion){
         
     char* texto = malloc(100);
     char* texto_a_enviar = malloc(pid_valor.valor);
+    printf("Escriba el texto deseado: \n");
     texto = leer_texto_consola();
     while(strlen(texto)  < pid_valor.valor){
         loguear_error("La cadena escrita es de %d bytes, debe ser de %d bytes.",strlen(texto),pid_valor.valor);
@@ -22,7 +23,7 @@ void io_stdin_read(t_direcciones_proceso* direcciones_proceso, int conexion){
     }
     loguear("TEXTO INGRESADO: %s",texto);
     memcpy(texto_a_enviar,texto,pid_valor.valor);
-    loguear("TEXTO A ENVIAR: %s",texto_a_enviar);
+    //loguear("TEXTO A ENVIAR: %s",texto_a_enviar);
     escribir_memoria_completa_io(direcciones_proceso, texto_a_enviar, conexion,ESCRITURA_MEMORIA);
     free(texto);
     free(texto_a_enviar);

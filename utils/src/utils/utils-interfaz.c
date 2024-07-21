@@ -293,29 +293,16 @@ t_buffer* leer_memoria_completa_FS(uint32_t tamanio_registro,t_list* direcciones
 						
 
 
-						//BORRAR
-						
-						char* dato_recibido_prueba = malloc(size_registro_pagina_actual +1 );
-						memcpy(dato_recibido_prueba, dato_recibido ,size_registro_pagina_actual);
-						dato_recibido_prueba[size_registro_pagina_actual] = '\0';
-						
-						/////BORRAR
-						loguear("DATO RECIBIDO PRUEBA: <%s>",dato_recibido_prueba);
 						size_leido += size_registro_pagina_actual;
 			
-						
-					//	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
-				// pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
 						free(dato_recibido);
-						free(dato_recibido_prueba);
+						
 					//}
 					
 					
 				};
 		list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
-		/////BORRAR
-		//loguear("Valor leido: <%d>",registro_reconstr);
-		/////BORRAR
+		
 	return dato_final_puntero;
 }
 
@@ -356,24 +343,11 @@ t_buffer* leer_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_re
 				
 				
 				memcpy(dato_final_puntero->stream + size_leido,dato_recibido, size_registro_pagina_actual);
-				
 
-
-				//BORRAR
-				
-				char* dato_recibido_prueba = malloc(size_registro_pagina_actual +1 );
-				memcpy(dato_recibido_prueba, dato_recibido ,size_registro_pagina_actual);
-				dato_recibido_prueba[size_registro_pagina_actual] = '\0';
-				
-				/////BORRAR
-				loguear("DATO RECIBIDO PRUEBA: <%s>",dato_recibido_prueba);
 				size_leido += size_registro_pagina_actual;
 	
-				
-			//	loguear("PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>",
-		   // pid_size_total.PID,direccion_registro->direccion_fisica,dato_recibido);
 				free(dato_recibido);
-				free(dato_recibido_prueba);
+				
 			//}
 			
 			

@@ -230,7 +230,6 @@ void recibir_io(){
 		if(config->TIPO_INTERFAZ.id == GENERICA){
             //t_peticion_io* peticion_io = malloc(sizeof(t_peticion_io));
             int cod_op_io = recibir_operacion(conexion_kernel);
-			loguear_warning("cod op: %d",cod_op_io);
             if(!es_codigo_valido(cod_op_io)){
                 loguear_warning("Kernel se desconectó.");
                 //free(peticion_io);
@@ -250,7 +249,6 @@ void recibir_io(){
 		else if(config->TIPO_INTERFAZ.id == STDIN || config->TIPO_INTERFAZ.id == STDOUT ){
             t_paquete* paquete = recibir_paquete(conexion_kernel);
             int cod_op_io = paquete->codigo_operacion;
-			loguear_warning("cod op: %d",cod_op_io);
             if(!es_codigo_valido(cod_op_io)){
                 loguear_warning("Kernel se desconectó.");
                // free(paquete);
@@ -266,7 +264,6 @@ void recibir_io(){
 		else if(config->TIPO_INTERFAZ.id == DIALFS){
 			t_paquete* paquete = recibir_paquete(conexion_kernel);
 			int cod_op_io = paquete->codigo_operacion;
-			loguear_warning("cod op: %d",cod_op_io);
 			if(!es_codigo_valido(cod_op_io)){
 				loguear_warning("Kernel se desconectó.");
 				//free(paquete);
@@ -276,13 +273,13 @@ void recibir_io(){
 			pthread_mutex_lock(&mx_peticion);
 			queue_push(cola_peticiones_io, operacion_fs);
 			pthread_mutex_unlock(&mx_peticion);
-			loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+			// loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 			sem_post(&sem_bin_cola_peticiones);
-			loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+			// loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 			//free(paquete);	
 		}
 
-		loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+		// loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 	}
 }
 
@@ -345,13 +342,14 @@ bool es_generica(){
 int ejecutar_op_io_stdin(){
 	while(1){
 		
-		loguear_warning("ejecutar_op_io_stdin sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+		// loguear_warning("ejecutar_op_io_stdin sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
-		loguear_warning("ejecutar_op_io_stdin sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+		// loguear_warning("ejecutar_op_io_stdin sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		pthread_mutex_lock(&mx_peticion);
 		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
+		loguear("PID: <%s> - Operacion: <IO_STDIN>", pid); 
 		io_stdin_read(direcciones_proceso, conexion_memoria);
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDIN_READ.");
@@ -363,13 +361,14 @@ int ejecutar_op_io_stdout(){
 	while(1){
 		
 
-		loguear_warning("ejecutar_op_io_stdout sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+		// loguear_warning("ejecutar_op_io_stdout sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
-		loguear_warning("ejecutar_op_io_stdout sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+		// loguear_warning("ejecutar_op_io_stdout sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		pthread_mutex_lock(&mx_peticion);
 		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 		char* pid = string_itoa(direcciones_proceso->pid_size_total.PID);
+		loguear("PID: <%s> - Operacion: <IO_STDOUT>", pid); 
 		io_stdout_write(direcciones_proceso,conexion_memoria);
 		enviar_texto(pid,TERMINO_IO,conexion_kernel);
 		loguear_warning("Termino el IO_STDOUT_WRITE.");
@@ -381,9 +380,9 @@ int ejecutar_op_io_stdout(){
 int ejecutar_op_io_generica(){
 	while(1){
 	
-		loguear_warning("ejecutar_op_io_generica sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+		// loguear_warning("ejecutar_op_io_generica sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
-		loguear_warning("ejecutar_op_io_generica sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+		// loguear_warning("ejecutar_op_io_generica sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
         pthread_mutex_lock(&mx_peticion);
         char* pid_mas_unidades = queue_pop(cola_peticiones_io);
         pthread_mutex_unlock(&mx_peticion);
@@ -413,9 +412,9 @@ int ejecutar_op_io_generica(){
 
 int ejecutar_op_io_dialfs(){
 	while(1){
-		loguear_warning("ejecutar_op_io_dialfs sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+		// loguear_warning("ejecutar_op_io_dialfs sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
-		loguear_warning("ejecutar_op_io_dialfs sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+		// loguear_warning("ejecutar_op_io_dialfs sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		pthread_mutex_lock(&mx_peticion);
 		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
