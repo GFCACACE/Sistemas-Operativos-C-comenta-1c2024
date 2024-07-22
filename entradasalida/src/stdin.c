@@ -18,7 +18,7 @@ void io_stdin_read(t_direcciones_proceso* direcciones_proceso, int conexion){
     printf("Escriba el texto deseado: \n");
     texto = leer_texto_consola();
     while(strlen(texto)  < pid_valor.valor){
-        loguear_error("La cadena escrita es de %d bytes, debe ser de %d bytes.",strlen(texto),pid_valor.valor);
+        loguear_error("La cadena escrita es de %d bytes, debe ser de %d bytes.",(uint32_t)strlen(texto),pid_valor.valor);
         texto = leer_texto_consola();
     }
     loguear("TEXTO INGRESADO: %s",texto);

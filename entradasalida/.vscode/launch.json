@@ -9,7 +9,7 @@
       "request": "launch",
       
       "program": "${workspaceFolder}/bin/${workspaceFolderBasename}",
-      "args": ["${workspaceFolder}/FS.config", "FS"],
+      "args": ["${workspaceFolder}/MONITOR.config", "MONITOR"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

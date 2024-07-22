@@ -339,7 +339,7 @@ bool es_generica(){
 	return es_selector(GENERICA);
 }
 
-int ejecutar_op_io_stdin(){
+void ejecutar_op_io_stdin(){
 	while(1){
 		
 		// loguear_warning("ejecutar_op_io_stdin sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
@@ -357,7 +357,7 @@ int ejecutar_op_io_stdin(){
 		direcciones_proceso_destroy(direcciones_proceso);
 	}
 }
-int ejecutar_op_io_stdout(){
+void ejecutar_op_io_stdout(){
 	while(1){
 		
 
@@ -377,7 +377,7 @@ int ejecutar_op_io_stdout(){
 	}
 }
 
-int ejecutar_op_io_generica(){
+void ejecutar_op_io_generica(){
 	while(1){
 	
 		// loguear_warning("ejecutar_op_io_generica sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
@@ -403,7 +403,7 @@ int ejecutar_op_io_generica(){
 }
 
 
-int ejecutar_op_io_dialfs(){
+void ejecutar_op_io_dialfs(){
 	while(1){
 		// loguear_warning("ejecutar_op_io_dialfs sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
