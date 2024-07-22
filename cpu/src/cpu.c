@@ -594,9 +594,6 @@ bool exe_set(t_param registro, t_param valor)
 bool exe_sum(t_param registro_destino, t_param incremento)
 {
 	int resultado = atoi(registro_destino.string_valor) + atoi(incremento.string_valor);
-	// int *registro_destino_valor = (int *)(registro_destino.puntero);
-    // int *incremento_valor = (int *)(incremento.puntero);
-    // *registro_destino_valor += *incremento_valor;
 	if(registro_destino.size==4){
 		uint32_t resultado_cast = (uint32_t) resultado;
 		memcpy(registro_destino.puntero,&resultado_cast,registro_destino.size);
@@ -611,12 +608,26 @@ bool exe_sum(t_param registro_destino, t_param incremento)
 
 bool exe_sub(t_param registro_destino,t_param incremento)
 {
-	int *registro_destino_valor = (int *)(registro_destino.puntero);
-    int *incremento_valor = (int *)(incremento.puntero);
-	if( *registro_destino_valor> *incremento_valor)
-    	*registro_destino_valor -= *incremento_valor;
+	int int_destino = atoi(registro_destino.string_valor);
+	int int_incremento = atoi(incremento.string_valor);
+	int resultado;
+	if (int_destino >= int_incremento) 
+		int_destino -= int_incremento;
 	else 
-		 *registro_destino_valor-= *registro_destino_valor;
+		int_destino=0;
+	if(registro_destino.size==4){
+		uint32_t resultado_cast = (uint32_t) resultado;
+		memcpy(registro_destino.puntero,&resultado_cast,registro_destino.size);
+	} else{
+		uint8_t resultado_cast = (uint8_t) resultado;
+		memcpy(registro_destino.puntero,&resultado_cast,registro_destino.size);
+	}
+	// int *registro_destino_valor = (int *)(registro_destino.puntero);
+    // int *incremento_valor = (int *)(incremento.puntero);
+	// if( *registro_destino_valor> *incremento_valor)
+    // 	*registro_destino_valor -= *incremento_valor;
+	// else 
+	// 	 *registro_destino_valor-= *registro_destino_valor;
 	registros_cpu->PC++;
 	return true;
 }
