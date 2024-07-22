@@ -587,7 +587,8 @@ bool exe_set(t_param registro, t_param valor)
 
     // Copia el valor de 'valor.puntero' al puntero 'registro.puntero'
     memcpy(registro.puntero, valor.puntero, registro.size < valor.size ? registro.size : valor.size);
-	registros_cpu->PC++;
+	if(registro.puntero != &registros_cpu->PC)
+		registros_cpu->PC++;
     return true;
 }
 bool exe_sum(t_param registro_destino, t_param incremento)
