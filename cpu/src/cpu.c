@@ -593,10 +593,18 @@ bool exe_set(t_param registro, t_param valor)
 }
 bool exe_sum(t_param registro_destino, t_param incremento)
 {
-
-	int *registro_destino_valor = (int *)(registro_destino.puntero);
-    int *incremento_valor = (int *)(incremento.puntero);
-    *registro_destino_valor += *incremento_valor;
+	int resultado = atoi(registro_destino.string_valor) + atoi(incremento.string_valor);
+	// int *registro_destino_valor = (int *)(registro_destino.puntero);
+    // int *incremento_valor = (int *)(incremento.puntero);
+    // *registro_destino_valor += *incremento_valor;
+	if(registro_destino.size==4){
+		uint32_t resultado_cast = (uint32_t) resultado;
+		memcpy(registro_destino.puntero,&resultado_cast,registro_destino.size);
+	} else{
+		uint8_t resultado_cast = (uint8_t) resultado;
+		memcpy(registro_destino.puntero,&resultado_cast,registro_destino.size);
+	}
+		
 	registros_cpu->PC++;
 	return true;
 }
