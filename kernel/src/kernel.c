@@ -1762,6 +1762,22 @@ void liberar_comandos(){
 
 void finalizar_kernel(){
 	
+
+	conexion_memoria = crear_conexion(config->IP_MEMORIA,config->PUERTO_MEMORIA);
+	char* texto = string_new();
+	string_append(&texto,"KERNEL");
+	string_append(&texto," ");
+	string_append(&texto,"KERNEL");
+
+	if(conexion_memoria ==-1){
+		loguear_error("No se pudo conectar memoria");
+	//	free(texto);
+		return false;
+	} 
+//	sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
+	enviar_texto(texto,NUEVA_IO,conexion_memoria);
+	free(texto);
+
 	if (conexion_memoria != -1) liberar_conexion(conexion_memoria);
 	if (cpu_dispatch != -1) liberar_conexion(cpu_dispatch);
 	if (cpu_interrupt != -1) liberar_conexion(cpu_interrupt);
@@ -1772,6 +1788,11 @@ void finalizar_kernel(){
 	liberar_diccionario_colas();
 	liberar_diccionarios_interfaces();
 	if(config!=NULL) config_destroy_kernel(config);
+
+	
+
+
+
 }
 
 

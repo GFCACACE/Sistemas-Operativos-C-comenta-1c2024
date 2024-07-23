@@ -204,7 +204,11 @@ void iniciar_conexion_io(){
 		loguear_warning("NOMBRE DE LA IO: %s", splitter_io[0]);
 		loguear_warning("TIPO DE INTERFAZ: %s", splitter_io[1]);
 		char* nombre_interfaz = splitter_io[0];
+		if (strcmp(nombre_interfaz,"KERNEL")){
 		
+			free(splitter_io);
+			break;
+		}
 		//char* tipo_interfaz = splitter_io[1]; 
 		if(aceptar_interfaz && !existe_interfaz(nombre_interfaz)){
 			//char* nombre_interfaz = recibir_nombre(*fd_conexion_ptr);
@@ -449,8 +453,12 @@ int buscar_instrucciones(){
 			loguear_error("el cliente se desconectó. Terminando servidor");		
 			paquete_destroy(paquete);
 			return EXIT_FAILURE;
+			
+			case MENSAJE:
+			paquete_destroy(paquete);
+			return EXIT_SUCCESS;
 		    default:
-			log_warning(logger,"Operación desconocida. No quieras meter la pata");	
+			log_warning(logger,"Operación desconocida cpu. No quieras meter la pata");	
 			paquete_destroy(paquete);
 			return EXIT_FAILURE;
 		}
@@ -686,8 +694,12 @@ int recibir_procesos(){
 				exit_failure = true;
 				paquete_destroy(paquete);
 				break;
+			case MENSAJE:
+				paquete_destroy(paquete);
+				
+				return EXIT_SUCCESS;
 		    default:
-				log_warning(logger,"Operación desconocida. No quieras meter la pata");		
+				log_warning(logger,"Operación desconocida kernel. No quieras meter la pata");		
 				exit_failure = true;
 				paquete_destroy(paquete);
 				break;
