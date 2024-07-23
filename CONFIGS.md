@@ -1,6 +1,8 @@
 # Configuraciones para las Pruebas
 
 Cada módulo contiene una carpeta `./configs` con la configuración específica para cada prueba.
+Para poder modificar un atributo de las configs se puede ejecutar desde la carpeta del tp:
+ `./config_update.sh IP_MEMORIA nueva_ip`
 
 ---
 
