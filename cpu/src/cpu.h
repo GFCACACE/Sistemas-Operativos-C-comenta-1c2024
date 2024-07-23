@@ -46,7 +46,7 @@ typedef struct
 
 bool iniciar_log_config();
 bool iniciar_registros_cpu();
-bool iniciar_dispatch();
+// bool iniciar_dispatch();
 bool iniciar_conexion_memoria();
 bool iniciar_conexion_kernel();
 bool iniciar_variables();//semáforos y variables globales

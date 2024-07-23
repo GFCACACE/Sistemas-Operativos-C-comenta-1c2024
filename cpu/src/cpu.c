@@ -87,16 +87,16 @@ bool iniciar_registros_cpu()
 	return true;
 }
 
-bool iniciar_dispatch()
-{
-	dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
-	if (dispatch == -1)
-	{
-		loguear_error("El servidor (dispatch) no pudo ser iniciado");
-		return false;
-	}
-	return true;
-}
+// bool iniciar_dispatch()
+// {
+// 	dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
+// 	if (dispatch == -1)
+// 	{
+// 		loguear_error("El servidor (dispatch) no pudo ser iniciado");
+// 		return false;
+// 	}
+// 	return true;
+// }
 
 bool iniciar_conexion_memoria()
 {
@@ -117,14 +117,32 @@ bool iniciar_conexion_memoria()
 
 bool iniciar_conexion_kernel()
 {
-	kernel_dispatch = esperar_cliente(dispatch);
-	interrupt = iniciar_servidor(config->PUERTO_ESCUCHA_INTERRUPT);
-	if (interrupt == -1)
+	void recibir_conex_interrupt(){
+			interrupt = iniciar_servidor(config->PUERTO_ESCUCHA_INTERRUPT);
+			
+			if (interrupt == -1)
+		{
+			loguear_error("El servidor (dispatch) no pudo ser iniciado");
+			
+		}
+		kernel_interrupt = esperar_cliente(interrupt);
+		};
+	void recibir_conex_dispatch(){
+		dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
+		
+		if (dispatch == -1)
 	{
-		loguear_error("El servidor (interrupt) no pudo ser iniciado");
-		return false;
+		loguear_error("El servidor (dispatch) no pudo ser iniciado");
+		
 	}
-	kernel_interrupt = esperar_cliente(interrupt);
+	kernel_dispatch = esperar_cliente(dispatch);
+	};
+	pthread_t thread_conex_interrupt, thread_conex_dispatch;
+	pthread_create(&thread_conex_interrupt, NULL, recibir_conex_interrupt, NULL);
+	pthread_create(&thread_conex_dispatch, NULL, recibir_conex_dispatch, NULL);
+	pthread_detach(thread_conex_dispatch);
+	pthread_join(thread_conex_interrupt,NULL);
+		
 	return true;
 }
 
@@ -137,7 +155,7 @@ bool iniciar_cpu(char *path_config)
 {
 	return iniciar_log_config(path_config) &&
 		   iniciar_registros_cpu() &&
-		   iniciar_dispatch() &&
+		//    iniciar_dispatch() &&
 		   iniciar_conexion_memoria() &&
 		   iniciar_conexion_kernel() &&
 		   iniciar_variables()	&&

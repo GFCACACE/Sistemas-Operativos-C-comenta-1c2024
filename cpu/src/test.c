@@ -7,7 +7,7 @@ bool test_conexion_memoria(char* path_config){
 		return
 	iniciar_log_config(path_config) &&
 	iniciar_registros_cpu()	&&
-	iniciar_dispatch()&&
+	// iniciar_dispatch()&&
 	iniciar_conexion_memoria();
 	
 }
