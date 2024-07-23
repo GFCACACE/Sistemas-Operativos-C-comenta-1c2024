@@ -612,9 +612,9 @@ bool exe_sub(t_param registro_destino,t_param incremento)
 	int int_incremento = atoi(incremento.string_valor);
 	int resultado;
 	if (int_destino >= int_incremento) 
-		int_destino -= int_incremento;
+		resultado = int_destino - int_incremento;
 	else 
-		int_destino=0;
+		resultado=0;
 	if(registro_destino.size==4){
 		uint32_t resultado_cast = (uint32_t) resultado;
 		memcpy(registro_destino.puntero,&resultado_cast,registro_destino.size);
