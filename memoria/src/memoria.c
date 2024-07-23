@@ -192,6 +192,7 @@ void iniciar_conexion_io(){
 		bool aceptar_interfaz = true;
 		pthread_t thread;
     	int *fd_conexion_ptr = malloc(sizeof(int));
+		
     	*fd_conexion_ptr = esperar_cliente(memoria_escucha);
 		if(*fd_conexion_ptr == -1){ 
 			loguear_warning("No se puso establecer la conexion con el cliente (I/O).");
@@ -204,9 +205,9 @@ void iniciar_conexion_io(){
 		loguear_warning("NOMBRE DE LA IO: %s", splitter_io[0]);
 		loguear_warning("TIPO DE INTERFAZ: %s", splitter_io[1]);
 		char* nombre_interfaz = splitter_io[0];
-		if (strcmp(nombre_interfaz,"KERNEL")){
-		
-			free(splitter_io);
+		if (!strcmp(nombre_interfaz,"KERNEL")){
+			loguear("Kernel mata memoria");
+			string_array_destroy(splitter_io);
 			break;
 		}
 		//char* tipo_interfaz = splitter_io[1]; 
