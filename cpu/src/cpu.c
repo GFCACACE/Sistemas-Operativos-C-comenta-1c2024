@@ -987,7 +987,7 @@ bool devolver_contexto(t_pcb *pcb,op_code codigo_operacion)
 	loguear_warning("Código de operación a enviar: %d para el PID %d:",codigo_operacion,pcb->PID);
 	enviar_pcb(pcb,codigo_operacion,kernel_dispatch);
 	// el pcb Siempre debe devolverse por dispatch
-	loguear_warning("Código de operación enviado!!"); 
+	// loguear_warning("Código de operación enviado!!"); 
 	return true;
 }
 

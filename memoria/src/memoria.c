@@ -211,7 +211,7 @@ void iniciar_conexion_io(){
 					
 			char* string_conexion = string_itoa(*fd_conexion_ptr);
 
-			loguear("bienvenido %s",nombre_interfaz);
+			loguear("Bienvenido %s",nombre_interfaz);
 			dictionary_put(diccionario_interfaz_conexion,nombre_interfaz,fd_conexion_ptr);
 			//
 			pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
@@ -229,7 +229,7 @@ void io_handler(int *ptr_conexion){
 
 		t_paquete *paquete = recibir_paquete(conexion_io);
 		int cod_op = paquete->codigo_operacion;
-		loguear_warning("Llego el cod op %d", cod_op);
+		// loguear_warning("Llego el cod op %d", cod_op);
 		// DES_SERIALIZAR EL PEDIDO
 		
 		t_acceso_espacio_usuario* acceso_espacio_usuario = recibir_acceso_espacio_usuario(paquete);					
@@ -326,13 +326,8 @@ bool iniciar_paginacion(){
 	crear_frames_memoria_principal(cantidadFrames);
 	imprimir_uso_frames();
 	
-	
-	
 
-
-
-
-	loguear("Espacio memoria total: %d",config_memoria->TAM_MEMORIA);
+	// loguear("Espacio memoria total: %d",config_memoria->TAM_MEMORIA);
 	loguear("Espacio memoria total: %d",config_memoria->TAM_MEMORIA);
 	loguear("El tamanio de pagina es: %d",tamanio_pagina);
 	
@@ -418,7 +413,7 @@ int buscar_instrucciones(){
          t_paquete *paquete = recibir_paquete(conexion_cpu);
          int cod_op =paquete->codigo_operacion;
 		 //int cod_op_a_devolver;
-		loguear("Cod op: %d", cod_op);
+		// loguear("Cod op: %d", cod_op);
 		efectuar_retardo();
         switch (cod_op) {
             case PROXIMA_INSTRUCCION:
@@ -678,7 +673,7 @@ int recibir_procesos(){
 	 while (1) {
 		t_paquete *paquete = recibir_paquete(conexion_kernel);
 		int cod_op =paquete->codigo_operacion;
-		loguear("Cod op: %d", cod_op);
+		// loguear("Cod op: %d", cod_op);
         switch (cod_op) {
 			case CREACION_PROCESO:
 			 	recibir_pcb_y_aplicar(paquete,crear_proceso,notificar_proceso_creado); 
@@ -827,8 +822,8 @@ for (int i = ultimo_indice_actual;i > ultimo_indice_nuevo;i--){
 }
 
 int convertir_bytes_a_paginas(int tamanio_bytes){
-	loguear("Tamanio en bytes %d",tamanio_bytes);
-	loguear("Tamanio en en pag %d",config_memoria->TAM_PAGINA);
+	// loguear("Tamanio en bytes %d",tamanio_bytes);
+	// loguear("Tamanio en pag %d",config_memoria->TAM_PAGINA);
 	//return ceil((double) (tamanio_bytes / config_memoria->TAM_PAGINA)); //Debería siempre devolver un entero no? Son múltiplos del tamanio memoria
 	return (int)ceil((double) tamanio_bytes / config_memoria->TAM_PAGINA);
 }

@@ -239,7 +239,7 @@ void recibir_io(){
             char* pid_mas_unidades;
             pid_mas_unidades = recibir_mensaje(conexion_kernel);
             //peticion_io->peticion = strdup(_peticion);
-            loguear_warning("Aca se ve la PETICION %s", pid_mas_unidades);
+            // loguear_warning("Aca se ve la PETICION %s", pid_mas_unidades);
             pthread_mutex_lock(&mx_peticion);
             queue_push(cola_peticiones_io, pid_mas_unidades);
             pthread_mutex_unlock(&mx_peticion);
@@ -273,13 +273,11 @@ void recibir_io(){
 			pthread_mutex_lock(&mx_peticion);
 			queue_push(cola_peticiones_io, operacion_fs);
 			pthread_mutex_unlock(&mx_peticion);
-			// loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+			
 			sem_post(&sem_bin_cola_peticiones);
-			// loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
+			
 			//free(paquete);	
 		}
-
-		// loguear_warning("recibir_io sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 	}
 }
 
@@ -342,9 +340,7 @@ bool es_generica(){
 void ejecutar_op_io_stdin(){
 	while(1){
 		
-		// loguear_warning("ejecutar_op_io_stdin sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
-		// loguear_warning("ejecutar_op_io_stdin sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		pthread_mutex_lock(&mx_peticion);
 		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
@@ -361,9 +357,7 @@ void ejecutar_op_io_stdout(){
 	while(1){
 		
 
-		// loguear_warning("ejecutar_op_io_stdout sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
-		// loguear_warning("ejecutar_op_io_stdout sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		pthread_mutex_lock(&mx_peticion);
 		t_direcciones_proceso* direcciones_proceso = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
@@ -380,18 +374,14 @@ void ejecutar_op_io_stdout(){
 void ejecutar_op_io_generica(){
 	while(1){
 	
-		// loguear_warning("ejecutar_op_io_generica sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
-		// loguear_warning("ejecutar_op_io_generica sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
-        pthread_mutex_lock(&mx_peticion);
+		pthread_mutex_lock(&mx_peticion);
         char* pid_mas_unidades = queue_pop(cola_peticiones_io);
         pthread_mutex_unlock(&mx_peticion);
         char** splitter = string_array_new();
         splitter = string_split(pid_mas_unidades," ");
         char mensaje[70];
-
         sprintf(mensaje,"PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]);
-        //loguear(mensaje);
         loguear("PID: <%s> - Operacion: <IO_GEN_SLEEP> - Unidades de trabajo: %s",splitter[0],splitter[1]); // LOG MÍNIMO Y OBLIGATORIO
         io_gen_sleep(atoi(splitter[1]));
         notificar_kernel(splitter[0], conexion_kernel);
@@ -405,13 +395,12 @@ void ejecutar_op_io_generica(){
 
 void ejecutar_op_io_dialfs(){
 	while(1){
-		// loguear_warning("ejecutar_op_io_dialfs sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		sem_wait(&sem_bin_cola_peticiones);
-		// loguear_warning("ejecutar_op_io_dialfs sem_cola_peticiones: %d", get_sem_cola_peticiones_value());
 		pthread_mutex_lock(&mx_peticion);
 		t_operacion_fs* operacion_fs = queue_pop(cola_peticiones_io);
 		pthread_mutex_unlock(&mx_peticion);
 		op_code cod_op = operacion_fs->cod_op;
+		loguear("PID: <%d> - Operacion: <DialFS>",operacion_fs->pid);
 		usleep(config->TIEMPO_UNIDAD_TRABAJO);// cualquier operación del fs SIEMPRE consume una unidad de tiempo trabajo
 		switch(cod_op){
 			case IO_FS_CREATE:

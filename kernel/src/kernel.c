@@ -509,17 +509,13 @@ t_queue* get_cola_pcb(t_pcb* pcb){
 //Este método se llama cuando se inicia un proceso
 void plp_procesos_nuevos(){
 	while(1){		
-			//loguear_warning("plp_procesos_nuevos - sem_wait &sem_bin_new");
 			sem_wait(&sem_bin_new); //Bloquea plp hasta que aparezca un proceso
-			//loguear_warning("plp_procesos_nuevos - sem_wait &sem_bin_plp_procesos_nuevos_iniciado)");
 			sem_wait(&sem_bin_plp_procesos_nuevos_iniciado); 
-			//loguear_warning("plp_procesos_nuevos - antes sem_wait &sem_cont_grado_mp):%d",get_sem_grado_value());
 			sem_wait(&sem_cont_grado_mp); //Se bloquea en caso de que el gradodemultiprogramación esté lleno
-			//loguear_warning("plp_procesos_nuevos - después sem_wait &sem_cont_grado_mp):%d",get_sem_grado_value());
-			//loguear_warning("plp_procesos_nuevos - cambio_de_estado)");
+			
 			bool proceso_new_a_ready = cambio_de_estado(estado_new, estado_ready,&mx_new,&mx_ready);
 			if(proceso_new_a_ready){
-				//loguear_warning("plp_procesos_nuevos - sem_post(&sem_bin_ready)");
+				
 				sem_post(&sem_bin_ready);
 				//loguear_warning("plp_procesos_nuevos - GMPDMás_%d",grado_multiprog_de_mas);
 				loguear("El proceso ingresó correctamente a la lista de ready");
@@ -537,44 +533,37 @@ void plp_procesos_nuevos(){
 
 void plp_procesos_finalizados(){
 	while(1){
-			//loguear_warning("plp_procesos_finalizados - sem_wait(&sem_bin_exit)");			
+					
 			sem_wait(&sem_bin_exit);
-			//loguear_warning("plp_procesos_finalizados - sem_wait(&sem_bin_plp_procesos_finalizados_iniciado)");
+			
 			sem_wait(&sem_bin_plp_procesos_finalizados_iniciado); 
-			//loguear_warning("Se va a sacar un PCB de temp");
+			
 			t_pcb* pcb = pop_estado_get_pcb(estado_temp,&mx_temp);
-			//loguear_warning("Se sacó el PCB: %d de cola temp para eliminar.", pcb->PID );
+			
 			eliminar_proceso_en_memoria(pcb);
-			//loguear_warning("Se eliminó el proceso: %d de memoria.", pcb->PID );
+			
 			push_proceso_a_estado(pcb,estado_exit,&mx_exit);
-			//loguear_warning("plp_procesos_finalizados - pthread_mutex_lock(&mx_grado_mult_de_mas);");	
+			
 			pthread_mutex_lock(&mx_grado_mult_de_mas);
 			if(grado_multiprog_de_mas>0)
-			{	//loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas--");	
+			{		
 				grado_multiprog_de_mas--;
-				//loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
-				//loguear_warning("plp_procesos_finalizados - get_sem_grado_value:%d",get_sem_grado_value());
-				// if(grado_multiprog_de_mas==0){
-				// 	sem_post(&sem_cont_grado_mp);
-				// 	loguear_warning("plp_procesos_finalizados -sem_post(&sem_cont_grado_mp) grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
-				// }
+				
 			}
 			else
 				{	
-					//loguear_warning("plp_procesos_finalizados - grado_multiprog_de_mas<=0. Grado actual:%d",get_sem_grado_value());
+					
 					if(grado_multiprog_de_mas<0)
 					{	grado_multiprog_de_mas++;
-						//loguear_warning("plp_procesos_finalizados - Se aumentó el grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+						
 					}
 					else{ 
 						sem_post(&sem_cont_grado_mp);
-						//loguear_warning("plp_procesos_finalizados -sem_post(&sem_cont_grado_mp) grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
-						//loguear_warning("plp_procesos_finalizados - sem_cont_grado_mp:%d",get_sem_grado_value());
 					}
 				}
-			//loguear_warning("plp_procesos_finalizados - pthread_mutex_unlock(&mx_grado_mult_de_mas)");
+			
 			pthread_mutex_unlock(&mx_grado_mult_de_mas);
-			//loguear_warning("plp_procesos_finalizados -sem_post(&sem_bin_plp_procesos_finalizados_iniciado)");
+			
 			sem_post(&sem_bin_plp_procesos_finalizados_iniciado); 
 		
 	}
@@ -582,7 +571,7 @@ void plp_procesos_finalizados(){
 
 
 //Muestra por pantalla el valor actual del semáforo
-//Ejempolo: //loguear_semaforo("sem_bin_planificador_corto_iniciado: %d\n",&sem_bin_planificador_corto_iniciado);	
+//Ejemplo: //loguear_semaforo("sem_bin_planificador_corto_iniciado: %d\n",&sem_bin_planificador_corto_iniciado);	
 void loguear_semaforo(char* texto,sem_t* semaforo){
 	int sval;
 	sem_getvalue(semaforo,&sval);
@@ -637,31 +626,27 @@ void modificar_quantum_restante(t_pcb* pcb){
 
 
 void io_gen_sleep(int pid,char** splitter){
-	loguear_warning("Entra al case");
 	char pid_mas_unidades [20];
 	sprintf(pid_mas_unidades,"%u",pid);
-	loguear_warning("El pid es %s", pid_mas_unidades);
 	strcat(pid_mas_unidades," ");
 	strcat(pid_mas_unidades, splitter[1]);
-	loguear_warning("El mensaje es %s", pid_mas_unidades);
 
-	loguear_warning("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
+	loguear("IO_GEN_SLEEP -> Interfaz:%s Unidades:%s", splitter[0], splitter[1]);
 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, splitter[0]);
 	int conexion_io = *(int *)ptr_conexion;
 
 	enviar_texto(pid_mas_unidades,
 				IO_GEN_SLEEP,
 				conexion_io);
-	loguear_warning("Peticion a IO enviada");
+	loguear("Peticion a IO enviada");
 	string_array_destroy(splitter);
 }
 
 void io_std(int pid,t_paquete* paquete_IO, char* nombre_interfaz){
-	loguear_warning("Entra al case");
 	void *ptr_conexion = dictionary_get(diccionario_nombre_conexion, nombre_interfaz);
 	int conexion_io = *(int *)ptr_conexion;
 	enviar_paquete(paquete_IO,conexion_io);
-	loguear_warning("Peticion a IO enviada");
+	loguear("Peticion a IO enviada");
 	paquete_destroy(paquete_IO);
 }
 
@@ -790,10 +775,10 @@ void rec_handler_exec(t_pcb* pcb_recibido){
 
 bool admite_operacion(op_code cod, char* interfaz){
 	char* clave = string_itoa(cod);
-	loguear("DICCIONARIO: %s", (char*)dictionary_get(tipos_de_interfaces, clave));
-	loguear("INTERFAZ: %s", interfaz);
+	// loguear("DICCIONARIO: %s", (char*)dictionary_get(tipos_de_interfaces, clave));
+	// loguear("INTERFAZ: %s", interfaz);
 	char* key_d = (char*)dictionary_get(tipos_de_interfaces, clave);
-	loguear("VALORRRR: %d", strcmp(key_d, clave));
+	// loguear("VALORRRR: %d", strcmp(key_d, clave));
 	free(clave);
 
 	return strncmp(key_d, interfaz,4 ) == 0;
@@ -826,7 +811,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 	char* nombre_interfaz = recibir_mensaje(cpu_dispatch);
 	//t_paquete* paquete_IO = recibir_paquete(cpu_dispatch);
 	//char* tipo_interfaz = string_new();
-	loguear_warning("NOMBRE DE LA INTERFAZ: %s", nombre_interfaz);
+	loguear("NOMBRE DE LA INTERFAZ: %s", nombre_interfaz);
 	if(!existe_interfaz(nombre_interfaz)){
 		free(nombre_interfaz);
 		loguear_warning("NOMBRE INCORRECTO.");
@@ -859,7 +844,7 @@ void io_handler_exec(t_pcb* pcb_recibido){
 			char* peticion = recibir_mensaje(cpu_dispatch);
 			char** splitter = string_split(peticion," ");
 			free(peticion);
-			loguear_warning("ENTRO AL SWITCH, PID: %s",splitter[0]);
+			// loguear_warning("ENTRO AL SWITCH, PID: %s",splitter[0]);
 			io_gen_sleep(pcb_recibido->PID,splitter);
 			break;
 		case IO_STDIN_READ:
@@ -960,10 +945,10 @@ bool fue_finalizado(uint32_t pid){
 }
 
 void recibir_pcb_de_cpu(){
-	loguear_warning("Intento recibir de CPU!");
+	// loguear_warning("Intento recibir de CPU!");
 	t_paquete *paquete = recibir_paquete(cpu_dispatch);
 	int cod_op = paquete->codigo_operacion;
-	loguear("Cod op CPU: %d", cod_op);
+	// loguear("Cod op CPU: %d", cod_op);
 	t_pcb_query* pcb_query = recibir_pcb_y_actualizar(paquete);
 	t_pcb* pcb_recibido = pcb_query->pcb;
 	paquete_destroy(paquete);
@@ -984,7 +969,7 @@ void recibir_pcb_de_cpu(){
 	// PAUSAR POR DETENER PLANI	
 	sem_wait(&sem_bin_recibir_pcb);
 	liberar_pcb_exec();
-	loguear_warning("Frenado en recibir_pcb_de_cpu.");
+	// loguear_warning("Frenado en recibir_pcb_de_cpu.");
 	
 	if(!fue_finalizado(pcb_recibido->PID))	
 		gestionar_operacion_de_cpu(cod_op,pcb_recibido,pcb_query->estado);
@@ -1358,46 +1343,34 @@ void* hilo_multiprogramacion_ajuste(void* diferencia_ptr){
 	pthread_mutex_lock(&mx_grado_mult_de_mas);
 	grado_multiprog_de_mas = grado_multiprog_de_mas - diferencia;
 	free(diferencia_ptr);
-	// if (diferencia > 0)
-	// 	loguear("hilo_multiprogramacion_ajuste - El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
-	// else loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
+	
 	
 	if (grado_multiprog_de_mas < 0){
-		//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas. Negativo: %d",grado_multiprog_de_mas);
+		
 		
 		for( ;grado_multiprog_de_mas < 0 ; grado_multiprog_de_mas++){	
-			//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas antes sem_post sem_cont_grado_mp:%d",grado_multiprog_de_mas);
+			
 			sem_post(&sem_cont_grado_mp);
-			//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas después sem_post sem_cont_grado_mp:%d",grado_multiprog_de_mas);	
+			
 		}
-		// if(grado_multiprog_de_mas > 0)
-		// 	grado_multiprog_de_mas = 0;
-	
-		// loguear("hilo_multiprogramacion_ajuste - Se terminó de ajustar. grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
-		// loguear("hilo_multiprogramacion_ajuste -get_sem_grado_value %d: ",get_sem_grado_value());
+		
 		pthread_mutex_unlock(&mx_grado_mult_de_mas);
 	}
 	else {		
-		//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas. Positivo: %d",grado_multiprog_de_mas);
-		//pthread_mutex_lock(&mx_grado_mult_de_mas);
+		
 		for( ;grado_multiprog_de_mas >0; grado_multiprog_de_mas--){
-			
-			//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas antes sem_wait sem_cont_grado_mp:%d",grado_multiprog_de_mas);
-			//loguear_warning("hilo_multiprogramacion_ajuste - antes sem_wait sem_cont_grado_mp:%d",get_sem_grado_value());
+		
 			pthread_mutex_unlock(&mx_grado_mult_de_mas);
 			sem_wait(&sem_cont_grado_mp);
 			pthread_mutex_lock(&mx_grado_mult_de_mas);
-			// if(grado_multiprog_de_mas>0)
-			// 	grado_multiprog_de_mas--;	
-			//loguear_warning("hilo_multiprogramacion_ajuste - grado_multiprog_de_mas después sem_wait sem_cont_grado_mp:%d",grado_multiprog_de_mas);		
-			//loguear_warning("hilo_multiprogramacion_ajuste - después sem_wait sem_cont_grado_mp:%d",get_sem_grado_value());
+			
 		}		
 		for( ;grado_multiprog_de_mas < 0 ; grado_multiprog_de_mas++)
-		{	//loguear("hilo_multiprogramacion_ajuste - Reajustamos - grado_multiprog_de_mas: %d",grado_multiprog_de_mas);
+		{	
 			sem_post(&sem_cont_grado_mp);
-			//loguear("hilo_multiprogramacion_ajuste - Reajustamos - get_sem_grado_value: %d",get_sem_grado_value());
+			
 		}
-		//loguear("hilo_multiprogramacion_ajuste - Se terminó de reducir. grado_multiprog_de_mas:%d",grado_multiprog_de_mas);
+		
 		pthread_mutex_unlock(&mx_grado_mult_de_mas);
 	}
 	return NULL;
@@ -1425,56 +1398,15 @@ bool multiprogramacion(char** substrings){
 				pthread_detach(thread_multiprogramacion);
 			}
 		}
-		else loguear("El valor: %s no es un grado de multiprogramación válido.",valor );
+		else loguear_error("El valor: %s no es un grado de multiprogramación válido.",valor );
 	}
-	else loguear("No se especificó ningún grado de multiprogramación");
+	else loguear_error("No se especificó ningún grado de multiprogramación");
 
 	
 	return true;
 }
 
 
-// bool multiprogramacion(char** substrings){
-
-// 	loguear("El grado de multiprogramación anterior es: %d",config->GRADO_MULTIPROGRAMACION);
-// 	if(string_array_size(substrings)>0){
-// 		char* valor = substrings[1];
-// 		if(is_numeric(valor)){
-// 			char* endptr;
-// 			int number, number_anterior;
-// 			number_anterior = config->GRADO_MULTIPROGRAMACION;
-// 			number = strtol(valor, &endptr, 10);
-// 			config->GRADO_MULTIPROGRAMACION = number;
-// 			loguear("El nuevo grado de multiprogramación es: %d",config->GRADO_MULTIPROGRAMACION);
-// 			// NUEVO: Agrego sem waits o post dependiendo si aumenta o disminuye el grad de multiprog
-// 			// int diferencia = number - number_anterior;
-// 			// if(diferencia == 0){
-// 			// 	loguear("El nuevo grado de multiprogramacion es igual al anterior");
-// 			// }
-// 			// else if (diferencia > 0){
-// 			// 	loguear("El nuevo grado de multiprogramacion es mayor al anterior. Aumento en %d",diferencia);
-// 			// 	for( ;diferencia != 0; diferencia--){
-// 			// 		sem_post(&sem_cont_grado_mp);
-// 			// 	}
-// 			// }
-// 			// else {
-// 			// 	loguear("El nuevo grado de multiprogramacion es menor al anterior. Disminuyo en %d",diferencia);
-// 			// 	for( ;diferencia != 0; diferencia--){
-// 			// 		sem_wait(&sem_cont_grado_mp);
-// 			// 	}
-// 			// }
-
-// 			// FIN NUEVO
-// 		}
-// 		else loguear("El valor: %s no es un grado de multiprogramación válido.",valor );
-// 	}
-// 	else{
-// 		loguear("No se especificó ningún grado de multiprogramación");
-// 	}
-	
-// 	return true;
-
-// }
 
 void imprimir_cola(t_queue *cola, const char *estado) {
 
@@ -1679,17 +1611,6 @@ void crear_hilo_eliminar_proceso(uint32_t pid){
 
 
 
-/*
-void interrumpir_por_fin_quantum(){
-	loguear("FIN DE QUANTUM: Se debe pasar el pcb a ready y notificar a la cpu");
-	t_pcb* pcb;
-	pthread_mutex_lock(&mx_pcb_exec);
-	pcb = pcb_exec;
-	pcb_exec = NULL;	
-	pthread_mutex_unlock(&mx_pcb_exec);
-	push_proceso_a_estado(pcb,estado_ready,&mx_ready); // Thread safe
-	sem_post(&sem_bin_ready); //Se le avisa a pcp que un nuevo proceso ingresó a esa lista
-}*/
 
 
 void planificacion_RR(){
@@ -2127,7 +2048,7 @@ void iniciar_conexion_io(){
 				
 				//
 				char* string_conexion = string_itoa(*fd_conexion_ptr);
-				loguear("bienvenido %s",nombre_interfaz);
+				loguear("Bienvenido %s",nombre_interfaz);
 				dictionary_put(diccionario_nombre_conexion,nombre_interfaz,fd_conexion_ptr);
 				dictionary_put(diccionario_nombre_qblocked,nombre_interfaz, blocked_interfaz);
 				dictionary_put(diccionario_conexion_qblocked,string_conexion, blocked_interfaz);
