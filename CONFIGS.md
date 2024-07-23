@@ -1,136 +1,115 @@
-# CONFIGURACIONES PARA LAS PRUEBAS
+# Configuraciones para las Pruebas
 
-Cada módulo contiene una carpeta ./configs con la configuración específica para cada prueba.
+Cada módulo contiene una carpeta `./configs` con la configuración específica para cada prueba.
 
+---
 
-# PRUEBA_PLANI #
+## Prueba: PLANI
 
-    **Memoria**:            ./exec PLANI
-    **Cpu**:                ./exec PLANI
-    **Kernel**: 
-        Primera vez:        ./exec PLANI
-        Segunda vez:        ./exec PLANI_RR
-        Tercera vez:        ./exec PLANI_VRR
-    **Entrada_Salida**:     ./exec SLP1 
+### Descripción
+Configuraciones para la prueba de planificación.
 
+### Configuración
 
-# PRUEBA_DEADLOCK #
+| **Componente**   | **Ejecución**               |
+|------------------|-----------------------------|
+| **Memoria**      | `./exec PLANI`              |
+| **Cpu**          | `./exec PLANI`              |
+| **Kernel**       |                             |
+| 1. Primera vez   | `./exec PLANI`              |
+| 2. Segunda vez   | `./exec PLANI_RR`           |
+| 3. Tercera vez   | `./exec PLANI_VRR`          |
+| **Entrada/Salida** | `./exec SLP1`             |
 
-    **Memoria**:               ./exec DEADLOCK
-    **Cpu**:                   ./exec DEADLOCK
-    **Kernel**:                ./exec DEADLOCK      
-    **Entrada_Salida**:        ./exec ESPERA 
+---
 
-# PRUEBA_MEMORIA_TLB #
+## Prueba: DEADLOCK
 
-    **Memoria**:               ./exec TLB
-    **Cpu**:                 
-        Primera vez:           ./exec TLB
-        Segunda vez:           ./exec TLB_LRU
-    **Kernel**:                ./exec TLB      
-    **Entrada_Salida**:        ./exec IO_GEN_SLEEP 
+### Descripción
+Configuraciones para la prueba de deadlock.
 
+### Configuración
 
-# PRUEBA_IO #
+| **Componente**   | **Ejecución**               |
+|------------------|-----------------------------|
+| **Memoria**      | `./exec DEADLOCK`           |
+| **Cpu**          | `./exec DEADLOCK`           |
+| **Kernel**       | `./exec DEADLOCK`           |
+| **Entrada/Salida** | `./exec ESPERA`           |
 
-    **Memoria**:               ./exec IO
-    **Cpu**:                   ./exec IO
-    **Kernel**:                ./exec IO      
-    **Entrada_Salida**:        
-                                ./exec GENERICA
-                                ./exec TECLADO
-                                ./exec MONITOR
+---
 
-# PRUEBA_FS #
+## Prueba: MEMORIA_TLB
 
-    **Memoria**:               ./exec FS
-    **Cpu**:                   ./exec FS
-    **Kernel**:                ./exec FS      
-    **Entrada_Salida**:        
-                                ./exec FS
-                                ./exec TECLADO
-                                ./exec MONITOR
+### Descripción
+Configuraciones para la prueba de memoria y TLB.
 
+### Configuración
 
-# PRUEBA_Salvation's Edge #
+| **Componente**   | **Ejecución**               |
+|------------------|-----------------------------|
+| **Memoria**      | `./exec TLB`                |
+| **Cpu**          |                             |
+| 1. Primera vez   | `./exec TLB`                |
+| 2. Segunda vez   | `./exec TLB_LRU`            |
+| **Kernel**       | `./exec TLB`                |
+| **Entrada/Salida** | `./exec IO_GEN_SLEEP`     |
 
-    **Memoria**:               ./exec SE
-    **Cpu**:                   ./exec SE
-    **Kernel**:                ./exec SE      
-    **Entrada_Salida**:        
-                                ./exec GENERICA
-                                ./exec TECLADO TECLADO_SE
-                                ./exec MONITOR
-                                ./exec ESPERA
-                                ./exec SLP1
+---
 
+## Prueba: IO
 
-Para poder compilar y ejecutar el proyecto, es necesario tener instalada la
-biblioteca [so-commons-library] de la cátedra:
+### Descripción
+Configuraciones para la prueba de entrada/salida.
 
-```bash
-git clone https://github.com/sisoputnfrba/so-commons-library
-cd so-commons-library
-make debug
-make install
-```
+### Configuración
 
-## Compilación
+| **Componente**   | **Ejecución**               |
+|------------------|-----------------------------|
+| **Memoria**      | `./exec IO`                 |
+| **Cpu**          | `./exec IO`                 |
+| **Kernel**       | `./exec IO`                 |
+| **Entrada/Salida** |                           |
+| -                | `./exec GENERICA`           |
+| -                | `./exec TECLADO`            |
+| -                | `./exec MONITOR`            |
 
-Cada módulo del proyecto se compila de forma independiente a través de un
-archivo `makefile`. Para compilar un módulo, es necesario ejecutar el comando
-`make` desde la carpeta correspondiente.
+---
 
-El ejecutable resultante se guardará en la carpeta `bin` del módulo.
+## Prueba: FS
 
-## Importar desde Visual Studio Code
+### Descripción
+Configuraciones para la prueba del sistema de archivos.
 
-Para importar el workspace, debemos abrir el archivo `tp.code-workspace` desde
-la interfaz o ejecutando el siguiente comando desde la carpeta raíz del
-repositorio:
+### Configuración
 
-```bash
-code tp.code-workspace
-```
+| **Componente**   | **Ejecución**               |
+|------------------|-----------------------------|
+| **Memoria**      | `./exec FS`                 |
+| **Cpu**          | `./exec FS`                 |
+| **Kernel**       | `./exec FS`                 |
+| **Entrada/Salida** |                           |
+| -                | `./exec FS`                 |
+| -                | `./exec TECLADO`            |
+| -                | `./exec MONITOR`            |
 
-## Checkpoint
+---
 
-Para cada checkpoint de control obligatorio, se debe crear un tag en el
-repositorio con el siguiente formato:
+## Prueba: Salvation's Edge
 
-```
-checkpoint-{número}
-```
+### Descripción
+Configuraciones para la prueba de Salvation's Edge.
 
-Donde `{número}` es el número del checkpoint.
+### Configuración
 
-Para crear un tag y subirlo al repositorio, podemos utilizar los siguientes
-comandos:
-
-```bash
-git tag -a checkpoint-{número} -m "Checkpoint {número}"
-git push origin checkpoint-{número}
-```
-
-Asegúrense de que el código compila y cumple con los requisitos del checkpoint
-antes de subir el tag.
-
-## Entrega
-
-Para desplegar el proyecto en una máquina Ubuntu Server, podemos utilizar el
-script [so-deploy] de la cátedra:
-
-```bash
-git clone https://github.com/sisoputnfrba/so-deploy.git
-cd so-deploy
-./deploy.sh -r=release -p=utils -p=kernel -p=cpu -p=memoria -p=entradasalida "tp-{año}-{cuatri}-{grupo}"
-```
-
-El mismo se encargará de instalar las Commons, clonar el repositorio del grupo
-y compilar el proyecto en la máquina remota.
-
-Ante cualquier duda, podés consultar la documentación en el repositorio de
-[so-deploy], o utilizar el comando `./deploy.sh -h`.
-
-[so-commons-library]: https://github.com/sisoputnfrba/so-commons-library
-[so-deploy]: https://github.com/sisoputnfrba/so-deploy
+| **Componente**   | **Ejecución**               |
+|------------------|-----------------------------|
+| **Memoria**      | `./exec SE`                 |
+| **Cpu**          | `./exec SE`                 |
+| **Kernel**       | `./exec SE`                 |
+| **Entrada/Salida** |                           |
+| -                | `./exec GENERICA`           |
+| -                | `./exec TECLADO TECLADO_SE` |
+| -                | `./exec MONITOR`            |
+| -                | `./exec ESPERA`             |
+| -                | `./exec SLP1`               |
