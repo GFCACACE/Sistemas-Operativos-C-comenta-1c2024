@@ -610,7 +610,7 @@ bool exe_sub(t_param registro_destino,t_param incremento)
 {
 	int int_destino = atoi(registro_destino.string_valor);
 	int int_incremento = atoi(incremento.string_valor);
-	int resultado;
+	int resultado = atoi(registro_destino.string_valor) - atoi(incremento.string_valor);
 	if (int_destino >= int_incremento) 
 		int_destino -= int_incremento;
 	else 
