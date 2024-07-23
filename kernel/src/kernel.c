@@ -1769,11 +1769,7 @@ void finalizar_kernel(){
 	string_append(&texto," ");
 	string_append(&texto,"KERNEL");
 
-	if(conexion_memoria ==-1){
-		loguear_error("No se pudo conectar memoria");
-	//	free(texto);
-		return false;
-	} 
+	
 //	sprintf(texto,"%s %s",config->NOMBRE,devuelve_tipo_en_char(config->TIPO_INTERFAZ.id));
 	enviar_texto(texto,NUEVA_IO,conexion_memoria);
 	free(texto);
