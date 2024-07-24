@@ -178,7 +178,7 @@ void escribir_memoria_completa_FS(uint32_t tamanio_registro,t_list* direcciones_
 		
 	list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
 	((char*)dato_parcial_prueba)[tamanio_registro] = '\0';
-	loguear("Dato prueba <%s>",dato_parcial_prueba);
+	loguear("Dato prueba <%s>",(char*)dato_parcial_prueba);
 //	loguear("Valor escrito: <%d>",registro_reconstr);
 	free(dato_parcial_prueba);
 
@@ -246,7 +246,7 @@ void escribir_memoria_completa_io(t_direcciones_proceso* direcciones_fisicas_reg
 		
 	list_iterate(direcciones_registros, &_enviar_direcciones_memoria);
 	((char*)dato_parcial_prueba)[pid_size_total.valor] = '\0';
-	loguear("Dato prueba <%s>",dato_parcial_prueba);
+	loguear("Dato prueba <%s>",(char*)dato_parcial_prueba);
 //	loguear("Valor escrito: <%d>",registro_reconstr);
 	free(dato_parcial_prueba);
 
