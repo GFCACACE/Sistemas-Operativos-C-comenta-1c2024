@@ -234,6 +234,7 @@ t_direcciones_proceso* direcciones_proceso_create(uint32_t pid,uint32_t tamanio)
 t_id_valor* id_valor_new(uint32_t id,uint32_t valor);
 void validacion_destroy(t_validacion* validacion);
 void acceso_espacio_usuario_destroy(t_acceso_espacio_usuario* acceso);
+bool es_codigo_valido(int code);
 
 /**
  * @fn    list_find_index

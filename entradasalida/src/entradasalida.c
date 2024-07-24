@@ -218,10 +218,6 @@ void notificar_kernel(char* texto, int socket){
     enviar_texto(texto, TERMINO_IO, socket);
 }
 
-bool es_codigo_valido(int code){
-	return code>=MENSAJE&&code<NO_CODE;
-}
-
 void recibir_io(){
 	loguear("IO conectada: Esperando ordenes");
 	

@@ -236,10 +236,18 @@ void io_handler(int *ptr_conexion){
 		int cod_op = paquete->codigo_operacion;
 		// loguear_warning("Llego el cod op %d", cod_op);
 		// DES_SERIALIZAR EL PEDIDO
-		
-		t_acceso_espacio_usuario* acceso_espacio_usuario = recibir_acceso_espacio_usuario(paquete);					
-		acceder_a_espacio_usuario(cod_op,acceso_espacio_usuario,conexion_io);
-		paquete_destroy(paquete);
+		if(es_codigo_valido(cod_op)){
+			t_acceso_espacio_usuario* acceso_espacio_usuario = recibir_acceso_espacio_usuario(paquete);					
+			acceder_a_espacio_usuario(cod_op,acceso_espacio_usuario,conexion_io);
+			paquete_destroy(paquete);
+		}
+		else{ 
+			loguear_warning("Se recibió un código no válido en io_handler.");
+			paquete_destroy(paquete);
+			return;
+		}
+
+	
 
 
 		// switch (cod_op)

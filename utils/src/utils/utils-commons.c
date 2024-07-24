@@ -62,7 +62,9 @@ t_registros_cpu* inicializar_registros(){
     return registros;
 }
 
-
+bool es_codigo_valido(int code){
+	return code>=MENSAJE&&code<NO_CODE;
+}
 
 
 t_pcb* pcb_create_quantum(char* path_programa,int quantum){
