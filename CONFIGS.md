@@ -24,6 +24,15 @@ Configuraciones para la prueba de planificación.
 | 3. Tercera vez   | `./exec PLANI_VRR`          |
 | **Entrada/Salida** | `./exec SLP1`             |
 
+### Resultados de ejecución
+
+| **Ejecución** | **Kernel**                                      | **Plani** | **Resultado**                                                                                                           | **Control**                           |
+|---------------|-------------------------------------------------|-----------|------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| 1             | EJECUTAR_SCRIPT /scripts_kernel/PRUEBA_PLANI    | FIFO      | 3 de los 4 procesos finalizan sin problemas                                                                            |                                       |
+| 2             | EJECUTAR_SCRIPT /scripts_kernel/PRUEBA_PLANI    | RR        | finalizan :<br>PLANI_1,<br>PLANI_3 (el cual es desalojado 2 veces por fin de quantum)<br>PLANI_2.<br>PLANI_4 continúa ejecutando. | grep "PID: <2>.*Quantum" kernel.log   |
+| 3             | EJECUTAR_SCRIPT /scripts_kernel/PRUEBA_PLANI    | VRR       | finalizan en el mismo orden que RR, pero PLANI_3 es desalojado 3 veces por fin de quantum.                             | grep "PID: <2>.*Quantum" kernel.log   |
+
+
 ---
 
 ## Prueba: DEADLOCK
