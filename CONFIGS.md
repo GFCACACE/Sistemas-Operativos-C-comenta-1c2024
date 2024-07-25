@@ -6,11 +6,13 @@ Para poder modificar un atributo de las configs se puede ejecutar desde la carpe
  `./config_update.sh IP_MEMORIA nueva_ip`
 
 Para el deploy:
+
 `git clone https://github.com/sisoputnfrba/so-deploy.git
 cd so-deploy
 ./deploy.sh -l=mumuki/cspec -p=kernel -p=memoria -p=cpu -p=entradasalida tp-2024-1c-sincronizados`
 
 Credencial temporal hasta el 29/7:
+
 `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`
 
 ---
