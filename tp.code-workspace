@@ -15,7 +15,8 @@
 			"*.tcc": "c",
 			"ostream": "c",
 			"utility": "c",
-			"type_traits": "c"
+			"type_traits": "c",
+			"concepts": "c"
 		},
 		"C_Cpp.errorSquiggles": "disabled",
 	},

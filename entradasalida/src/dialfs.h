@@ -47,7 +47,7 @@ extern FILE *archivo_bitmap,*archivo_metadata,*archivo_bloques;
 extern int tamanio_filesystem, tamanio_bitmap;
 extern void* bitmap, *data_bloques;
 extern char* path_bitmap, *path_bloques, *dir_metadata;
-extern char* swap;
+extern void* swap;
 extern t_list* lista_archivos;
 extern t_bitarray* bitarray_bitmap;
 
