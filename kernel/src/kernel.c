@@ -44,7 +44,7 @@ t_queue* estado_new, *estado_ready, *estado_exit, *estado_ready_plus, *estado_te
 t_blocked_interfaz* blocked_interfaz;
 //
 t_pcb* pcb_exec = NULL;
-t_list* lista_interfaces_blocked;
+//t_list* lista_interfaces_blocked;
 
  // Crear el diccionario de algoritmo
 t_planificador get_algoritmo(char* nombre){
@@ -2032,7 +2032,7 @@ void iniciar_conexion_io(){
 	diccionario_nombre_qblocked = dictionary_create();
 	diccionario_conexion_qblocked = dictionary_create();
 	//
-	lista_interfaces_blocked = list_create();
+	// lista_interfaces_blocked = list_create();
 	//
 	while (1){
 		t_blocked_interfaz* blocked_interfaz = malloc(sizeof(t_blocked_interfaz));
@@ -2079,7 +2079,7 @@ void iniciar_conexion_io(){
 				////
 
 				//
-				list_add(lista_interfaces_blocked,blocked_interfaz);
+				// list_add(lista_interfaces_blocked,blocked_interfaz);
 				//
 				pthread_create(&thread,NULL, (void*) io_handler,(int*)(fd_conexion_ptr));
 				//							
