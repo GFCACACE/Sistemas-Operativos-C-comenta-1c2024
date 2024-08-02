@@ -93,8 +93,12 @@ t_paquete* recibir_paquete(int socket_cliente)
 
 	// Después ya podemos recibir el buffer. Primero su tamaño seguido del contenido
 	recv(socket_cliente, &(paquete->buffer->size), sizeof(uint32_t), 0);
-	paquete->buffer->stream = malloc(paquete->buffer->size);
-	recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, 0);
+	if(paquete->buffer->size>0){
+		paquete->buffer->stream = malloc(paquete->buffer->size);
+		recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, 0);
+	}
+	else paquete->buffer->stream = NULL;
+
 
 	return paquete;
 }

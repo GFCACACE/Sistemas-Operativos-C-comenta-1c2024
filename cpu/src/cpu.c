@@ -67,6 +67,13 @@ t_dictionary *iniciar_diccionario_cpu()
 	return diccionario;
 }
 
+void liberar_registro(char* registro){
+	if(registro!=NULL){
+		 free(registro);	
+		 registro =NULL;
+	}
+}
+
 bool iniciar_registros_cpu()
 {	
 	loguear("CPU inicializará registros");
@@ -74,8 +81,8 @@ bool iniciar_registros_cpu()
 
 	loguear("Registros CPU logueados");
 
-	IR = string_new();
-	INSTID = string_new();
+	//IR = string_new();
+	//INSTID = string_new();
 	if (registros_cpu == NULL)
 	{
 		loguear_error("No se pudieron iniciar los registros correctamente");
@@ -206,13 +213,16 @@ void finalizar_cpu()
 	if (conexion_memoria != -1)
 		liberar_conexion(conexion_memoria);
 	//if (mutex_interrupt) pthread_mutex_destroy(&mutex_interrupt);
+	
 }
 
 void finalizar_estructuras_cpu()
 {
+	//if(INSTID !=NULL)free(INSTID);
+
 	if (registros_cpu != NULL)
 	{
-		if(INSTID !=NULL)free(INSTID);
+		
 		// if(PARAM1 !=NULL)free(PARAM1);
 		// if(PARAM2 !=NULL)free(PARAM2);
 		// if(PARAM3 !=NULL)free(PARAM3);
@@ -261,29 +271,37 @@ char *pedir_proxima_instruccion(t_pcb *pcb)
 
 bool check_interrupt(){ return (cod_op_kernel_interrupt != EJECUTAR_CPU && !es_exit(IR) && !es_io_handler(INSTID));};
 bool es_io_handler(char* INSTID){	
-	return (strncmp(INSTID, "IO_", 3) == 0);
+	return INSTID!=NULL && (strncmp(INSTID, "IO_", 3) == 0);
 }
-bool continuar_ciclo_instruccion(){return (!es_exit(IR)) && !check_interrupt() && !es_io_handler(INSTID);};
+bool continuar_ciclo_instruccion(){
+	
+	
+	bool continuar =  (!es_exit(IR)) && !check_interrupt() && !es_io_handler(INSTID);
+	liberar_registro(IR);
+	liberar_registro(INSTID);
+
+	return continuar;
+}
 
  void ciclo_de_instruccion(t_pcb* pcb){
 	bool flag_execute;
+	bool _es_exit = true;
 
-	do{		
-		wait_o_signal = false;
+	do{				
+		wait_o_signal = false;		
 		fetch(pcb);
 		decode();
-		flag_execute = execute(pcb);
-		
+		flag_execute = execute(pcb);	
+			
 		if(check_interrupt() && !wait_o_signal)
-			devolver_contexto(pcb,cod_op_kernel_interrupt);
+			devolver_contexto(pcb,cod_op_kernel_interrupt);		
+		_es_exit = es_exit(IR);
 
 	}while (continuar_ciclo_instruccion() && flag_execute);
 
-	if(es_exit(IR))
+	if(_es_exit)
 		enviar_texto("fin",FIN_PROGRAMA,conexion_memoria);
-
-
-	if(IR!=NULL) free(IR);	
+	
  }
 
 
@@ -294,14 +312,21 @@ t_param interpretar_valor_instruccion(char* valor){
 	if(dictionary_has_key(diccionario_registros_cpu,valor)){
 	 parametro.puntero=dictionary_get(diccionario_registros_cpu,valor);
 	 if(!strcmp(valor,"AX")||!strcmp(valor,"BX")||!strcmp(valor,"CX")||!strcmp(valor,"DX")){
-	 parametro.size = sizeof(uint8_t);
-	 parametro.string_valor=string_new();
-	 sprintf(parametro.string_valor,"%d",*(uint8_t*)parametro.puntero);
+		parametro.size = sizeof(uint8_t);
+		parametro.string_valor=string_new();
+		char* puntero_valor_string = string_itoa(*(uint8_t*)parametro.puntero);
+		string_append(&parametro.string_valor,puntero_valor_string);
+		free(puntero_valor_string);
+		
+		//sprintf(parametro.string_valor,"%d",*(uint8_t*)parametro.puntero);
 	 }
 	 else {
-	 parametro.size=sizeof(uint32_t);
-	 parametro.string_valor = string_new();
-	 sprintf(parametro.string_valor,"%d",*(uint32_t*)parametro.puntero);
+		parametro.size=sizeof(uint32_t);
+		parametro.string_valor = string_new();
+		char* puntero_valor_string = string_itoa(*(uint8_t*)parametro.puntero);
+		string_append(&parametro.string_valor,puntero_valor_string);
+		free(puntero_valor_string);
+		//sprintf(parametro.string_valor,"%d",*(uint32_t*)parametro.puntero);
 	 }
 	 return parametro;
 
@@ -319,14 +344,13 @@ t_param interpretar_valor_instruccion(char* valor){
 bool fetch(t_pcb *pcb)
 {
 
-	actualizar_registros(pcb);
+	actualizar_registros(pcb);	
 	IR = pedir_proxima_instruccion(pcb);
 	loguear("PID: <%i> - FETCH - Program Counter: <%i>",
 			pcb->PID,
 			pcb->program_counter);
-	if (IR == NULL)
-		return false;
-	return true;
+
+	return IR!=NULL;
 }
 
 bool decode()
@@ -334,29 +358,32 @@ bool decode()
 	char *registros = string_duplicate(IR);	
 	char **sep_instruction = string_split(registros, " ");
 	INSTID = string_duplicate(sep_instruction[0]);
-	if (sep_instruction == NULL || registros_cpu == NULL)
-		return false;
-	if (es_exit(INSTID))
-		return true;
-	// Acá están las funciones
 
-	// LOS IF HACEN LO MISMO. PODRIAMOS PASARLO CON UNA FUNCION (5 PARAM MAX)
-	if (sep_instruction[1])
-		PARAM1 = interpretar_valor_instruccion(sep_instruction[1]);
-	if (sep_instruction[2]){
-		PARAM2 = interpretar_valor_instruccion(sep_instruction[2]); // esta de acá
-		if (sep_instruction[3]){
-			PARAM3 = interpretar_valor_instruccion(sep_instruction[3]);
-			if(sep_instruction[4]){
-				PARAM4 = interpretar_valor_instruccion(sep_instruction[4]);
-				if(sep_instruction[5])
-					PARAM5 = interpretar_valor_instruccion(sep_instruction[5]);
+	bool decodificado = sep_instruction!=NULL && registros_cpu!=NULL;
+
+	if (decodificado && !es_exit(INSTID))
+	{
+		// Acá están las funciones
+
+		// LOS IF HACEN LO MISMO. PODRIAMOS PASARLO CON UNA FUNCION (5 PARAM MAX)
+		if (sep_instruction[1])
+			PARAM1 = interpretar_valor_instruccion(sep_instruction[1]);
+		if (sep_instruction[2]){
+			PARAM2 = interpretar_valor_instruccion(sep_instruction[2]); // esta de acá
+			if (sep_instruction[3]){
+				PARAM3 = interpretar_valor_instruccion(sep_instruction[3]);
+				if(sep_instruction[4]){
+					PARAM4 = interpretar_valor_instruccion(sep_instruction[4]);
+					if(sep_instruction[5])
+						PARAM5 = interpretar_valor_instruccion(sep_instruction[5]);
+				}
 			}
 		}
 	}
 	string_array_destroy(sep_instruction);
+	
 	free(registros);
-	return true;
+	return decodificado;
 }
 
 
