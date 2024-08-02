@@ -1080,7 +1080,7 @@ int ejecutar_proceso_cpu()
 			paquete_destroy(paquete);
 			return EXIT_FAILURE;
 		}
-		// Si no se agrega otro caso, convertir switch en IF
+		
 	}
 }
 
