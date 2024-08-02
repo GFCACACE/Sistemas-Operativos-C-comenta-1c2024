@@ -79,8 +79,12 @@ char* recibir_mensaje(int socket_cliente)
 t_paquete* recibir_paquete(int socket_cliente)
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
+	memset(paquete, 0, sizeof(t_paquete));
 	paquete->buffer = malloc(sizeof(t_buffer));
 
+	// Inicializar el buffer a cero
+		
+    memset(paquete->buffer, 0, sizeof(t_buffer));
 	// Primero recibimos el codigo de operacion
 	recv(socket_cliente, &(paquete->codigo_operacion), sizeof(op_code), 0);
 

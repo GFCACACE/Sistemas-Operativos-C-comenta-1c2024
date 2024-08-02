@@ -108,8 +108,10 @@ bool iniciar_conexion_memoria()
 	}
 	int codigo_operacion = recibir_operacion(conexion_memoria);
 	if(codigo_operacion == TAMANIO_PAGINA){
-		tamanio_pagina=atoi(recibir_mensaje(conexion_memoria));
+		char* mensaje = recibir_mensaje(conexion_memoria);
+		tamanio_pagina=atoi(mensaje);
 		loguear("TAM_PAGINA: %d B", tamanio_pagina);
+		free(mensaje);
 	}
 
 	return true;
