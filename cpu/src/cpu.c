@@ -119,7 +119,7 @@ bool iniciar_conexion_memoria()
 
 bool iniciar_conexion_kernel()
 {
-	void recibir_conex_interrupt(){
+	void* recibir_conex_interrupt(){
 			interrupt = iniciar_servidor(config->PUERTO_ESCUCHA_INTERRUPT);
 			
 			if (interrupt == -1)
@@ -128,8 +128,9 @@ bool iniciar_conexion_kernel()
 			
 		}
 		kernel_interrupt = esperar_cliente(interrupt);
+		return &kernel_interrupt;
 		};
-	void recibir_conex_dispatch(){
+	void* recibir_conex_dispatch(){
 		dispatch = iniciar_servidor(config->PUERTO_ESCUCHA_DISPATCH);
 		
 		if (dispatch == -1)
@@ -138,6 +139,7 @@ bool iniciar_conexion_kernel()
 		
 	}
 	kernel_dispatch = esperar_cliente(dispatch);
+	return &kernel_dispatch;
 	};
 	pthread_t thread_conex_interrupt, thread_conex_dispatch;
 	pthread_create(&thread_conex_interrupt, NULL, recibir_conex_interrupt, NULL);
