@@ -1037,6 +1037,7 @@ int ejecutar_proceso_cpu()
 				cod_op_kernel_interrupt = EJECUTAR_CPU;
                 ciclo_de_instruccion(pcb);
 				paquete_destroy(paquete);
+				pcb_destroy(pcb);
                 break;	
             case -1:
 			loguear_error("el cliente se desconectó. Terminando servidor");
@@ -1053,10 +1054,12 @@ int ejecutar_proceso_cpu()
 
 void* gestionar_interrupcion(){
 	int estado_guardado;
+
     while(1){
         estado_guardado=recibir_operacion(kernel_interrupt);
-        recibir_paquete(kernel_interrupt);
-        pthread_mutex_lock(&mutex_interrupt);
+        t_paquete* paquete=recibir_paquete(kernel_interrupt);
+        paquete_destroy(paquete);
+		pthread_mutex_lock(&mutex_interrupt);
         cod_op_kernel_interrupt=estado_guardado;
         pthread_mutex_unlock(&mutex_interrupt);
     }
